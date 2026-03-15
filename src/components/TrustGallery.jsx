@@ -32,8 +32,8 @@ const ACTION_SHOTS = [
 ];
 
 const REVIEWS = [
-  { name: "Deborah Biddle", location: "Google Review", stars: 5, text: "TKS cleaned our windows and power washed our home and concrete patio. The staff were courteous, professional and did a fantastic job! The power wash took years of dirt off the siding and concrete." },
-  { name: "Gina Idsinga", location: "Google Review", stars: 5, text: "This is the first time we hired a service to clean our windows inside and out. The TKS team is phenomenal! Communications were timely and clear. The technicians arrived on time, were very friendly, and were conscientious." },
+  { name: "Deborah Biddle", location: "Google Review", stars: 5, text: "Cloute cleaned our windows and power washed our home and concrete patio. The staff were courteous, professional and did a fantastic job! The power wash took years of dirt off the siding and concrete." },
+  { name: "Gina Idsinga", location: "Google Review", stars: 5, text: "This is the first time we hired a service to clean our windows inside and out. The Cloute team is phenomenal! Communications were timely and clear. The technicians arrived on time, were very friendly, and were conscientious." },
   { name: "Tywana German", location: "Google Review", stars: 5, text: "Tim and his staff were extremely easy to work with and very professional. They arrived on time, prepared and explained the process to me. The house looked amazing when they were done." },
   { name: "Nathan Freie", location: "Google Review", stars: 5, text: "Tim and his crew are professional and do an excellent job. They took the time to walk our property before and after the power washing, and were able to show me the results. Our house looks brand new." },
   { name: "Doug Marshall", location: "Google Review", stars: 5, text: "Tim was very responsive. We asked to reschedule due to another home maintenance project, and he was very helpful. Came on the scheduled day on time." },
