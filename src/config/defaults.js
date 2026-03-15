@@ -6,6 +6,7 @@ export const SERVICES_WITH_STORIES = [
   "window_cleaning",
   "roof_cleaning",
   "gutter_cleaning",
+  "gutter_guard_install",
 ];
 
 const DEFAULT_CONFIG = {
@@ -116,10 +117,26 @@ const DEFAULT_CONFIG = {
       perLinFt: 1.5,
       enabled: true,
       extras: [
-        { id: "guards", label: "Gutter Guard Install", price: 350 },
         { id: "downspout", label: "Downspout Repair", price: 45 },
         { id: "whitening", label: "Gutter Whitening", price: 120 },
       ],
+    },
+    {
+      id: "gutter_guard_install",
+      name: "Gutter Guard Installation",
+      icon: "\u{1F6E1}\u{FE0F}",
+      description: "Professional gutter guard installation — priced per linear foot",
+      basePrice: 0,
+      perSqFt: 0,
+      perWindow: 0,
+      perLinFt: 14.99,
+      enabled: true,
+      tiers: [
+        { id: "basic", label: "Basic Install", perLinFt: 14.99, description: "Guard installation only" },
+        { id: "with_cleaning", label: "Install + Gutter Cleaning", perLinFt: 19.99, description: "Includes full gutter cleaning before install" },
+        { id: "full_service", label: "Full Service", perLinFt: 24.99, description: "Gutter cleaning, guard install & downspout work" },
+      ],
+      extras: [],
     },
   ],
   packages: {

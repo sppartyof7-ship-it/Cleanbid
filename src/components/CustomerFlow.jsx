@@ -219,12 +219,38 @@ export default function CustomerFlow({ config, onSubmitLead }) {
 
                   {sel && (
                     <div style={{ padding: "0 20px 20px", borderTop: `1px solid ${C.borderLight}` }}>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12, paddingTop: 16 }}>
+                      {/* Tier selector for tiered services (e.g. Gutter Guard Installation) */}
+                      {svc.tiers && svc.tiers.length > 0 && (
+                        <div style={{ paddingTop: 16, marginBottom: 12 }}>
+                          <label style={s.label}>Service Level</label>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            {svc.tiers.map((tier) => {
+                              const isActive = (d.selectedTier || svc.tiers[0].id) === tier.id;
+                              return (
+                                <div key={tier.id} onClick={() => updateDetail(svc.id, "selectedTier", tier.id)}
+                                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderRadius: 12, border: `2px solid ${isActive ? C.primary : C.border}`, background: isActive ? `${C.primary}08` : C.white, cursor: "pointer", transition: "all 0.2s" }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                    <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${isActive ? C.primary : C.border}`, background: isActive ? C.primary : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                      {isActive && <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.white }} />}
+                                    </div>
+                                    <div>
+                                      <div style={{ fontSize: 14, fontWeight: 700, color: isActive ? C.primary : C.text }}>{tier.label}</div>
+                                      <div style={{ fontSize: 12, color: C.textLight }}>{tier.description}</div>
+                                    </div>
+                                  </div>
+                                  <div style={{ fontSize: 15, fontWeight: 700, color: isActive ? C.primary : C.textMid }}>{fmt(tier.perLinFt)}/LF</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12, paddingTop: svc.tiers ? 0 : 16 }}>
                         {svc.perSqFt > 0 && <div><label style={s.label}>Square Footage</label><input type="number" placeholder="e.g. 1500" value={d.sqft || ""} onChange={(e) => updateDetail(svc.id, "sqft", Math.max(0, Number(e.target.value)))} style={s.input} /></div>}
                         {svc.perWindow > 0 && <div><label style={s.label}>Number of Windows</label><input type="number" placeholder="e.g. 20" value={d.windows || ""} onChange={(e) => updateDetail(svc.id, "windows", Math.max(0, Number(e.target.value)))} style={s.input} /></div>}
-                        {svc.perLinFt > 0 && <div><label style={s.label}>Linear Feet</label><input type="number" placeholder="e.g. 150" value={d.linearFt || ""} onChange={(e) => updateDetail(svc.id, "linearFt", Math.max(0, Number(e.target.value)))} style={s.input} /></div>}
+                        {(svc.perLinFt > 0 || (svc.tiers && svc.tiers.length > 0)) && <div><label style={s.label}>Linear Feet of Gutters</label><input type="number" placeholder="e.g. 150" value={d.linearFt || ""} onChange={(e) => updateDetail(svc.id, "linearFt", Math.max(0, Number(e.target.value)))} style={s.input} /></div>}
                       </div>
-                      {svc.extras.length > 0 && (
+                      {svc.extras && svc.extras.length > 0 && (
                         <div style={{ marginTop: 12 }}>
                           <label style={s.label}>Add-Ons</label>
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>

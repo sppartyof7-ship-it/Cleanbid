@@ -9,6 +9,18 @@ export function calculateServicePrice(svc, details, selectedExtras, globalPriceA
 
   const applyGlobal = (price) => price * (1 + globalPriceAdj / 100);
   const d = details || {};
+
+  // Handle tier-based services (like gutter guard installation)
+  if (svc.tiers && svc.tiers.length > 0) {
+    const selectedTier = svc.tiers.find((t) => t.id === (d.selectedTier || svc.tiers[0].id)) || svc.tiers[0];
+    let total = (d.linearFt || 0) * applyGlobal(selectedTier.perLinFt);
+    if (SERVICES_WITH_STORIES.includes(svc.id)) {
+      if (globalStories === 2) total *= 1.25;
+      else if (globalStories >= 3) total *= 1.5;
+    }
+    return total;
+  }
+
   let total = applyGlobal(svc.basePrice);
 
   if (svc.perSqFt) total += (d.sqft || 0) * applyGlobal(svc.perSqFt);
