@@ -13,6 +13,7 @@ const DEFAULT_CONFIG = {
   businessName: "CleanBid",
   adminPassword: "admin123",
   globalPriceAdjustment: 0,
+  googlePlacesApiKey: "",
   leadSources: [
     "Online Organic",
     "Online Paid",
@@ -47,11 +48,18 @@ const DEFAULT_CONFIG = {
       name: "Window Cleaning",
       icon: "\u{1FA9F}",
       description: "Interior & exterior window washing",
-      basePrice: 120,
+      basePrice: 0,
       perSqFt: 0,
       perWindow: 8,
       perLinFt: 0,
       enabled: true,
+      // Wisconsin avg: ~1 window per 80 sq ft of living space
+      windowsPerSqFt: 0.0125,
+      windowTypes: [
+        { id: "casement", label: "Casement", multiplier: 1.0, icon: "\u{1FA9F}", description: "Standard hinged windows" },
+        { id: "double_hung", label: "Double Hung", multiplier: 1.6, icon: "\u{1FA9F}", description: "Two sliding sashes (+60%)" },
+        { id: "combination", label: "Combination / Storm", pricePerWindow: 40, icon: "\u{1FA9F}", description: "Storm windows ($40/window)" },
+      ],
       extras: [
         { id: "screens", label: "Screen Cleaning", price: 3 },
         { id: "tracks", label: "Track & Sill Detail", price: 2 },
@@ -116,6 +124,11 @@ const DEFAULT_CONFIG = {
       perWindow: 0,
       perLinFt: 1.5,
       enabled: true,
+      conditionQuestions: [
+        { id: "plugged_downspouts", label: "Are any downspouts plugged?", priceAdj: 35 },
+        { id: "trees_growing", label: "Trees or debris growing out of gutters?", priceAdj: 50 },
+        { id: "has_gutter_guards", label: "Do you have existing gutter guards?", priceAdj: 25 },
+      ],
       extras: [
         { id: "downspout", label: "Downspout Repair", price: 45 },
         { id: "whitening", label: "Gutter Whitening", price: 120 },

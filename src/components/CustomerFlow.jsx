@@ -3,10 +3,11 @@ import C from "../config/colors";
 import s from "../config/styles";
 import { SERVICES_WITH_STORIES } from "../config/defaults";
 import { fmt, isValidEmail, isValidPhone } from "../utils/helpers";
-import { calculateServicePrice, calculateTotalBase, getDiscountPercent, getPackagePrice } from "../utils/pricing";
+import { calculateServicePrice, calculateTotalBase, getDiscountPercent, getPackagePrice, getEstimatedWindows } from "../utils/pricing";
 import Badge from "./Badge";
 import CountdownTimer from "./CountdownTimer";
 import PhotoUploader from "./PhotoUploader";
+import AddressAutocomplete from "./AddressAutocomplete";
 
 export default function CustomerFlow({ config, onSubmitLead }) {
   const [step, setStep] = useState(0);
@@ -127,14 +128,23 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                 { key: "name", l: "Full Name", p: "John Smith", t: "text" },
                 { key: "email", l: "Email", p: "john@example.com", t: "email" },
                 { key: "phone", l: "Phone", p: "(555) 123-4567", t: "tel" },
-                { key: "address", l: "Property Address", p: "123 Main St, City, ST", t: "text" },
               ].map((f) => (
                 <div key={f.key}>
-                  <label style={s.label}>{f.l} {f.key !== "address" && <span style={{ color: C.danger }}>*</span>}</label>
+                  <label style={s.label}>{f.l} <span style={{ color: C.danger }}>*</span></label>
                   <input type={f.t} placeholder={f.p} value={contact[f.key]} onChange={(e) => { setContact((c) => ({ ...c, [f.key]: e.target.value })); setValidationErrors((v) => ({ ...v, [f.key]: undefined })); }} style={{ ...s.input, borderColor: validationErrors[f.key] ? C.danger : C.border }} />
                   {validationErrors[f.key] && <div style={{ color: C.danger, fontSize: 12, marginTop: 4 }}>{validationErrors[f.key]}</div>}
                 </div>
               ))}
+              <div>
+                <label style={s.label}>Property Address</label>
+                <AddressAutocomplete
+                  value={contact.address}
+                  onChange={(val) => setContact((c) => ({ ...c, address: val }))}
+                  style={s.input}
+                  placeholder="Start typing an address..."
+                  apiKey={config.googlePlacesApiKey}
+                />
+              </div>
             </div>
             <div style={{ marginTop: 16 }}>
               <label style={s.label}>How did you hear about us?</label>
@@ -282,11 +292,75 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                           </div>
                         </div>
                       )}
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12, paddingTop: svc.tiers ? 0 : 16 }}>
-                        {svc.perSqFt > 0 && <div><label style={s.label}>Square Footage</label><input type="number" placeholder="e.g. 1500" value={d.sqft || ""} onChange={(e) => updateDetail(svc.id, "sqft", Math.max(0, Number(e.target.value)))} style={s.input} /></div>}
-                        {svc.perWindow > 0 && <div><label style={s.label}>Number of Windows</label><input type="number" placeholder="e.g. 20" value={d.windows || ""} onChange={(e) => updateDetail(svc.id, "windows", Math.max(0, Number(e.target.value)))} style={s.input} /></div>}
-                        {(svc.perLinFt > 0 || (svc.tiers && svc.tiers.length > 0)) && <div><label style={s.label}>Linear Feet of Gutters</label><input type="number" placeholder="e.g. 150" value={d.linearFt || ""} onChange={(e) => updateDetail(svc.id, "linearFt", Math.max(0, Number(e.target.value)))} style={s.input} /></div>}
-                      </div>
+                      {/* Window cleaning: sq ft input + window type selector */}
+                      {svc.id === "window_cleaning" && svc.windowTypes && (
+                        <div style={{ paddingTop: 16 }}>
+                          <div style={{ marginBottom: 12 }}>
+                            <label style={s.label}>Home Square Footage</label>
+                            <input type="number" placeholder="e.g. 2000" value={d.sqft || ""} onChange={(e) => updateDetail(svc.id, "sqft", Math.max(0, Number(e.target.value)))} style={s.input} />
+                            {d.sqft > 0 && (
+                              <div style={{ marginTop: 6, fontSize: 12, color: C.textLight }}>
+                                Estimated windows: ~{getEstimatedWindows(d.sqft, svc.windowsPerSqFt)} (based on WI home averages)
+                              </div>
+                            )}
+                          </div>
+                          <label style={s.label}>Window Type</label>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            {svc.windowTypes.map((wt) => {
+                              const isActive = (d.windowType || "casement") === wt.id;
+                              return (
+                                <div key={wt.id} onClick={() => updateDetail(svc.id, "windowType", wt.id)}
+                                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderRadius: 12, border: `2px solid ${isActive ? C.primary : C.border}`, background: isActive ? `${C.primary}08` : C.white, cursor: "pointer", transition: "all 0.2s" }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                    <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${isActive ? C.primary : C.border}`, background: isActive ? C.primary : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                      {isActive && <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.white }} />}
+                                    </div>
+                                    <div>
+                                      <div style={{ fontSize: 14, fontWeight: 700, color: isActive ? C.primary : C.text }}>{wt.label}</div>
+                                      <div style={{ fontSize: 12, color: C.textLight }}>{wt.description}</div>
+                                    </div>
+                                  </div>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: isActive ? C.primary : C.textMid }}>
+                                    {wt.pricePerWindow ? `$${wt.pricePerWindow}/win` : wt.multiplier === 1 ? "Base" : `+${Math.round((wt.multiplier - 1) * 100)}%`}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Standard numeric inputs (non-window-cleaning services) */}
+                      {!(svc.id === "window_cleaning" && svc.windowTypes) && (
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12, paddingTop: svc.tiers ? 0 : 16 }}>
+                          {svc.perSqFt > 0 && <div><label style={s.label}>Square Footage</label><input type="number" placeholder="e.g. 1500" value={d.sqft || ""} onChange={(e) => updateDetail(svc.id, "sqft", Math.max(0, Number(e.target.value)))} style={s.input} /></div>}
+                          {svc.perWindow > 0 && !svc.windowTypes && <div><label style={s.label}>Number of Windows</label><input type="number" placeholder="e.g. 20" value={d.windows || ""} onChange={(e) => updateDetail(svc.id, "windows", Math.max(0, Number(e.target.value)))} style={s.input} /></div>}
+                          {(svc.perLinFt > 0 || (svc.tiers && svc.tiers.length > 0)) && <div><label style={s.label}>Linear Feet of Gutters</label><input type="number" placeholder="e.g. 150" value={d.linearFt || ""} onChange={(e) => updateDetail(svc.id, "linearFt", Math.max(0, Number(e.target.value)))} style={s.input} /></div>}
+                        </div>
+                      )}
+
+                      {/* Condition questions (e.g. gutter cleaning) */}
+                      {svc.conditionQuestions && svc.conditionQuestions.length > 0 && (
+                        <div style={{ marginTop: 12 }}>
+                          <label style={s.label}>Property Conditions</label>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            {svc.conditionQuestions.map((q) => {
+                              const checked = d.conditions?.[q.id] || false;
+                              return (
+                                <div key={q.id} onClick={() => updateDetail(svc.id, "conditions", { ...(d.conditions || {}), [q.id]: !checked })}
+                                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 10, border: `1px solid ${checked ? C.accent : C.border}`, background: checked ? `${C.accent}08` : C.white, cursor: "pointer", transition: "all 0.2s" }}>
+                                  <div style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${checked ? C.accent : C.border}`, background: checked ? C.accent : "transparent", display: "flex", alignItems: "center", justifyContent: "center", color: C.white, fontSize: 13, flexShrink: 0 }}>{checked ? "\u2713" : ""}</div>
+                                  <div style={{ flex: 1 }}>
+                                    <span style={{ fontSize: 14, fontWeight: 600, color: checked ? C.accent : C.text }}>{q.label}</span>
+                                  </div>
+                                  <span style={{ fontSize: 12, color: C.textLight }}>+{fmt(q.priceAdj)}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
                       {svc.extras && svc.extras.length > 0 && (
                         <div style={{ marginTop: 12 }}>
                           <label style={s.label}>Add-Ons</label>
