@@ -62,12 +62,12 @@ export default function CustomerFlow({ config, onSubmitLead }) {
   const back = () => { setStep((x) => Math.max(x - 1, 0)); setValidationErrors({}); };
 
   const canProceed = () => {
-    if (step === 0) return selectedServices.length > 0;
-    if (step === 3) return contact.name && contact.email && contact.phone;
+    if (step === 0) return contact.name && contact.email && contact.phone;
+    if (step === 1) return selectedServices.length > 0;
     return true;
   };
 
-  const validateAndSubmit = () => {
+  const validateContactAndProceed = () => {
     const errors = {};
     if (!contact.name.trim()) errors.name = "Name is required";
     if (!isValidEmail(contact.email)) errors.email = "Please enter a valid email";
@@ -75,7 +75,10 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     setValidationErrors(errors);
 
     if (Object.keys(errors).length > 0) return;
+    next();
+  };
 
+  const submitQuote = () => {
     const newLead = {
       id: Date.now(),
       name: contact.name.trim(),
@@ -109,13 +112,47 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     setValidationErrors({});
   };
 
-  const stepLabels = ["Services & Details", "Photos", "Your Quote", "Contact"];
+  const stepLabels = ["Your Info", "Services & Details", "Photos", "Your Quote"];
 
   return (
     <>
-      {/* Step indicator in parent header is managed by parent; we expose step */}
-      {/* Marketing Banners — only on step 0 */}
+      {/* STEP 0: Contact Info (first!) */}
       {step === 0 && (
+        <div>
+          <h1 style={s.h1}>Let's get started!</h1>
+          <p style={{ color: C.textLight, marginBottom: 24, fontSize: 15 }}>Tell us a bit about yourself so we can build your custom quote.</p>
+          <div style={s.card}>
+            <div style={s.grid2}>
+              {[
+                { key: "name", l: "Full Name", p: "John Smith", t: "text" },
+                { key: "email", l: "Email", p: "john@example.com", t: "email" },
+                { key: "phone", l: "Phone", p: "(555) 123-4567", t: "tel" },
+                { key: "address", l: "Property Address", p: "123 Main St, City, ST", t: "text" },
+              ].map((f) => (
+                <div key={f.key}>
+                  <label style={s.label}>{f.l} {f.key !== "address" && <span style={{ color: C.danger }}>*</span>}</label>
+                  <input type={f.t} placeholder={f.p} value={contact[f.key]} onChange={(e) => { setContact((c) => ({ ...c, [f.key]: e.target.value })); setValidationErrors((v) => ({ ...v, [f.key]: undefined })); }} style={{ ...s.input, borderColor: validationErrors[f.key] ? C.danger : C.border }} />
+                  {validationErrors[f.key] && <div style={{ color: C.danger, fontSize: 12, marginTop: 4 }}>{validationErrors[f.key]}</div>}
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 16 }}>
+              <label style={s.label}>How did you hear about us?</label>
+              <select value={contact.leadSource} onChange={(e) => setContact((c) => ({ ...c, leadSource: e.target.value }))} style={s.input}>
+                <option value="">Select...</option>
+                {config.leadSources.map((src) => <option key={src} value={src}>{src}</option>)}
+              </select>
+            </div>
+            <div style={{ marginTop: 16 }}>
+              <label style={s.label}>Notes</label>
+              <textarea placeholder="Anything we should know about your property..." value={contact.notes} onChange={(e) => setContact((c) => ({ ...c, notes: e.target.value }))} rows={3} style={{ ...s.input, resize: "vertical", fontFamily: "inherit" }} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Marketing Banners — on step 1 (services) */}
+      {step === 1 && (
         <div style={{ marginBottom: 24, display: "flex", flexDirection: "column", gap: 10 }}>
           {config.marketing.showLimitedOffer && (
             <div style={{ padding: "12px 20px", background: "linear-gradient(90deg, #eef4ff, #f0f7ff)", border: `1px solid ${C.border}`, borderRadius: 12, display: "flex", alignItems: "center", gap: 10 }}>
@@ -146,7 +183,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
       )}
 
       {/* Seasonal Bundle Promo */}
-      {step === 0 && config.seasonalBundles.filter((b) => b.active && new Date(b.endDate) > new Date()).map((bundle) => (
+      {step === 1 && config.seasonalBundles.filter((b) => b.active && new Date(b.endDate) > new Date()).map((bundle) => (
         <div key={bundle.id} style={{ marginBottom: 20, padding: "20px 24px", background: "linear-gradient(135deg, #eef4ff, #f0fdf4)", border: `2px dashed ${C.primary}60`, borderRadius: 16, cursor: "pointer" }}
           onClick={() => { setSelectedServices(bundle.services.filter((sid) => config.services.find((sv) => sv.id === sid)?.enabled)); setAppliedBundle(bundle.id); }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
@@ -162,8 +199,8 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         </div>
       ))}
 
-      {/* STEP 0: Services + Details */}
-      {step === 0 && (
+      {/* STEP 1: Services + Details */}
+      {step === 1 && (
         <div>
           <h1 style={s.h1}>Tell us about your project</h1>
           <p style={{ color: C.textLight, marginBottom: 24, fontSize: 15 }}>Select your services and fill in the details. We'll build your custom quote!</p>
@@ -279,8 +316,8 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         </div>
       )}
 
-      {/* STEP 1: Photos */}
-      {step === 1 && (
+      {/* STEP 2: Photos */}
+      {step === 2 && (
         <div>
           <h1 style={s.h1}>{"\u{1F4F7}"} Upload Photos</h1>
           <p style={{ color: C.textLight, marginBottom: 24, fontSize: 15 }}>Photos help us see the job and give you a more accurate quote!</p>
@@ -299,11 +336,11 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         </div>
       )}
 
-      {/* STEP 2: Packages */}
-      {step === 2 && (
+      {/* STEP 3: Quote + Submit */}
+      {step === 3 && (
         <div>
           <h1 style={s.h1}>Here's your custom quote!</h1>
-          <p style={{ color: C.textLight, marginBottom: 24, fontSize: 15 }}>Choose the package that fits your needs.</p>
+          <p style={{ color: C.textLight, marginBottom: 24, fontSize: 15 }}>Choose the package that fits your needs, then submit to lock in your price.</p>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 20 }}>
             {Object.entries(config.packages).map(([key, pkg]) => {
@@ -353,44 +390,11 @@ export default function CustomerFlow({ config, onSubmitLead }) {
               <span style={{ fontSize: 24, fontWeight: 800 }}>{fmt(pkgPrice(selectedPackage))}</span>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* STEP 3: Contact */}
-      {step === 3 && (
-        <div>
-          <h1 style={s.h1}>Almost there!</h1>
-          <p style={{ color: C.textLight, marginBottom: 24, fontSize: 15 }}>Enter your info and we'll send your custom quote.</p>
-          <div style={s.card}>
-            <div style={s.grid2}>
-              {[
-                { key: "name", l: "Full Name", p: "John Smith", t: "text" },
-                { key: "email", l: "Email", p: "john@example.com", t: "email" },
-                { key: "phone", l: "Phone", p: "(555) 123-4567", t: "tel" },
-                { key: "address", l: "Property Address", p: "123 Main St, City, ST", t: "text" },
-              ].map((f) => (
-                <div key={f.key}>
-                  <label style={s.label}>{f.l} {f.key !== "address" && <span style={{ color: C.danger }}>*</span>}</label>
-                  <input type={f.t} placeholder={f.p} value={contact[f.key]} onChange={(e) => { setContact((c) => ({ ...c, [f.key]: e.target.value })); setValidationErrors((v) => ({ ...v, [f.key]: undefined })); }} style={{ ...s.input, borderColor: validationErrors[f.key] ? C.danger : C.border }} />
-                  {validationErrors[f.key] && <div style={{ color: C.danger, fontSize: 12, marginTop: 4 }}>{validationErrors[f.key]}</div>}
-                </div>
-              ))}
-            </div>
-            <div style={{ marginTop: 16 }}>
-              <label style={s.label}>How did you hear about us?</label>
-              <select value={contact.leadSource} onChange={(e) => setContact((c) => ({ ...c, leadSource: e.target.value }))} style={s.input}>
-                <option value="">Select...</option>
-                {config.leadSources.map((src) => <option key={src} value={src}>{src}</option>)}
-              </select>
-            </div>
-            <div style={{ marginTop: 16 }}>
-              <label style={s.label}>Notes</label>
-              <textarea placeholder="Anything we should know..." value={contact.notes} onChange={(e) => setContact((c) => ({ ...c, notes: e.target.value }))} rows={3} style={{ ...s.input, resize: "vertical", fontFamily: "inherit" }} />
-            </div>
-            <div style={{ marginTop: 20, padding: 20, background: `${C.primary}06`, borderRadius: 12, border: `1px solid ${C.primary}20`, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-              <div style={{ fontSize: 13, color: C.textLight }}>{selectedServices.length} service{selectedServices.length > 1 ? "s" : ""} · {config.packages[selectedPackage].label} · {customerPhotos.length} photo{customerPhotos.length !== 1 ? "s" : ""}</div>
-              <div style={{ fontSize: 28, fontWeight: 800 }}>{fmt(pkgPrice(selectedPackage))}</div>
-            </div>
+          {/* Summary bar with customer info */}
+          <div style={{ marginTop: 20, padding: 20, background: `${C.primary}06`, borderRadius: 12, border: `1px solid ${C.primary}20`, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+            <div style={{ fontSize: 13, color: C.textLight }}>Quote for {contact.name} · {selectedServices.length} service{selectedServices.length > 1 ? "s" : ""} · {config.packages[selectedPackage].label} · {customerPhotos.length} photo{customerPhotos.length !== 1 ? "s" : ""}</div>
+            <div style={{ fontSize: 28, fontWeight: 800 }}>{fmt(pkgPrice(selectedPackage))}</div>
           </div>
         </div>
       )}
@@ -421,11 +425,11 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: 28, paddingTop: 20, borderTop: `1px solid ${C.borderLight}` }}>
           <button onClick={back} disabled={step === 0} style={{ ...s.btnSecondary, color: step === 0 ? C.borderLight : C.textMid, borderColor: step === 0 ? C.borderLight : C.border, cursor: step === 0 ? "default" : "pointer" }}>Back</button>
           <button
-            onClick={() => { if (step === 3) validateAndSubmit(); else next(); }}
+            onClick={() => { if (step === 0) validateContactAndProceed(); else if (step === 3) submitQuote(); else next(); }}
             disabled={!canProceed()}
             style={{ ...s.btnPrimary, background: canProceed() ? C.gradient : C.bgDark, color: canProceed() ? C.white : C.textLight, cursor: canProceed() ? "pointer" : "default", boxShadow: canProceed() ? "0 4px 16px rgba(59,156,255,0.25)" : "none" }}
           >
-            {step === 3 ? "Submit Quote" : step === 1 ? "See My Quote" : "Continue"}
+            {step === 0 ? "Continue" : step === 2 ? "See My Quote" : step === 3 ? "Submit Quote" : "Continue"}
           </button>
         </div>
       )}
