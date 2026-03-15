@@ -8,6 +8,7 @@ import Badge from "./Badge";
 import CountdownTimer from "./CountdownTimer";
 import PhotoUploader from "./PhotoUploader";
 import AddressAutocomplete from "./AddressAutocomplete";
+import TrustGallery from "./TrustGallery";
 
 export default function CustomerFlow({ config, onSubmitLead }) {
   const [step, setStep] = useState(0);
@@ -130,6 +131,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
       {/* STEP 0: Contact Info (first!) */}
       {step === 0 && (
         <div>
+          <TrustGallery />
           <h1 style={s.h1}>Let's get started!</h1>
           <p style={{ color: C.textLight, marginBottom: 24, fontSize: 15 }}>Tell us a bit about yourself so we can build your custom quote.</p>
           <div style={s.card}>
