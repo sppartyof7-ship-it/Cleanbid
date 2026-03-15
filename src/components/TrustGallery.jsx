@@ -26,7 +26,7 @@ const BEFORE_AFTER = [
 ];
 
 const ACTION_SHOTS = [
-  { src: "/gallery/action_washing.jpg", caption: "Commercial building washing" },
+  { src: "/gallery/action_washing.jpg", caption: "Professional house washing" },
   { src: "/gallery/action_windows.jpg", caption: "Window cleaning crew" },
   { src: "/gallery/truck_side.jpg", caption: "Cloute Soft Washing" },
 ];
