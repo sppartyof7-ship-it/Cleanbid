@@ -18,10 +18,31 @@ const DEFAULT_LEADS = [
 export default function App() {
   const [config, setConfig] = useState(() => loadConfig() || deepClone(DEFAULT_CONFIG));
   const [leads, setLeads] = useState(() => loadLeads() || DEFAULT_LEADS);
-  const [view, setView] = useState("customer");
+  // Read initial view from URL hash (#admin, #leads) — defaults to customer
+  const getViewFromHash = () => {
+    const hash = window.location.hash.replace("#", "").toLowerCase();
+    if (hash === "admin") return "admin";
+    if (hash === "leads") return "leads";
+    return "customer";
+  };
+
+  const [view, setView] = useState(getViewFromHash);
   const [adminAuth, setAdminAuth] = useState(false);
   const [adminPw, setAdminPw] = useState("");
   const [animate, setAnimate] = useState(false);
+
+  // Sync view when the URL hash changes (browser back/forward)
+  useEffect(() => {
+    const onHashChange = () => setView(getViewFromHash());
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  // Keep hash in sync when view changes programmatically
+  const changeView = (newView) => {
+    window.location.hash = newView === "customer" ? "" : newView;
+    setView(newView);
+  };
 
   // Persist config and leads to localStorage whenever they change
   useEffect(() => { saveConfig(config); }, [config]);
@@ -41,7 +62,7 @@ export default function App() {
   const handleAdminExit = () => {
     setAdminAuth(false);
     setAdminPw("");
-    setView("customer");
+    changeView("customer");
   };
 
   const handleSubmitLead = (newLead) => {
@@ -53,18 +74,24 @@ export default function App() {
       {/* HEADER */}
       <header style={{ background: C.white, borderBottom: `1px solid ${C.border}`, padding: "12px 24px", position: "sticky", top: 0, zIndex: 50, boxShadow: "0 1px 8px rgba(59,156,255,0.06)" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => setView("customer")}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => changeView("customer")}>
             <div style={{ width: 38, height: 38, borderRadius: 10, background: C.gradient, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 800, color: C.white }}>C</div>
             <span style={{ fontSize: 20, fontWeight: 800, color: C.text }}>{config.businessName}</span>
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <button onClick={() => setView("leads")} style={{ ...s.btnSecondary, padding: "8px 14px", fontSize: 12, background: view === "leads" ? `${C.primary}12` : C.white, color: view === "leads" ? C.primary : C.textLight, borderColor: view === "leads" ? C.primary : C.border }}>
-              {"\u{1F4CB}"} Leads ({leads.filter((l) => l.status === "pending").length})
-            </button>
-            <button onClick={() => setView("admin")} style={{ ...s.btnSecondary, padding: "8px 14px", fontSize: 12, background: view === "admin" ? `${C.primary}12` : C.white, color: view === "admin" ? C.primary : C.textLight, borderColor: view === "admin" ? C.primary : C.border }}>
-              {"\u2699\uFE0F"} Admin
-            </button>
-          </div>
+          {/* Admin nav — only visible when on admin/leads views (accessed via #admin or #leads URL) */}
+          {(view === "admin" || view === "leads") && (
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <button onClick={() => changeView("leads")} style={{ ...s.btnSecondary, padding: "8px 14px", fontSize: 12, background: view === "leads" ? `${C.primary}12` : C.white, color: view === "leads" ? C.primary : C.textLight, borderColor: view === "leads" ? C.primary : C.border }}>
+                {"\u{1F4CB}"} Leads ({leads.filter((l) => l.status === "pending").length})
+              </button>
+              <button onClick={() => changeView("admin")} style={{ ...s.btnSecondary, padding: "8px 14px", fontSize: 12, background: view === "admin" ? `${C.primary}12` : C.white, color: view === "admin" ? C.primary : C.textLight, borderColor: view === "admin" ? C.primary : C.border }}>
+                {"\u2699\uFE0F"} Admin
+              </button>
+              <button onClick={() => changeView("customer")} style={{ ...s.btnSecondary, padding: "8px 14px", fontSize: 12, color: C.textLight, borderColor: C.border }}>
+                {"\u{1F441}"} Customer View
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
