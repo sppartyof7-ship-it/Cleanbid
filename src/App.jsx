@@ -4,6 +4,7 @@ import s from "./config/styles";
 import DEFAULT_CONFIG from "./config/defaults";
 import { deepClone } from "./utils/helpers";
 import { saveConfig, loadConfig, saveLeads, loadLeads } from "./utils/storage";
+import { sendLeadNotification } from "./utils/email";
 import AdminPanel from "./components/AdminPanel";
 import LeadsPanel from "./components/LeadsPanel";
 import CustomerFlow from "./components/CustomerFlow";
@@ -67,6 +68,8 @@ export default function App() {
 
   const handleSubmitLead = (newLead) => {
     setLeads((prev) => [newLead, ...prev]);
+    // Send email notification (fire-and-forget — doesn't block the UI)
+    sendLeadNotification(newLead, config);
   };
 
   return (
