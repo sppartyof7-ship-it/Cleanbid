@@ -3,15 +3,56 @@ import { useEffect, useRef, useState } from "react";
 /**
  * Address input with Google Places Autocomplete.
  * Uses the NEW PlaceAutocompleteElement API (required for accounts created after March 2025).
- * Loads the Places library via importLibrary() as required by the new API.
+ * Uses Google's Dynamic Library Import bootstrap to load importLibrary().
  * Falls back to a plain text input if no API key is configured.
  */
+
+// Initialize the Google Maps bootstrap loader (sets up importLibrary)
+function initGoogleMapsLoader(apiKey) {
+  if (window.google?.maps?.importLibrary) return; // Already initialized
+
+  ((g) => {
+    var h,
+      a,
+      k,
+      p = "The Google Maps JavaScript API",
+      c = "google",
+      l = "importLibrary",
+      q = "__ib__",
+      m = document,
+      b = window;
+    b = b[c] || (b[c] = {});
+    var d = b.maps || (b.maps = {}),
+      r = new Set(),
+      e = new URLSearchParams(),
+      u = () =>
+        h ||
+        (h = new Promise(async (f, n) => {
+          await (a = m.createElement("script"));
+          e.set("libraries", [...r] + "");
+          for (k in g)
+            e.set(
+              k.replace(/[A-Z]/g, (t) => "_" + t[0].toLowerCase()),
+              g[k]
+            );
+          e.set("callback", c + ".maps." + q);
+          a.src = `https://maps.googleapis.com/maps/api/js?` + e;
+          d[q] = f;
+          a.onerror = () => (h = n(Error(p + " could not load.")));
+          a.nonce = m.querySelector("script[nonce]")?.nonce || "";
+          m.head.append(a);
+        }));
+    d[l]
+      ? console.warn(p + " only loads once. Ignoring:", g)
+      : (d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n)));
+  })({ key: apiKey, v: "weekly" });
+}
+
 export default function AddressAutocomplete({ value, onChange, style, placeholder, apiKey }) {
   const containerRef = useRef(null);
   const autocompleteRef = useRef(null);
   const [useFallback, setUseFallback] = useState(!apiKey);
 
-  // Load Google Maps core script, then import Places library & create element
   useEffect(() => {
     if (!apiKey) {
       setUseFallback(true);
@@ -23,32 +64,12 @@ export default function AddressAutocomplete({ value, onChange, style, placeholde
 
     async function init() {
       try {
-        // Step 1: Load the Google Maps core script if not already present
-        if (!window.google?.maps) {
-          await new Promise((resolve, reject) => {
-            // Check if script is already being loaded
-            if (document.querySelector('script[src*="maps.googleapis.com"]')) {
-              // Wait for it to finish loading
-              const check = setInterval(() => {
-                if (window.google?.maps) {
-                  clearInterval(check);
-                  resolve();
-                }
-              }, 100);
-              return;
-            }
-            const script = document.createElement("script");
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async`;
-            script.async = true;
-            script.onload = resolve;
-            script.onerror = reject;
-            document.head.appendChild(script);
-          });
-        }
+        // Step 1: Initialize the Google Maps bootstrap loader
+        initGoogleMapsLoader(apiKey);
 
         if (cancelled) return;
 
-        // Step 2: Import the Places library using the new importLibrary method
+        // Step 2: Import the Places library using importLibrary
         const placesLib = await window.google.maps.importLibrary("places");
 
         if (cancelled || !containerRef.current) return;
