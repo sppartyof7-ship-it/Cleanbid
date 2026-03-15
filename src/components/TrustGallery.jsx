@@ -32,10 +32,12 @@ const ACTION_SHOTS = [
 ];
 
 const REVIEWS = [
-  { name: "Sarah M.", location: "Fort Atkinson, WI", stars: 5, text: "Tim and his crew did an amazing job on our siding and gutters. The house looks brand new! Highly recommend." },
-  { name: "Mike & Julie R.", location: "Jefferson, WI", stars: 5, text: "We've used Cloute for 3 years running — windows, pressure washing, the works. Always professional, always on time." },
-  { name: "Dan K.", location: "Lake Mills, WI", stars: 5, text: "Got a quote in minutes and they were out the next week. Our concrete driveway went from black to white. Incredible difference." },
-  { name: "Lisa W.", location: "Whitewater, WI", stars: 5, text: "Best exterior cleaning company in the area. Fair prices and the results speak for themselves." },
+  { name: "Deborah Biddle", location: "Google Review", stars: 5, text: "TKS cleaned our windows and power washed our home and concrete patio. The staff were courteous, professional and did a fantastic job! The power wash took years of dirt off the siding and concrete." },
+  { name: "Gina Idsinga", location: "Google Review", stars: 5, text: "This is the first time we hired a service to clean our windows inside and out. The TKS team is phenomenal! Communications were timely and clear. The technicians arrived on time, were very friendly, and were conscientious." },
+  { name: "Tywana German", location: "Google Review", stars: 5, text: "Tim and his staff were extremely easy to work with and very professional. They arrived on time, prepared and explained the process to me. The house looked amazing when they were done." },
+  { name: "Nathan Freie", location: "Google Review", stars: 5, text: "Tim and his crew are professional and do an excellent job. They took the time to walk our property before and after the power washing, and were able to show me the results. Our house looks brand new." },
+  { name: "Doug Marshall", location: "Google Review", stars: 5, text: "Tim was very responsive. We asked to reschedule due to another home maintenance project, and he was very helpful. Came on the scheduled day on time." },
+  { name: "Nicole Horton", location: "Google Review", stars: 5, text: "They were efficient and did an amazing job with my 3 level home. My windows were extremely dirty due to living close to the highway and nature. They did all sides of my windows." },
 ];
 
 export default function TrustGallery() {
@@ -134,7 +136,7 @@ export default function TrustGallery() {
         <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, padding: "8px 20px" }}>
           <span style={{ fontSize: 18 }}>⭐</span>
           <span style={{ fontWeight: 800, color: "#b45309", fontSize: 16 }}>4.9</span>
-          <span style={{ color: C.textLight, fontSize: 13 }}>from 238 verified reviews</span>
+          <span style={{ color: C.textLight, fontSize: 13 }}>from 439 Google reviews</span>
         </div>
       </div>
 
