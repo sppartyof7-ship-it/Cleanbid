@@ -57,8 +57,8 @@ const DEFAULT_CONFIG = {
       windowsPerSqFt: 0.0125,
       windowTypes: [
         { id: "casement", label: "Casement", multiplier: 1.0, icon: "\u{1FA9F}", description: "Standard hinged windows" },
-        { id: "double_hung", label: "Double Hung", multiplier: 1.6, icon: "\u{1FA9F}", description: "Two sliding sashes (+60%)" },
-        { id: "combination", label: "Combination / Storm", pricePerWindow: 40, icon: "\u{1FA9F}", description: "Storm windows ($40/window)" },
+        { id: "double_hung", label: "Double Hung", multiplier: 1.6, icon: "\u{1FA9F}", description: "Two sliding sashes" },
+        { id: "combination", label: "Combination / Storm", pricePerWindow: 40, icon: "\u{1FA9F}", description: "Storm windows with outer pane" },
       ],
       extras: [
         { id: "screens", label: "Screen Cleaning", price: 3 },

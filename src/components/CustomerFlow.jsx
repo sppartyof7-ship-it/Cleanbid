@@ -285,7 +285,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                                       <div style={{ fontSize: 12, color: C.textLight }}>{tier.description}</div>
                                     </div>
                                   </div>
-                                  <div style={{ fontSize: 15, fontWeight: 700, color: isActive ? C.primary : C.textMid }}>{fmt(tier.perLinFt)}/LF</div>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: isActive ? C.primary : C.textMid }}>{isActive ? "✓ Selected" : ""}</div>
                                 </div>
                               );
                             })}
@@ -321,7 +321,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                                     </div>
                                   </div>
                                   <div style={{ fontSize: 13, fontWeight: 600, color: isActive ? C.primary : C.textMid }}>
-                                    {wt.pricePerWindow ? `$${wt.pricePerWindow}/win` : wt.multiplier === 1 ? "Base" : `+${Math.round((wt.multiplier - 1) * 100)}%`}
+                                    {isActive ? "✓ Selected" : ""}
                                   </div>
                                 </div>
                               );
@@ -353,7 +353,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                                   <div style={{ flex: 1 }}>
                                     <span style={{ fontSize: 14, fontWeight: 600, color: checked ? C.accent : C.text }}>{q.label}</span>
                                   </div>
-                                  <span style={{ fontSize: 12, color: C.textLight }}>+{fmt(q.priceAdj)}</span>
+                                  <span style={{ fontSize: 12, color: C.textLight }}></span>
                                 </div>
                               );
                             })}
@@ -456,7 +456,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
               </div>
             )}
             <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${C.borderLight}` }}>
-              <span style={{ color: C.textLight, fontSize: 14 }}>{config.packages[selectedPackage].label} Package ({config.packages[selectedPackage].multiplier}x)</span>
+              <span style={{ color: C.textLight, fontSize: 14 }}>{config.packages[selectedPackage].label} Package</span>
               <span />
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0 0" }}>
