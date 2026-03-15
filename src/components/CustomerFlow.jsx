@@ -87,6 +87,10 @@ export default function CustomerFlow({ config, onSubmitLead }) {
       phone: contact.phone.trim(),
       address: contact.address || "",
       services: [...selectedServices],
+      servicePrices: selectedServices.reduce((acc, svcId) => {
+        acc[svcId] = svcPrice(svcId);
+        return acc;
+      }, {}),
       package: selectedPackage,
       total: pkgPrice(selectedPackage),
       allPackagePrices: {

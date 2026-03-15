@@ -11,10 +11,12 @@ export async function sendLeadNotification(lead, config) {
     return { ok: false, reason: "no_key" };
   }
 
-  // Build service list with icons
+  // Build service list with icons and individual prices
   const serviceLines = lead.services.map((svcId) => {
     const svc = config.services.find((sv) => sv.id === svcId);
-    return svc ? `  ${svc.icon} ${svc.name}` : `  • ${svcId}`;
+    const price = lead.servicePrices?.[svcId];
+    const priceStr = price != null ? ` — ${fmt(price)}` : "";
+    return svc ? `  ${svc.icon} ${svc.name}${priceStr}` : `  • ${svcId}`;
   });
 
   const serviceNames = lead.services
