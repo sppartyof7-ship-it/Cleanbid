@@ -11,31 +11,54 @@ export async function sendLeadNotification(lead, config) {
     return { ok: false, reason: "no_key" };
   }
 
+  // Build service list with icons
+  const serviceLines = lead.services.map((svcId) => {
+    const svc = config.services.find((sv) => sv.id === svcId);
+    return svc ? `  ${svc.icon} ${svc.name}` : `  • ${svcId}`;
+  });
+
   const serviceNames = lead.services
     .map((svcId) => config.services.find((sv) => sv.id === svcId)?.name || svcId)
     .join(", ");
 
-  const packageLabel = config.packages[lead.package]?.label || lead.package;
+  // All 3 package options with prices
+  const selectedPkg = lead.package;
+  const packageLines = Object.entries(config.packages).map(([key, pkg]) => {
+    const price = lead.allPackagePrices?.[key] || lead.total;
+    const marker = key === selectedPkg ? " ◀ SELECTED" : "";
+    return `  ${pkg.label}: ${fmt(price)}${marker}`;
+  });
 
   const message = [
-    `New Lead from ${config.businessName || "CleanBid"}!`,
+    `========================================`,
+    `  NEW LEAD from ${config.businessName || "CleanBid"}`,
+    `========================================`,
     ``,
-    `Customer: ${lead.name}`,
-    `Email: ${lead.email}`,
-    `Phone: ${lead.phone}`,
-    `Project Type: ${lead.projectType || "residential"}`,
+    `CUSTOMER INFO`,
+    `  Name:    ${lead.name}`,
+    `  Email:   ${lead.email}`,
+    `  Phone:   ${lead.phone}`,
+    lead.address ? `  Address: ${lead.address}` : null,
+    `  Type:    ${lead.projectType || "residential"}`,
     ``,
-    `Services: ${serviceNames}`,
-    `Package: ${packageLabel}`,
-    `Quote Total: ${fmt(lead.total)}`,
+    `SERVICES REQUESTED`,
+    ...serviceLines,
     ``,
-    lead.notes ? `Notes: ${lead.notes}` : null,
-    lead.leadSource ? `Lead Source: ${lead.leadSource}` : null,
-    lead.photos?.length ? `Photos Uploaded: ${lead.photos.length}` : null,
+    `PACKAGE OPTIONS`,
+    ...packageLines,
+    ``,
+    `----------------------------------------`,
+    `  CUSTOMER CHOSE: ${config.packages[selectedPkg]?.label || selectedPkg} — ${fmt(lead.total)}`,
+    `----------------------------------------`,
+    ``,
+    lead.notes ? `NOTES\n  ${lead.notes}` : null,
+    lead.notes ? `` : null,
+    lead.leadSource ? `LEAD SOURCE: ${lead.leadSource}` : null,
+    lead.photos?.length ? `PHOTOS UPLOADED: ${lead.photos.length}` : null,
     ``,
     `Date: ${lead.date}`,
   ]
-    .filter(Boolean)
+    .filter((line) => line !== null)
     .join("\n");
 
   try {
