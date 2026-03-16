@@ -132,6 +132,37 @@ export default function App() {
           <CustomerFlow config={config} onSubmitLead={handleSubmitLead} />
         )}
       </main>
+
+      {/* Floating Call Now Button — visible on customer view only */}
+      {view === "customer" && (
+        <a
+          href="tel:+19205634101"
+          style={{
+            position: "fixed",
+            bottom: 24,
+            right: 24,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            background: "linear-gradient(135deg, #10b981, #059669)",
+            color: "#fff",
+            padding: "14px 22px",
+            borderRadius: 50,
+            boxShadow: "0 4px 20px rgba(16,185,129,0.4)",
+            textDecoration: "none",
+            fontSize: 15,
+            fontWeight: 700,
+            zIndex: 100,
+            transition: "transform 0.2s, box-shadow 0.2s",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(16,185,129,0.5)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(16,185,129,0.4)"; }}
+        >
+          <span style={{ fontSize: 20 }}>{"\u{1F4DE}"}</span>
+          <span>Call Now</span>
+          <span style={{ fontSize: 13, opacity: 0.9 }}>(920) 563-4101</span>
+        </a>
+      )}
     </div>
   );
 }
