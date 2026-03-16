@@ -21,9 +21,26 @@ export default function App() {
   const [config, setConfig] = useState(() => {
     const saved = loadConfig();
     if (!saved) return deepClone(DEFAULT_CONFIG);
-    // Auto-merge: fill in any missing keys from defaults so new features
-    // (like web3formsKey, googlePlacesApiKey) work even with old saved config
-    const merged = { ...deepClone(DEFAULT_CONFIG), ...saved };
+    const defaults = deepClone(DEFAULT_CONFIG);
+    // Deep merge: start with defaults, overlay saved top-level keys
+    const merged = { ...defaults, ...saved };
+    // Always sync services from defaults (names, descriptions, extras, options)
+    // but preserve any admin price overrides
+    merged.services = defaults.services.map((defSvc) => {
+      const savedSvc = saved.services?.find((s) => s.id === defSvc.id);
+      if (!savedSvc) return defSvc;
+      return {
+        ...defSvc,
+        // Preserve admin-editable fields from saved config
+        basePrice: savedSvc.basePrice ?? defSvc.basePrice,
+        perSqFt: savedSvc.perSqFt ?? defSvc.perSqFt,
+        perWindow: savedSvc.perWindow ?? defSvc.perWindow,
+        perLinFt: savedSvc.perLinFt ?? defSvc.perLinFt,
+        enabled: savedSvc.enabled ?? defSvc.enabled,
+      };
+    });
+    // Always use default lead sources (simplified list)
+    merged.leadSources = defaults.leadSources;
     return merged;
   });
   const [leads, setLeads] = useState(() => loadLeads() || DEFAULT_LEADS);
