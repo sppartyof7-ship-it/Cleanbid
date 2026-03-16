@@ -32,7 +32,7 @@ const ACTION_SHOTS = [
 ];
 
 const REVIEWS = [
-  { name: "Deborah Biddle", location: "Google Review", stars: 5, text: "Cloute cleaned our windows and power washed our home and concrete patio. The staff were courteous, professional and did a fantastic job!" },
+  { name: "Deborah Biddle", location: "Google Review", stars: 5, text: "Cloute cleaned our windows and washed our home and concrete patio. The staff were courteous, professional and did a fantastic job!" },
   { name: "Nathan Freie", location: "Google Review", stars: 5, text: "Tim and his crew are professional and do an excellent job. They walked our property before and after — our house looks brand new." },
   { name: "Tywana German", location: "Google Review", stars: 5, text: "Tim and his staff were extremely easy to work with. They arrived on time, prepared, and the house looked amazing when they were done." },
 ];
