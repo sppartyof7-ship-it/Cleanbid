@@ -16,8 +16,8 @@ const DEFAULT_CONFIG = {
   web3formsKey: "6cf87767-154f-42e1-8920-4988ef3cf5a3",
   googlePlacesApiKey: "AIzaSyChuudJiPotYb4GFXKFOSZsEPOPjJqd7Q4",
   leadSources: [
-    "Google Search",
-    "Social Media",
+    "Google",
+    "Social Media: Facebook / Instagram",
     "Friend / Referral",
     "Saw Our Truck",
     "Repeat Customer",
