@@ -5,7 +5,7 @@ import { fmt } from "./helpers";
  * Get your access key at https://web3forms.com — just enter your email.
  */
 export async function sendLeadNotification(lead, config) {
-  const accessKey = config.web3formsKey;
+  const accessKey = config.web3formsKey || "6cf87767-154f-42e1-8920-4988ef3cf5a3";
   if (!accessKey) {
     console.warn("No Web3Forms access key set — skipping email notification.");
     return { ok: false, reason: "no_key" };

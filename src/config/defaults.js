@@ -13,6 +13,7 @@ const DEFAULT_CONFIG = {
   businessName: "CleanBid",
   adminPassword: "admin123",
   globalPriceAdjustment: 0,
+  web3formsKey: "6cf87767-154f-42e1-8920-4988ef3cf5a3",
   googlePlacesApiKey: "",
   leadSources: [
     "Online Organic",
