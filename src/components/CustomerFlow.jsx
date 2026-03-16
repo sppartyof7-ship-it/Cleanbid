@@ -364,6 +364,11 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                                   <div style={{ fontSize: 14, fontWeight: 700, color: isActive ? C.primary : C.text, marginTop: 8 }}>{wt.label}</div>
                                   <div style={{ fontSize: 11, color: C.textLight, marginTop: 2, lineHeight: 1.3 }}>{wt.description}</div>
                                   {isActive && <div style={{ fontSize: 11, fontWeight: 700, color: C.primary, marginTop: 6 }}>✓ Selected</div>}
+                                  {wt.id === "combination" && isActive && (
+                                    <div style={{ marginTop: 8, padding: "8px 10px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, fontSize: 11, color: "#92400e", lineHeight: 1.4 }}>
+                                      Storm windows often require an onsite estimate for accurate pricing. <a href="tel:+19205634101" style={{ color: "#b45309", fontWeight: 700 }}>Call (920) 563-4101</a> for a free quote.
+                                    </div>
+                                  )}
                                 </div>
                               );
                             })}
