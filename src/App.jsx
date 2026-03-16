@@ -5,6 +5,7 @@ import DEFAULT_CONFIG from "./config/defaults";
 import { deepClone } from "./utils/helpers";
 import { saveConfig, loadConfig, saveLeads, loadLeads } from "./utils/storage";
 import { sendLeadNotification } from "./utils/email";
+import { sendToHousecallPro } from "./utils/housecall";
 import AdminPanel from "./components/AdminPanel";
 import LeadsPanel from "./components/LeadsPanel";
 import CustomerFlow from "./components/CustomerFlow";
@@ -70,6 +71,8 @@ export default function App() {
     setLeads((prev) => [newLead, ...prev]);
     // Send email notification (fire-and-forget — doesn't block the UI)
     sendLeadNotification(newLead, config);
+    // Sync to Housecall Pro CRM (fire-and-forget — creates customer + estimate)
+    sendToHousecallPro(newLead, config.services);
   };
 
   return (
