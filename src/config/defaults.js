@@ -16,15 +16,11 @@ const DEFAULT_CONFIG = {
   web3formsKey: "6cf87767-154f-42e1-8920-4988ef3cf5a3",
   googlePlacesApiKey: "AIzaSyChuudJiPotYb4GFXKFOSZsEPOPjJqd7Q4",
   leadSources: [
-    "Online Organic",
-    "Online Paid",
+    "Google Search",
     "Social Media",
-    "Yard Signs / Vehicles",
-    "Repeat / Referral",
-    "Direct Mail",
-    "Doorknocking",
-    "Events",
-    "Sales Team",
+    "Friend / Referral",
+    "Saw Our Truck",
+    "Repeat Customer",
     "Other",
   ],
   services: [
@@ -61,11 +57,7 @@ const DEFAULT_CONFIG = {
         { id: "double_hung", label: "Double Hung", multiplier: 1.6, description: "Two sashes that slide up & down, tilt-in for cleaning", windowImage: "double_hung" },
         { id: "combination", label: "Combination / Storm", multiplier: 2.0, description: "Inner window + outer storm pane — extra glass to clean", windowImage: "combination" },
       ],
-      extras: [
-        { id: "screens", label: "Screen Cleaning", price: 3 },
-        { id: "tracks", label: "Track & Sill Detail", price: 2 },
-        { id: "skylights", label: "Skylights", price: 25 },
-      ],
+      extras: [],
     },
     {
       id: "deck_cleaning",

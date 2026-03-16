@@ -118,36 +118,23 @@ export default function TrustGallery() {
         </div>
       </div>
 
-      {/* Action Shot Strip */}
-      <div style={{ display: "flex", gap: 12, overflowX: "auto", padding: "4px 0 16px", marginBottom: 24 }}>
-        {ACTION_SHOTS.map((shot, i) => (
-          <div key={i} style={{ minWidth: 200, flex: "0 0 auto", borderRadius: 12, overflow: "hidden", boxShadow: C.shadow, border: `1px solid ${C.border}` }}>
-            <img src={shot.src} alt={shot.caption} style={{ width: "100%", height: 130, objectFit: "cover", display: "block" }} />
-            <div style={{ padding: "8px 12px", fontSize: 12, color: C.textMid, fontWeight: 600, background: C.white }}>{shot.caption}</div>
-          </div>
-        ))}
+      {/* Reviews — compact horizontal strip */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 14 }}>
+        <span style={{ fontSize: 16 }}>⭐</span>
+        <span style={{ fontWeight: 800, color: "#b45309", fontSize: 15 }}>4.9</span>
+        <span style={{ color: C.textLight, fontSize: 13 }}>from 439 Google reviews</span>
       </div>
 
-      {/* Reviews */}
-      <div style={{ textAlign: "center", marginBottom: 16 }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, padding: "8px 20px" }}>
-          <span style={{ fontSize: 18 }}>⭐</span>
-          <span style={{ fontWeight: 800, color: "#b45309", fontSize: 16 }}>4.9</span>
-          <span style={{ color: C.textLight, fontSize: 13 }}>from 439 Google reviews</span>
-        </div>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: 12 }}>
+      <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 0 8px" }}>
         {REVIEWS.map((r, i) => (
-          <div key={i} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 20px", boxShadow: C.shadow }}>
-            <div style={{ display: "flex", gap: 2, marginBottom: 8 }}>
+          <div key={i} style={{ minWidth: 240, flex: "0 0 auto", background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 16px", boxShadow: C.shadow }}>
+            <div style={{ display: "flex", gap: 1, marginBottom: 6 }}>
               {Array.from({ length: r.stars }).map((_, s) => (
-                <span key={s} style={{ color: "#f59e0b", fontSize: 14 }}>★</span>
+                <span key={s} style={{ color: "#f59e0b", fontSize: 12 }}>★</span>
               ))}
             </div>
-            <p style={{ fontSize: 14, color: C.textMid, lineHeight: 1.5, marginBottom: 10 }}>"{r.text}"</p>
-            <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{r.name}</div>
-            <div style={{ fontSize: 12, color: C.textLight }}>{r.location}</div>
+            <p style={{ fontSize: 13, color: C.textMid, lineHeight: 1.4, marginBottom: 8 }}>"{r.text}"</p>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.text }}>{r.name}</div>
           </div>
         ))}
       </div>
