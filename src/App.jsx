@@ -18,7 +18,14 @@ const DEFAULT_LEADS = [
 ];
 
 export default function App() {
-  const [config, setConfig] = useState(() => loadConfig() || deepClone(DEFAULT_CONFIG));
+  const [config, setConfig] = useState(() => {
+    const saved = loadConfig();
+    if (!saved) return deepClone(DEFAULT_CONFIG);
+    // Auto-merge: fill in any missing keys from defaults so new features
+    // (like web3formsKey, googlePlacesApiKey) work even with old saved config
+    const merged = { ...deepClone(DEFAULT_CONFIG), ...saved };
+    return merged;
+  });
   const [leads, setLeads] = useState(() => loadLeads() || DEFAULT_LEADS);
   // Read initial view from URL hash (#admin, #leads) — defaults to customer
   const getViewFromHash = () => {
