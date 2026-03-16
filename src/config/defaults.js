@@ -111,7 +111,7 @@ const DEFAULT_CONFIG = {
       id: "gutter_cleaning",
       name: "Gutter Cleaning",
       icon: "\u{1F327}\u{FE0F}",
-      description: "Gutter flush, downspout clearing",
+      description: "Gutter flush & debris removal",
       basePrice: 125,
       perSqFt: 0,
       perWindow: 0,
@@ -123,7 +123,7 @@ const DEFAULT_CONFIG = {
         { id: "has_gutter_guards", label: "Do you have existing gutter guards?", priceAdj: 25 },
       ],
       extras: [
-        { id: "downspout", label: "Downspout Repair", price: 45 },
+        { id: "downspout_clearing", label: "Downspout Clearing", price: 65 },
         { id: "whitening", label: "Gutter Whitening", price: 120 },
       ],
     },
