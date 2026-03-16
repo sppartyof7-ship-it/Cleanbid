@@ -10,6 +10,43 @@ import PhotoUploader from "./PhotoUploader";
 import AddressAutocomplete from "./AddressAutocomplete";
 import TrustGallery from "./TrustGallery";
 
+function WindowTypeSVG({ type, active }) {
+  const color = active ? "#3b9cff" : "#94a3b8";
+  const bg = active ? "#eef6ff" : "#f8fafc";
+  const w = 80, h = 64;
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ display: "block", margin: "0 auto" }}>
+      <rect x="4" y="4" width="72" height="56" rx="3" fill={bg} stroke={color} strokeWidth="2" />
+      {type === "casement" && (
+        <>
+          <line x1="40" y1="4" x2="40" y2="60" stroke={color} strokeWidth="1.5" />
+          <circle cx="36" cy="32" r="2" fill={color} />
+          <circle cx="44" cy="32" r="2" fill={color} />
+          <path d="M 20 20 L 20 44" stroke={color} strokeWidth="0.8" strokeDasharray="3,2" opacity="0.5" />
+          <path d="M 60 20 L 60 44" stroke={color} strokeWidth="0.8" strokeDasharray="3,2" opacity="0.5" />
+        </>
+      )}
+      {type === "double_hung" && (
+        <>
+          <line x1="4" y1="32" x2="76" y2="32" stroke={color} strokeWidth="2" />
+          <line x1="40" y1="4" x2="40" y2="60" stroke={color} strokeWidth="1" />
+          <path d="M 30 26 L 30 38 M 50 26 L 50 38" stroke={color} strokeWidth="0.8" opacity="0.5" />
+          <rect x="35" y="28" width="10" height="8" rx="1" fill="none" stroke={color} strokeWidth="1" opacity="0.6" />
+        </>
+      )}
+      {type === "combination" && (
+        <>
+          <rect x="10" y="10" width="60" height="44" rx="2" fill="none" stroke={color} strokeWidth="1.5" strokeDasharray="4,2" />
+          <line x1="40" y1="4" x2="40" y2="60" stroke={color} strokeWidth="1" />
+          <line x1="4" y1="32" x2="76" y2="32" stroke={color} strokeWidth="1" />
+          <text x="40" y="22" textAnchor="middle" fontSize="7" fill={color} fontWeight="600">STORM</text>
+          <text x="40" y="48" textAnchor="middle" fontSize="7" fill={color} fontWeight="600">INNER</text>
+        </>
+      )}
+    </svg>
+  );
+}
+
 export default function CustomerFlow({ config, onSubmitLead }) {
   const [step, setStep] = useState(0);
   const [selectedServices, setSelectedServices] = useState([]);
@@ -317,24 +354,16 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                             )}
                           </div>
                           <label style={s.label}>Window Type</label>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 10 }}>
                             {svc.windowTypes.map((wt) => {
                               const isActive = (d.windowType || "casement") === wt.id;
                               return (
                                 <div key={wt.id} onClick={() => updateDetail(svc.id, "windowType", wt.id)}
-                                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderRadius: 12, border: `2px solid ${isActive ? C.primary : C.border}`, background: isActive ? `${C.primary}08` : C.white, cursor: "pointer", transition: "all 0.2s" }}>
-                                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                                    <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${isActive ? C.primary : C.border}`, background: isActive ? C.primary : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                      {isActive && <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.white }} />}
-                                    </div>
-                                    <div>
-                                      <div style={{ fontSize: 14, fontWeight: 700, color: isActive ? C.primary : C.text }}>{wt.label}</div>
-                                      <div style={{ fontSize: 12, color: C.textLight }}>{wt.description}</div>
-                                    </div>
-                                  </div>
-                                  <div style={{ fontSize: 13, fontWeight: 600, color: isActive ? C.primary : C.textMid }}>
-                                    {isActive ? "✓ Selected" : ""}
-                                  </div>
+                                  style={{ padding: "14px 12px", borderRadius: 14, border: `2px solid ${isActive ? C.primary : C.border}`, background: isActive ? `${C.primary}08` : C.white, cursor: "pointer", transition: "all 0.2s", textAlign: "center" }}>
+                                  <WindowTypeSVG type={wt.id} active={isActive} />
+                                  <div style={{ fontSize: 14, fontWeight: 700, color: isActive ? C.primary : C.text, marginTop: 8 }}>{wt.label}</div>
+                                  <div style={{ fontSize: 11, color: C.textLight, marginTop: 2, lineHeight: 1.3 }}>{wt.description}</div>
+                                  {isActive && <div style={{ fontSize: 11, fontWeight: 700, color: C.primary, marginTop: 6 }}>✓ Selected</div>}
                                 </div>
                               );
                             })}

@@ -30,18 +30,18 @@ const DEFAULT_CONFIG = {
   services: [
     {
       id: "pressure_washing",
-      name: "Pressure Washing",
-      icon: "\u{1F4A6}",
-      description: "Driveways, sidewalks, patios & siding",
+      name: "House Washing",
+      icon: "\u{1F3E0}",
+      description: "Siding, eaves, porches & exterior surfaces",
       basePrice: 150,
       perSqFt: 0.15,
       perWindow: 0,
       perLinFt: 0,
       enabled: true,
       extras: [
-        { id: "siding", label: "House Siding", price: 120 },
         { id: "patio", label: "Patio / Porch", price: 75 },
         { id: "fence", label: "Fence", price: 90 },
+        { id: "soffit_fascia", label: "Soffit & Fascia", price: 95 },
       ],
     },
     {
@@ -57,9 +57,9 @@ const DEFAULT_CONFIG = {
       // Wisconsin avg: ~1 window per 80 sq ft of living space
       windowsPerSqFt: 0.0125,
       windowTypes: [
-        { id: "casement", label: "Casement", multiplier: 1.0, icon: "\u{1FA9F}", description: "Standard hinged windows" },
-        { id: "double_hung", label: "Double Hung", multiplier: 1.6, icon: "\u{1FA9F}", description: "Two sliding sashes" },
-        { id: "combination", label: "Combination / Storm", pricePerWindow: 40, icon: "\u{1FA9F}", description: "Storm windows with outer pane" },
+        { id: "casement", label: "Casement", multiplier: 1.0, description: "Single pane, hinged on one side, cranks open", windowImage: "casement" },
+        { id: "double_hung", label: "Double Hung", multiplier: 1.6, description: "Two sashes that slide up & down, tilt-in for cleaning", windowImage: "double_hung" },
+        { id: "combination", label: "Combination / Storm", multiplier: 2.0, description: "Inner window + outer storm pane — extra glass to clean", windowImage: "combination" },
       ],
       extras: [
         { id: "screens", label: "Screen Cleaning", price: 3 },
@@ -78,7 +78,6 @@ const DEFAULT_CONFIG = {
       perLinFt: 0,
       enabled: true,
       extras: [
-        { id: "stain", label: "Staining / Sealing", price: 250 },
         { id: "railings", label: "Railing Detail Clean", price: 65 },
         { id: "stairs", label: "Stairs (per flight)", price: 45 },
       ],
@@ -102,7 +101,7 @@ const DEFAULT_CONFIG = {
     {
       id: "roof_cleaning",
       name: "Roof Cleaning",
-      icon: "\u{1F3E0}",
+      icon: "\u{1F9F9}",
       description: "Soft wash moss & algae removal",
       basePrice: 250,
       perSqFt: 0.18,
