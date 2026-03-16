@@ -14,7 +14,7 @@ const DEFAULT_CONFIG = {
   adminPassword: "admin123",
   globalPriceAdjustment: 0,
   web3formsKey: "6cf87767-154f-42e1-8920-4988ef3cf5a3",
-  googlePlacesApiKey: "",
+  googlePlacesApiKey: "AIzaSyChuudJiPotYb4GFXKFOSZsEPOPjJqd7Q4",
   leadSources: [
     "Online Organic",
     "Online Paid",

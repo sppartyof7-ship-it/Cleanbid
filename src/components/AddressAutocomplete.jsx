@@ -48,13 +48,16 @@ function initGoogleMapsLoader(apiKey) {
   })({ key: apiKey, v: "beta" });
 }
 
+const FALLBACK_KEY = "AIzaSyChuudJiPotYb4GFXKFOSZsEPOPjJqd7Q4";
+
 export default function AddressAutocomplete({ value, onChange, style, placeholder, apiKey }) {
+  const resolvedKey = apiKey || FALLBACK_KEY;
   const containerRef = useRef(null);
   const autocompleteRef = useRef(null);
-  const [useFallback, setUseFallback] = useState(!apiKey);
+  const [useFallback, setUseFallback] = useState(!resolvedKey);
 
   useEffect(() => {
-    if (!apiKey) {
+    if (!resolvedKey) {
       setUseFallback(true);
       return;
     }
@@ -65,7 +68,7 @@ export default function AddressAutocomplete({ value, onChange, style, placeholde
     async function init() {
       try {
         // Step 1: Initialize the Google Maps bootstrap loader
-        initGoogleMapsLoader(apiKey);
+        initGoogleMapsLoader(resolvedKey);
 
         if (cancelled) return;
 
@@ -111,7 +114,21 @@ export default function AddressAutocomplete({ value, onChange, style, placeholde
     return () => {
       cancelled = true;
     };
-  }, [apiKey, onChange]);
+  }, [resolvedKey, onChange]);
+
+  // Fix mobile: ensure Google Places dropdown renders above everything
+  useEffect(() => {
+    const styleId = "gmp-autocomplete-fix";
+    if (!document.getElementById(styleId)) {
+      const s = document.createElement("style");
+      s.id = styleId;
+      s.textContent = `
+        .pac-container, gmp-place-autocomplete { z-index: 99999 !important; }
+        gmp-place-autocomplete input { font-size: 16px !important; }
+      `;
+      document.head.appendChild(s);
+    }
+  }, []);
 
   // Fallback: plain text input (no autocomplete)
   if (useFallback) {
