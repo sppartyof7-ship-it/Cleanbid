@@ -28,7 +28,7 @@ const DEFAULT_CONFIG = {
       id: "pressure_washing",
       name: "House Washing",
       icon: "\u{1F3E0}",
-      description: "Siding, eaves, porches & exterior surfaces",
+      description: "House / Siding Wash",
       basePrice: 150,
       perSqFt: 0.15,
       perWindow: 0,
@@ -36,8 +36,9 @@ const DEFAULT_CONFIG = {
       enabled: true,
       extras: [
         { id: "patio", label: "Patio / Porch", price: 75 },
-        { id: "fence", label: "Fence", price: 90 },
-        { id: "soffit_fascia", label: "Soffit & Fascia", price: 95 },
+        { id: "garage", label: "Detached Garage", price: 120 },
+        { id: "aluminum", label: "Aluminum Siding", price: 75 },
+        { id: "eifs_stucco_wood", label: "EIFS / Stucco / Wood Siding", price: 100 },
       ],
     },
     {
