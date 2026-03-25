@@ -2,8 +2,8 @@
 // This ensures your admin config and leads survive page refreshes!
 
 const STORAGE_KEYS = {
-  CONFIG: "cleanbid_config",
-  LEADS: "cleanbid_leads",
+  CONFIG: "cloutebid_config",
+  LEADS: "cloutebid_leads",
 };
 
 export function saveConfig(config) {

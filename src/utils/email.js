@@ -33,7 +33,7 @@ export async function sendLeadNotification(lead, config) {
 
   const message = [
     `========================================`,
-    `  NEW LEAD from ${config.businessName || "CleanBid"}`,
+    `  NEW LEAD from ${config.businessName || "ClouteBid"}`,
     `========================================`,
     ``,
     `CUSTOMER INFO`,
@@ -70,7 +70,7 @@ export async function sendLeadNotification(lead, config) {
       body: JSON.stringify({
         access_key: accessKey,
         subject: `New Lead: ${lead.name} — ${fmt(lead.total)} (${serviceNames})`,
-        from_name: config.businessName || "CleanBid",
+        from_name: config.businessName || "ClouteBid",
         message,
       }),
     });

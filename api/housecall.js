@@ -1,7 +1,7 @@
 /**
  * Vercel Serverless Function: Housecall Pro Integration
  *
- * Receives a CleanBid lead and:
+ * Receives a ClouteBid lead and:
  * 1. Searches for existing customer by email (avoids duplicates!)
  * 2. Creates customer if not found
  * 3. Creates an estimate with line items and pricing
@@ -126,7 +126,7 @@ async function createEstimate(customerId, lead, services) {
 
   // Build a note with all the context
   const noteLines = [
-    `CleanBid Quote — ${lead.package} package`,
+    `ClouteBid Quote — ${lead.package} package`,
     `Total: $${(lead.total || 0).toFixed(2)}`,
     "",
     `All package options:`,
