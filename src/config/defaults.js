@@ -14,7 +14,7 @@ export const SERVICES_WITH_STORIES = [
  * Called once at app boot with the resolved tenant.
  */
 export function buildDefaultConfig(tenant) {
-  const cfg = { ...BASE_CONFIG };
+  const cfg = { ...BASE_CONFIG, services: BASE_CONFIG.services.map((s) => ({ ...s })) };
 
   if (tenant) {
     // Overlay tenant-level settings
@@ -31,6 +31,14 @@ export function buildDefaultConfig(tenant) {
     if (tenant.id) cfg.tenantId = tenant.id;
     cfg.housecallProEnabled = tenant.housecallProEnabled ?? true;
     if (tenant.gallery) cfg.gallery = tenant.gallery;
+
+    // Disable specific services for this tenant
+    if (tenant.disabledServices?.length) {
+      cfg.services = cfg.services.map((svc) => ({
+        ...svc,
+        enabled: tenant.disabledServices.includes(svc.id) ? false : svc.enabled,
+      }));
+    }
   }
 
   return cfg;

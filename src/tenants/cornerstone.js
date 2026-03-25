@@ -74,12 +74,8 @@ const CORNERSTONE = {
     reviewAverage: 0,
   },
 
-  // Service overrides — only list differences from defaults
-  // null = use default, set a value to override
-  serviceOverrides: {
-    // Cornerstone is wash & windows focused
-    // Tim can customize which services are enabled/disabled later
-  },
+  // Services to disable for this tenant
+  disabledServices: ["roof_cleaning", "gutter_guard_install"],
 };
 
 export default CORNERSTONE;
