@@ -46,14 +46,20 @@ export function resolveTenant() {
     return TENANTS[paramTenant];
   }
 
-  // 2. Check hostname
+  // 2. Check hostname (exact match)
   const host = window.location.hostname.toLowerCase();
   const tenantId = HOST_MAP[host];
   if (tenantId && TENANTS[tenantId]) {
     return TENANTS[tenantId];
   }
 
-  // 3. Default to Cloute
+  // 3. Fuzzy match — handles Vercel preview URLs like
+  //    cornerstonebid-abc123-team.vercel.app
+  if (host.includes("cornerstonebid") || host.includes("cornerstone")) {
+    return TENANTS.cornerstone;
+  }
+
+  // 4. Default to Cloute
   return TENANTS.cloute;
 }
 
