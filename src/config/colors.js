@@ -1,7 +1,9 @@
 // ═══════════════════════════════════════════════════════════════════════
-// COLOR PALETTE
+// COLOR PALETTE — Tenant-aware
 // ═══════════════════════════════════════════════════════════════════════
-const C = {
+
+// Default Cloute colors (used if no tenant override)
+const DEFAULT_COLORS = {
   bg: "#f0f7ff",
   bgCard: "#ffffff",
   bgCardAlt: "#f8fbff",
@@ -26,5 +28,17 @@ const C = {
   shadow: "0 2px 12px rgba(59,156,255,0.1)",
   shadowHover: "0 4px 20px rgba(59,156,255,0.18)",
 };
+
+// Mutable reference — set once at app boot via setTenantColors()
+let C = { ...DEFAULT_COLORS };
+
+/**
+ * Apply tenant colors. Call this once at app initialization.
+ * After this, every `import C from "./colors"` gets the tenant's palette.
+ */
+export function setTenantColors(tenantColors) {
+  if (!tenantColors) return;
+  Object.assign(C, tenantColors);
+}
 
 export default C;

@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
-import C from "./config/colors";
+import { useState, useEffect, useMemo } from "react";
+import C, { setTenantColors } from "./config/colors";
 import s from "./config/styles";
-import DEFAULT_CONFIG from "./config/defaults";
+import DEFAULT_CONFIG, { buildDefaultConfig } from "./config/defaults";
+import { resolveTenant } from "./tenants";
 import { deepClone } from "./utils/helpers";
 import { saveConfig, loadConfig, saveLeads, loadLeads } from "./utils/storage";
 import { sendLeadNotification } from "./utils/email";
@@ -9,6 +10,10 @@ import { sendToHousecallPro } from "./utils/housecall";
 import AdminPanel from "./components/AdminPanel";
 import LeadsPanel from "./components/LeadsPanel";
 import CustomerFlow from "./components/CustomerFlow";
+
+// Resolve tenant once at module load (before any renders)
+const TENANT = resolveTenant();
+setTenantColors(TENANT.colors);
 
 const DEFAULT_LEADS = [
   { id: 1, name: "Sarah Johnson", email: "sarah@email.com", phone: "(555) 234-5678", services: ["pressure_washing", "gutter_cleaning"], package: "standard", total: 485, status: "pending", date: "2026-03-12", followUpStep: 2, notes: "Two-story home, large driveway", leadSource: "Online Organic", projectType: "residential", photos: [] },
@@ -19,9 +24,10 @@ const DEFAULT_LEADS = [
 
 export default function App() {
   const [config, setConfig] = useState(() => {
+    const tenantDefaults = buildDefaultConfig(TENANT);
     const saved = loadConfig();
-    if (!saved) return deepClone(DEFAULT_CONFIG);
-    const defaults = deepClone(DEFAULT_CONFIG);
+    if (!saved) return deepClone(tenantDefaults);
+    const defaults = deepClone(tenantDefaults);
     // Deep merge: start with defaults, overlay saved top-level keys
     const merged = { ...defaults, ...saved };
     // Always sync services from defaults (names, descriptions, extras, options)
@@ -39,8 +45,14 @@ export default function App() {
         enabled: savedSvc.enabled ?? defSvc.enabled,
       };
     });
-    // Always use default lead sources (simplified list)
+    // Always use tenant lead sources
     merged.leadSources = defaults.leadSources;
+    // Always preserve tenant identity
+    merged.tenantId = defaults.tenantId;
+    merged.businessName = defaults.businessName;
+    merged.logoLetter = defaults.logoLetter;
+    merged.tagline = defaults.tagline;
+    merged.housecallProEnabled = defaults.housecallProEnabled;
     return merged;
   });
   const [leads, setLeads] = useState(() => loadLeads() || DEFAULT_LEADS);
@@ -56,6 +68,11 @@ export default function App() {
   const [adminAuth, setAdminAuth] = useState(false);
   const [adminPw, setAdminPw] = useState("");
   const [animate, setAnimate] = useState(false);
+
+  // Set page title from tenant
+  useEffect(() => {
+    document.title = `${config.businessName} - ${config.tagline || "Instant Cleaning Service Quotes"}`;
+  }, [config.businessName, config.tagline]);
 
   // Sync view when the URL hash changes (browser back/forward)
   useEffect(() => {
@@ -96,7 +113,9 @@ export default function App() {
     // Send email notification (fire-and-forget — doesn't block the UI)
     sendLeadNotification(newLead, config);
     // Sync to Housecall Pro CRM (fire-and-forget — creates customer + estimate)
-    sendToHousecallPro(newLead, config.services);
+    if (config.housecallProEnabled) {
+      sendToHousecallPro(newLead, config.services);
+    }
   };
 
   return (
@@ -105,7 +124,7 @@ export default function App() {
       <header style={{ background: C.white, borderBottom: `1px solid ${C.border}`, padding: "12px 24px", position: "sticky", top: 0, zIndex: 50, boxShadow: "0 1px 8px rgba(59,156,255,0.06)" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => changeView("customer")}>
-            <div style={{ width: 38, height: 38, borderRadius: 10, background: C.gradient, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 800, color: C.white }}>C</div>
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: C.gradient, display: "flex", alignItems: "center", justifyContent: "center", fontSize: config.logoLetter?.length > 1 ? 13 : 18, fontWeight: 800, color: C.white }}>{config.logoLetter || "C"}</div>
             <span style={{ fontSize: 20, fontWeight: 800, color: C.text }}>{config.businessName}</span>
           </div>
           {/* Admin nav — only visible when on admin/leads views (accessed via #admin or #leads URL) */}

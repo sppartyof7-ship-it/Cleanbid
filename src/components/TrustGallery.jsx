@@ -37,7 +37,9 @@ const REVIEWS = [
   { name: "Tywana German", location: "Google Review", stars: 5, text: "Tim and his staff were extremely easy to work with. They arrived on time, prepared, and the house looked amazing when they were done." },
 ];
 
-export default function TrustGallery() {
+export default function TrustGallery({ config }) {
+  // If tenant has gallery disabled, don't render
+  if (config?.gallery?.enabled === false) return null;
   const [activeSlide, setActiveSlide] = useState(0);
   const [sliderPos, setSliderPos] = useState(50);
   const [dragging, setDragging] = useState(false);

@@ -9,12 +9,46 @@ export const SERVICES_WITH_STORIES = [
   "gutter_guard_install",
 ];
 
-const DEFAULT_CONFIG = {
+/**
+ * Build the default config, optionally merging tenant overrides.
+ * Called once at app boot with the resolved tenant.
+ */
+export function buildDefaultConfig(tenant) {
+  const cfg = { ...BASE_CONFIG };
+
+  if (tenant) {
+    // Overlay tenant-level settings
+    if (tenant.businessName) cfg.businessName = tenant.businessName;
+    if (tenant.adminPassword) cfg.adminPassword = tenant.adminPassword;
+    if (tenant.web3formsKey) cfg.web3formsKey = tenant.web3formsKey;
+    if (tenant.googlePlacesApiKey) cfg.googlePlacesApiKey = tenant.googlePlacesApiKey;
+    if (tenant.leadSources) cfg.leadSources = tenant.leadSources;
+    if (tenant.marketing) cfg.marketing = { ...cfg.marketing, ...tenant.marketing };
+    if (tenant.phone) cfg.phone = tenant.phone;
+    if (tenant.email) cfg.contactEmail = tenant.email;
+    if (tenant.tagline) cfg.tagline = tenant.tagline;
+    if (tenant.logoLetter) cfg.logoLetter = tenant.logoLetter;
+    if (tenant.id) cfg.tenantId = tenant.id;
+    cfg.housecallProEnabled = tenant.housecallProEnabled ?? true;
+    if (tenant.gallery) cfg.gallery = tenant.gallery;
+  }
+
+  return cfg;
+}
+
+const BASE_CONFIG = {
   businessName: "ClouteBid",
   adminPassword: "admin123",
   globalPriceAdjustment: 0,
   web3formsKey: "6cf87767-154f-42e1-8920-4988ef3cf5a3",
   googlePlacesApiKey: "AIzaSyChuudJiPotYb4GFXKFOSZsEPOPjJqd7Q4",
+  tenantId: "cloute",
+  logoLetter: "C",
+  tagline: "Instant Cleaning Service Quotes",
+  phone: "(920) 563-4101",
+  contactEmail: "",
+  housecallProEnabled: true,
+  gallery: { enabled: true },
   leadSources: [
     "Google",
     "Social Media: Facebook / Instagram",
@@ -243,4 +277,6 @@ const DEFAULT_CONFIG = {
   },
 };
 
+// Keep the default export for backward compatibility
+const DEFAULT_CONFIG = BASE_CONFIG;
 export default DEFAULT_CONFIG;

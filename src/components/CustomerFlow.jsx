@@ -169,7 +169,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
       {/* STEP 0: Contact Info (first!) */}
       {step === 0 && (
         <div>
-          <TrustGallery />
+          <TrustGallery config={config} />
           <h1 style={s.h1}>Let's get started!</h1>
           <p style={{ color: C.textLight, marginBottom: 24, fontSize: 15 }}>Tell us a bit about yourself so we can build your custom quote.</p>
           <div style={s.card}>
