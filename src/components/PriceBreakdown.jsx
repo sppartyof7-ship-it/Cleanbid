@@ -1,0 +1,182 @@
+import { useMemo } from "react";
+import C from "../config/colors";
+import s from "../config/styles";
+import { SERVICES_WITH_STORIES } from "../config/defaults";
+import { fmt } from "../utils/helpers";
+
+/**
+ * National average price ranges for exterior cleaning services.
+ * Source: HomeAdvisor, Angi, Thumbtack aggregated data.
+ */
+const NATIONAL_AVERAGES = {
+  pressure_washing: { low: 200, high: 600, label: "House Washing" },
+  window_cleaning: { low: 150, high: 500, label: "Window Cleaning" },
+  deck_cleaning: { low: 175, high: 500, label: "Deck Cleaning" },
+  concrete_cleaning: { low: 125, high: 400, label: "Concrete Cleaning" },
+  roof_cleaning: { low: 300, high: 800, label: "Roof Cleaning" },
+  gutter_cleaning: { low: 100, high: 350, label: "Gutter Cleaning" },
+  gutter_guard_install: { low: 800, high: 2500, label: "Gutter Guards" },
+};
+
+/**
+ * PriceBreakdown — Simple, clean pricing with national average comparison.
+ * Shows customers where their quote falls vs. what others pay nationally.
+ */
+export default function PriceBreakdown({
+  selectedServices,
+  config,
+  details,
+  selectedExtras,
+  globalStories,
+  svcPrice,
+  bundleDiscount,
+  basePrice,
+  selectedPackage,
+  pkgPrice,
+  contact,
+}) {
+  // Google Maps satellite image
+  const satelliteUrl = useMemo(() => {
+    if (!contact?.address || !config.googlePlacesApiKey) return null;
+    const encoded = encodeURIComponent(contact.address);
+    return `https://maps.googleapis.com/maps/api/staticmap?center=${encoded}&zoom=19&size=600x300&maptype=satellite&key=${config.googlePlacesApiKey}`;
+  }, [contact?.address, config.googlePlacesApiKey]);
+
+  return (
+    <div>
+      {/* Satellite property image */}
+      {satelliteUrl && (
+        <div style={{ marginBottom: 24, borderRadius: 16, overflow: "hidden", border: `1px solid ${C.border}`, boxShadow: C.shadow }}>
+          <img
+            src={satelliteUrl}
+            alt="Your property"
+            style={{ width: "100%", height: 180, objectFit: "cover", display: "block" }}
+            onError={(e) => { e.target.parentElement.style.display = "none"; }}
+          />
+          <div style={{ padding: "10px 16px", background: C.white, display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 14 }}>📍</span>
+            <span style={{ fontSize: 13, color: C.textMid, fontWeight: 500 }}>{contact.address}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Service line items */}
+      <div style={{ ...s.card, padding: 0, overflow: "hidden" }}>
+        <div style={{ padding: "18px 24px 14px" }}>
+          <h4 style={{ fontSize: 16, fontWeight: 800, color: C.text, margin: 0 }}>Quote Summary</h4>
+        </div>
+
+        {selectedServices.map((svcId) => {
+          const svc = config.services.find((sv) => sv.id === svcId);
+          if (!svc) return null;
+          const price = svcPrice(svcId);
+          return (
+            <div key={svcId} style={{ padding: "10px 24px", borderTop: `1px solid ${C.borderLight}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 14, color: C.textMid }}>
+                  {svc.icon} {svc.name}
+                  {SERVICES_WITH_STORIES.includes(svcId) && globalStories >= 2 ? ` (${globalStories}-story)` : ""}
+                </span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{fmt(price)}</span>
+              </div>
+            </div>
+          );
+        })}
+
+        {bundleDiscount > 0 && (
+          <div style={{ padding: "10px 24px", borderTop: `1px solid ${C.borderLight}`, background: "#f0fdf4" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 14, color: "#16a34a", fontWeight: 600 }}>Bundle discount ({bundleDiscount}%)</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#16a34a" }}>−{fmt(basePrice * bundleDiscount / 100)}</span>
+            </div>
+          </div>
+        )}
+
+        {selectedPackage !== "basic" && (
+          <div style={{ padding: "10px 24px", borderTop: `1px solid ${C.borderLight}` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 13, color: C.textLight }}>{config.packages[selectedPackage].label} package</span>
+            </div>
+          </div>
+        )}
+
+        <div style={{ padding: "16px 24px", borderTop: `2px solid ${C.primary}20`, background: `${C.primary}06` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 18, fontWeight: 800, color: C.text }}>Your Quote</span>
+            <span style={{ fontSize: 28, fontWeight: 800, color: C.text }}>{fmt(pkgPrice(selectedPackage))}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* National Average Price Comparison */}
+      <div style={{ ...s.card, marginTop: 20, padding: 0, overflow: "hidden" }}>
+        <div style={{ padding: "16px 24px 12px", borderBottom: `1px solid ${C.borderLight}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 16 }}>📊</span>
+            <h4 style={{ fontSize: 15, fontWeight: 700, color: C.text, margin: 0 }}>How Your Quote Compares</h4>
+          </div>
+          <p style={{ fontSize: 12, color: C.textLight, margin: "4px 0 0" }}>Your price vs. national averages</p>
+        </div>
+
+        {selectedServices.map((svcId) => {
+          const svc = config.services.find((sv) => sv.id === svcId);
+          const avg = NATIONAL_AVERAGES[svcId];
+          if (!svc || !avg) return null;
+          const price = svcPrice(svcId);
+          if (price <= 0) return null;
+
+          const range = avg.high - avg.low;
+          const position = Math.min(100, Math.max(0, ((price - avg.low) / range) * 100));
+          const isGoodValue = price <= avg.low + range * 0.5;
+
+          return (
+            <div key={svcId} style={{ padding: "14px 24px", borderTop: `1px solid ${C.borderLight}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{svc.icon} {avg.label}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.primary }}>{fmt(price)}</span>
+                  {isGoodValue && (
+                    <span style={{ fontSize: 10, fontWeight: 700, color: "#16a34a", background: "#f0fdf4", padding: "2px 8px", borderRadius: 10, border: "1px solid #bbf7d0" }}>Great value</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Comparison bar */}
+              <div style={{ position: "relative" }}>
+                <div style={{ height: 8, borderRadius: 4, background: `linear-gradient(90deg, #bbf7d0, #fde68a, #fecaca)`, overflow: "visible", position: "relative" }}>
+                  {/* Your price marker */}
+                  <div style={{
+                    position: "absolute",
+                    left: `${Math.min(96, Math.max(2, position))}%`,
+                    top: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    background: C.white,
+                    border: `3px solid ${C.primary}`,
+                    boxShadow: "0 1px 6px rgba(0,0,0,0.15)",
+                    zIndex: 2,
+                  }} />
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+                  <span style={{ fontSize: 10, color: C.textLight }}>{fmt(avg.low)}</span>
+                  <span style={{ fontSize: 10, color: C.textLight }}>National avg range</span>
+                  <span style={{ fontSize: 10, color: C.textLight }}>{fmt(avg.high)}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Trust note */}
+      <div style={{ marginTop: 16, padding: "12px 16px", background: C.white, borderRadius: 12, border: `1px solid ${C.borderLight}`, display: "flex", alignItems: "flex-start", gap: 10 }}>
+        <span style={{ fontSize: 14, flexShrink: 0 }}>🔒</span>
+        <div style={{ fontSize: 12, color: C.textLight, lineHeight: 1.5 }}>
+          <strong style={{ color: C.textMid }}>No surprises.</strong> Final pricing confirmed at your free on-site walkthrough. We never charge more than quoted without your approval.
+        </div>
+      </div>
+    </div>
+  );
+}

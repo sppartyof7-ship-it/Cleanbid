@@ -9,6 +9,7 @@ import CountdownTimer from "./CountdownTimer";
 import PhotoUploader from "./PhotoUploader";
 import AddressAutocomplete from "./AddressAutocomplete";
 import TrustGallery from "./TrustGallery";
+import PriceBreakdown from "./PriceBreakdown";
 
 function WindowTypeSVG({ type, active }) {
   const color = active ? "#3b9cff" : "#94a3b8";
@@ -482,39 +483,21 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             })}
           </div>
 
-          {/* Breakdown */}
-          <div style={{ ...s.card, marginTop: 24 }}>
-            <h4 style={{ ...s.label, marginBottom: 16 }}>Quote Breakdown</h4>
-            {selectedServices.map((svcId) => {
-              const svc = config.services.find((sv) => sv.id === svcId);
-              if (!svc) return null;
-              return (
-                <div key={svcId} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${C.borderLight}` }}>
-                  <span style={{ color: C.textMid, fontSize: 14 }}>{svc.icon} {svc.name}{SERVICES_WITH_STORIES.includes(svcId) && globalStories >= 2 ? ` (${globalStories} story)` : ""}</span>
-                  <span style={{ color: C.text, fontWeight: 600, fontSize: 14 }}>{fmt(svcPrice(svcId))}</span>
-                </div>
-              );
-            })}
-            {bundleDiscount > 0 && (
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${C.borderLight}` }}>
-                <span style={{ color: C.secondaryDark, fontSize: 14 }}>Discount ({bundleDiscount}%)</span>
-                <span style={{ color: C.secondaryDark, fontWeight: 600 }}>-{fmt(basePrice * bundleDiscount / 100)}</span>
-              </div>
-            )}
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${C.borderLight}` }}>
-              <span style={{ color: C.textLight, fontSize: 14 }}>{config.packages[selectedPackage].label} Package</span>
-              <span />
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0 0" }}>
-              <span style={{ fontSize: 18, fontWeight: 800 }}>Your Quote</span>
-              <span style={{ fontSize: 24, fontWeight: 800 }}>{fmt(pkgPrice(selectedPackage))}</span>
-            </div>
-          </div>
-
-          {/* Summary bar with customer info */}
-          <div style={{ marginTop: 20, padding: 20, background: `${C.primary}06`, borderRadius: 12, border: `1px solid ${C.primary}20`, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-            <div style={{ fontSize: 13, color: C.textLight }}>Quote for {contact.name} · {selectedServices.length} service{selectedServices.length > 1 ? "s" : ""} · {config.packages[selectedPackage].label} · {customerPhotos.length} photo{customerPhotos.length !== 1 ? "s" : ""}</div>
-            <div style={{ fontSize: 28, fontWeight: 800 }}>{fmt(pkgPrice(selectedPackage))}</div>
+          {/* Transparent Pricing Breakdown — ClouteBid's differentiator */}
+          <div style={{ marginTop: 24 }}>
+            <PriceBreakdown
+              selectedServices={selectedServices}
+              config={config}
+              details={details}
+              selectedExtras={selectedExtras}
+              globalStories={globalStories}
+              svcPrice={svcPrice}
+              bundleDiscount={bundleDiscount}
+              basePrice={basePrice}
+              selectedPackage={selectedPackage}
+              pkgPrice={pkgPrice}
+              contact={contact}
+            />
           </div>
         </div>
       )}
