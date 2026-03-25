@@ -1,11 +1,12 @@
 /**
- * Tenant config: Cornerstone Wash and Window Cleaning
- * URL: TBD (custom domain later)
+ * Tenant config: Cornerstone Exterior Cleaning
+ * URL: cornerstonebid.vercel.app (custom domain later)
  */
 const CORNERSTONE = {
   id: "cornerstone",
   businessName: "Cornerstone",
-  tagline: "Wash & Window Cleaning Quotes",
+  businessSubtitle: "Exterior Cleaning",
+  tagline: "Exterior Cleaning Quotes",
   phone: "",  // TODO: Add Cornerstone phone
   email: "",  // TODO: Add Cornerstone email
   adminPassword: "admin123",
@@ -15,35 +16,36 @@ const CORNERSTONE = {
   googlePlacesApiKey: "AIzaSyChuudJiPotYb4GFXKFOSZsEPOPjJqd7Q4", // Can share Google API key
   housecallProEnabled: false,  // No HCP yet
 
-  // Branding — warm stone/slate palette (placeholder, Tim will customize later)
+  // Branding — navy + light blue to match the logo
   colors: {
-    bg: "#f5f3ef",
+    bg: "#f0f4f8",
     bgCard: "#ffffff",
-    bgCardAlt: "#faf8f5",
-    bgDark: "#ebe7e0",
-    bgAccent: "#eef3ee",
-    border: "#ddd8cf",
-    borderLight: "#eae6df",
-    primary: "#8b6f47",
-    primaryDark: "#725a38",
-    secondary: "#6ba368",
-    secondaryDark: "#548a51",
-    accent: "#b08d57",
-    accentDark: "#967640",
-    warning: "#d4940a",
-    danger: "#c4392a",
-    text: "#3a3228",
-    textMid: "#6b5f52",
-    textLight: "#9b8e7f",
-    textMuted: "#b8ad9f",
+    bgCardAlt: "#f6f9fc",
+    bgDark: "#e3eaf2",
+    bgAccent: "#edf7ff",
+    border: "#c8d6e5",
+    borderLight: "#dde7f0",
+    primary: "#1a2e4a",       // Dark navy from logo
+    primaryDark: "#0f1f35",
+    secondary: "#5cb8e4",     // Light blue from logo
+    secondaryDark: "#3a9fd1",
+    accent: "#5cb8e4",
+    accentDark: "#3a9fd1",
+    warning: "#f59e0b",
+    danger: "#ef4444",
+    text: "#1a2e4a",          // Navy text
+    textMid: "#3d5a80",
+    textLight: "#6b8db5",
+    textMuted: "#98b4d4",
     white: "#ffffff",
-    gradient: "linear-gradient(135deg, #8b6f47, #6ba368)",
-    shadow: "0 2px 12px rgba(139,111,71,0.08)",
-    shadowHover: "0 4px 20px rgba(139,111,71,0.15)",
+    gradient: "linear-gradient(135deg, #1a2e4a, #5cb8e4)",
+    shadow: "0 2px 12px rgba(26,46,74,0.08)",
+    shadowHover: "0 4px 20px rgba(26,46,74,0.15)",
   },
 
-  // Logo icon letter(s) for the header
-  logoLetter: "CW",
+  // Logo image instead of letter icon
+  logoImage: "/cornerstone_logo.png",
+  logoLetter: "CE",  // Fallback if image fails
 
   // Lead sources
   leadSources: [

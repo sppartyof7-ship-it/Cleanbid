@@ -28,6 +28,7 @@ export function buildDefaultConfig(tenant) {
     if (tenant.email) cfg.contactEmail = tenant.email;
     if (tenant.tagline) cfg.tagline = tenant.tagline;
     if (tenant.logoLetter) cfg.logoLetter = tenant.logoLetter;
+    if (tenant.logoImage) cfg.logoImage = tenant.logoImage;
     if (tenant.id) cfg.tenantId = tenant.id;
     cfg.housecallProEnabled = tenant.housecallProEnabled ?? true;
     if (tenant.gallery) cfg.gallery = tenant.gallery;

@@ -124,8 +124,11 @@ export default function App() {
       <header style={{ background: C.white, borderBottom: `1px solid ${C.border}`, padding: "12px 24px", position: "sticky", top: 0, zIndex: 50, boxShadow: "0 1px 8px rgba(59,156,255,0.06)" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => changeView("customer")}>
-            <div style={{ width: 38, height: 38, borderRadius: 10, background: C.gradient, display: "flex", alignItems: "center", justifyContent: "center", fontSize: config.logoLetter?.length > 1 ? 13 : 18, fontWeight: 800, color: C.white }}>{config.logoLetter || "C"}</div>
-            <span style={{ fontSize: 20, fontWeight: 800, color: C.text }}>{config.businessName}</span>
+            {config.logoImage ? (
+              <img src={config.logoImage} alt={config.businessName} style={{ height: 38, width: "auto", objectFit: "contain" }} onError={(e) => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }} />
+            ) : null}
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: C.gradient, display: config.logoImage ? "none" : "flex", alignItems: "center", justifyContent: "center", fontSize: config.logoLetter?.length > 1 ? 13 : 18, fontWeight: 800, color: C.white }}>{config.logoLetter || "C"}</div>
+            {!config.logoImage && <span style={{ fontSize: 20, fontWeight: 800, color: C.text }}>{config.businessName}</span>}
           </div>
           {/* Admin nav — only visible when on admin/leads views (accessed via #admin or #leads URL) */}
           {(view === "admin" || view === "leads") && (
