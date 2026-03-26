@@ -1,46 +1,14 @@
 import { SERVICES_WITH_STORIES } from "../config/defaults";
 
 /**
- * Calculate tiered/bracket sqft price (like tax brackets).
- * Each tier only applies to the sqft WITHIN that bracket.
- * Example tiers: [{ upTo: 1500, rate: 0.12 }, { upTo: 2500, rate: 0.08 }, ...]
- * The last tier's rate applies to everything above its upTo.
- */
-export function calculateTieredSqFt(sqft, pricingTiers) {
-  if (!sqft || sqft <= 0 || !pricingTiers || pricingTiers.length === 0) return 0;
-
-  let remaining = sqft;
-  let total = 0;
-  let prevCap = 0;
-
-  for (let i = 0; i < pricingTiers.length; i++) {
-    const tier = pricingTiers[i];
-    const cap = tier.upTo || Infinity;
-    const bracket = Math.min(remaining, cap - prevCap);
-    if (bracket <= 0) break;
-    total += bracket * tier.rate;
-    remaining -= bracket;
-    prevCap = cap;
-    if (remaining <= 0) break;
-  }
-
-  // If there's still sqft left beyond the last defined tier, use the last tier's rate
-  if (remaining > 0) {
-    total += remaining * pricingTiers[pricingTiers.length - 1].rate;
-  }
-
-  return total;
-}
-
-/**
  * Calculate the price for a single service.
  * This is the SINGLE source of truth for pricing â no more duplicated logic!
  *
- * Supports two sqft pricing modes:
- *   1. Flat rate:   perSqFt > 0 (legacy, simple)
- *   2. Tiered rate: pricingTiers array (bracket pricing â bigger homes pay less per ft)
+ * @param {string} packageKey - Optional. If the service has per-package pricing
+ *   (like window cleaning), this determines which price tier to use.
+ *   Pass "standard", "premium", or "platinum". Falls back to "standard" / base price.
  */
-export function calculateServicePrice(svc, details, selectedExtras, globalPriceAdj, globalStories) {
+export function calculateServicePrice(svc, details, selectedExtras, globalPriceAdj, globalStories, packageKey) {
   if (!svc) return 0;
 
   const applyGlobal = (price) => price * (1 + globalPriceAdj / 100);
@@ -57,24 +25,51 @@ export function calculateServicePrice(svc, details, selectedExtras, globalPriceA
     return total;
   }
 
-  // Handle window cleaning with window types (sq ft â estimated windows â type pricing)
+  // Handle window cleaning with per-package pricing
   if (svc.id === "window_cleaning" && svc.windowTypes && d.sqft) {
     const estimatedWindows = Math.round(d.sqft * (svc.windowsPerSqFt || 0.0125));
     const windowType = svc.windowTypes.find((wt) => wt.id === (d.windowType || "casement")) || svc.windowTypes[0];
+    const pkg = packageKey || "standard";
 
-    let total;
-    if (windowType.pricePerWindow) {
-      total = estimatedWindows * applyGlobal(windowType.pricePerWindow);
+    let perWindowPrice;
+    if (windowType.priceByPackage && windowType.priceByPackage[pkg]) {
+      // Per-package pricing (new system: each tier has its own price)
+      perWindowPrice = windowType.priceByPackage[pkg];
+    } else if (windowType.pricePerWindow) {
+      // Legacy flat per-window price
+      perWindowPrice = windowType.pricePerWindow;
     } else {
-      total = estimatedWindows * applyGlobal(svc.perWindow) * (windowType.multiplier || 1);
+      // Legacy base Ã multiplier
+      perWindowPrice = svc.perWindow * (windowType.multiplier || 1);
     }
 
+    let total = estimatedWindows * applyGlobal(perWindowPrice);
+
+    // Add doors
+    if (d.doors && svc.doorPrice) {
+      total += d.doors * applyGlobal(svc.doorPrice);
+    }
+
+    // Add extras (screen cleaning is per-unit, others per-window)
     const extras = selectedExtras || [];
     extras.forEach((extId) => {
       const ext = svc.extras.find((e) => e.id === extId);
-      if (ext) total += estimatedWindows * applyGlobal(ext.price);
+      if (!ext) return;
+      // Skip extras that require a higher package tier
+      if (ext.minPackage) {
+        const tierOrder = ["standard", "premium", "platinum"];
+        if (tierOrder.indexOf(pkg) < tierOrder.indexOf(ext.minPackage)) return;
+      }
+      if (ext.pricePerUnit) {
+        // Per-unit pricing (e.g. screen cleaning: $3/screen, default = window count)
+        const unitCount = d[ext.unit + "s"] || d[ext.unit + "Count"] || estimatedWindows;
+        total += unitCount * applyGlobal(ext.pricePerUnit);
+      } else {
+        total += estimatedWindows * applyGlobal(ext.price);
+      }
     });
 
+    // Stories multiplier
     if (SERVICES_WITH_STORIES.includes(svc.id)) {
       if (globalStories === 2) total *= 1.25;
       else if (globalStories >= 3) total *= 1.5;
@@ -82,16 +77,9 @@ export function calculateServicePrice(svc, details, selectedExtras, globalPriceA
     return total;
   }
 
-  // --- Standard service pricing ---
   let total = applyGlobal(svc.basePrice);
 
-  // SqFt pricing: use tiered brackets if available, otherwise flat rate
-  if (svc.pricingTiers && svc.pricingTiers.length > 0) {
-    total += calculateTieredSqFt(d.sqft || 0, svc.pricingTiers.map(t => ({ ...t, rate: applyGlobal(t.rate) })));
-  } else if (svc.perSqFt) {
-    total += (d.sqft || 0) * applyGlobal(svc.perSqFt);
-  }
-
+  if (svc.perSqFt) total += (d.sqft || 0) * applyGlobal(svc.perSqFt);
   if (svc.perWindow) total += (d.windows || 0) * applyGlobal(svc.perWindow);
   if (svc.perLinFt) total += (d.linearFt || 0) * applyGlobal(svc.perLinFt);
 
@@ -144,11 +132,45 @@ export function getDiscountPercent(selectedServices, bundleDiscounts, appliedBun
 }
 
 /**
- * Get the final price for a package tier.
+ * Get the final price for a package tier (legacy â applies one multiplier to total).
  */
 export function getPackagePrice(basePrice, discountPercent, packageMultiplier) {
   const discounted = basePrice * (1 - discountPercent / 100);
   return discounted * packageMultiplier;
+}
+
+/**
+ * Calculate the total package price across all services, respecting per-service
+ * package pricing (like window cleaning) while using the global multiplier for
+ * everything else.
+ *
+ * Services with `hasPackagePricing: true` calculate their own price for each
+ * package tier. All other services use: basePrice Ã globalMultiplier.
+ */
+export function calculateTotalPackagePrice(
+  selectedServices, allServices, allDetails, allExtras,
+  globalPriceAdj, globalStories, discountPercent, packageKey, packageMultiplier
+) {
+  let total = 0;
+
+  selectedServices.forEach((svcId) => {
+    const svc = allServices.find((sv) => sv.id === svcId);
+    if (!svc) return;
+
+    if (svc.hasPackagePricing) {
+      // This service has its own per-package prices (e.g. window cleaning)
+      // Calculate directly with the packageKey â no global multiplier needed
+      const svcPrice = calculateServicePrice(svc, allDetails[svcId], allExtras[svcId], globalPriceAdj, globalStories, packageKey);
+      total += svcPrice;
+    } else {
+      // Standard service â calculate base price, then apply global multiplier
+      const svcBase = calculateServicePrice(svc, allDetails[svcId], allExtras[svcId], globalPriceAdj, globalStories);
+      total += svcBase * packageMultiplier;
+    }
+  });
+
+  // Apply bundle discount to the total
+  return total * (1 - discountPercent / 100);
 }
 
 /**
