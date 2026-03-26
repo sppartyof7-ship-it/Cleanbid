@@ -72,21 +72,17 @@ const BASE_CONFIG = {
       name: "House Washing",
       icon: "\u{1F3E0}",
       description: "House / Siding Wash",
-      basePrice: 75,
-      perSqFt: 0,  // replaced by pricingTiers below
+      basePrice: 150,
+      perSqFt: 0.15,
       perWindow: 0,
       perLinFt: 0,
       enabled: true,
-      // Tiered bracket pricing â rate drops as sqft goes up (like tax brackets)
-      // 2000 sqft example: $75 base + 1500Ã$0.12 + 500Ã$0.08 = $295 Basic
-      pricingTiers: [
-        { upTo: 1500, rate: 0.12, label: "First 1,500 sqft" },
-        { upTo: 2500, rate: 0.08, label: "1,500â2,500 sqft" },
-        { upTo: 3500, rate: 0.05, label: "2,500â3,500 sqft" },
-        { upTo: Infinity, rate: 0.03, label: "3,500+ sqft" },
-      ],
+      tierFeatures: {
+        standard: "Exterior rinse & surface wash",
+        premium: "Soft wash with mildew & algae treatment",
+        platinum: "Full restoration wash + trim & eave detail",
+      },
       extras: [
-        { id: "patio", label: "Patio / Porch", price: 75 },
         { id: "garage", label: "Detached Garage", price: 120 },
         { id: "aluminum", label: "Aluminum Siding", price: 75 },
         { id: "eifs_stucco_wood", label: "EIFS / Stucco / Wood Siding", price: 100 },
@@ -104,12 +100,34 @@ const BASE_CONFIG = {
       enabled: true,
       // Wisconsin avg: ~1 window per 80 sq ft of living space
       windowsPerSqFt: 0.0125,
+      // Window cleaning has its own per-package pricing (overrides global multiplier)
+      hasPackagePricing: true,
+      doorPrice: 12,
+      tierFeatures: {
+        standard: "Exterior glass only",
+        premium: "Interior & exterior + optional screen cleaning",
+        platinum: "Full detail â interior, exterior, tracks, sills & screens included",
+      },
       windowTypes: [
-        { id: "casement", label: "Casement", multiplier: 1.0, description: "Single pane, hinged on one side, cranks open", windowImage: "casement" },
-        { id: "double_hung", label: "Double Hung", multiplier: 1.6, description: "Two sashes that slide up & down, tilt-in for cleaning", windowImage: "double_hung" },
-        { id: "combination", label: "Combination / Storm", multiplier: 2.0, description: "Inner window + outer storm pane â extra glass to clean", windowImage: "combination" },
+        {
+          id: "casement", label: "Casement", multiplier: 1.0,
+          description: "Single pane, hinged on one side, cranks open", windowImage: "casement",
+          priceByPackage: { standard: 8, premium: 15, platinum: 22 },
+        },
+        {
+          id: "double_hung", label: "Double Hung", multiplier: 1.6,
+          description: "Two sashes that slide up & down, tilt-in for cleaning", windowImage: "double_hung",
+          priceByPackage: { standard: 13, premium: 21, platinum: 29 },
+        },
+        {
+          id: "combination", label: "Combination / Storm", multiplier: 2.0,
+          description: "Inner window + outer storm pane â extra glass to clean", windowImage: "combination",
+          priceByPackage: { standard: 30, premium: 45, platinum: 55 },
+        },
       ],
-      extras: [],
+      extras: [
+        { id: "screen_cleaning", label: "Screen Cleaning", pricePerUnit: 3, unit: "screen", minPackage: "premium", description: "Remove, wash & reinstall each screen" },
+      ],
     },
     {
       id: "deck_cleaning",
@@ -121,6 +139,11 @@ const BASE_CONFIG = {
       perWindow: 0,
       perLinFt: 0,
       enabled: true,
+      tierFeatures: {
+        standard: "Surface wash & debris removal",
+        premium: "Deep clean + wood brightener application",
+        platinum: "Full restoration + sealant application",
+      },
       extras: [
         { id: "railings", label: "Railing Detail Clean", price: 65 },
         { id: "stairs", label: "Stairs (per flight)", price: 45 },
@@ -136,8 +159,12 @@ const BASE_CONFIG = {
       perWindow: 0,
       perLinFt: 0,
       enabled: true,
+      tierFeatures: {
+        standard: "Surface pressure wash",
+        premium: "Deep clean + oil & rust stain treatment",
+        platinum: "Full restoration + joint sand + sealant coat",
+      },
       extras: [
-        { id: "sealing", label: "Concrete Sealing", price: 200 },
         { id: "oil_stain", label: "Oil Stain Removal", price: 50 },
         { id: "edging", label: "Edging & Detail Work", price: 40 },
       ],
@@ -147,19 +174,16 @@ const BASE_CONFIG = {
       name: "Roof Cleaning",
       icon: "\u{1F9F9}",
       description: "Soft wash moss & algae removal",
-      basePrice: 150,
-      perSqFt: 0,  // replaced by pricingTiers below
+      basePrice: 250,
+      perSqFt: 0.18,
       perWindow: 0,
       perLinFt: 0,
       enabled: true,
-      // Tiered bracket pricing for roof cleaning
-      // 2000 sqft example: $150 base + 1500Ã$0.10 + 500Ã$0.07 = $335 Basic
-      pricingTiers: [
-        { upTo: 1500, rate: 0.10, label: "First 1,500 sqft" },
-        { upTo: 2500, rate: 0.07, label: "1,500â2,500 sqft" },
-        { upTo: 3500, rate: 0.04, label: "2,500â3,500 sqft" },
-        { upTo: Infinity, rate: 0.03, label: "3,500+ sqft" },
-      ],
+      tierFeatures: {
+        standard: "Surface debris removal & rinse",
+        premium: "Soft wash with algae & moss treatment",
+        platinum: "Full roof restoration + gutter line detail",
+      },
       extras: [
         { id: "moss_treatment", label: "Moss Prevention Treatment", price: 150 },
         { id: "chimney", label: "Chimney Wash", price: 75 },
@@ -176,6 +200,11 @@ const BASE_CONFIG = {
       perWindow: 0,
       perLinFt: 1.5,
       enabled: true,
+      tierFeatures: {
+        standard: "Debris removal & basic flush",
+        premium: "Full clean + downspout flush & flow test",
+        platinum: "Full clean + seal inspection + detailed report",
+      },
       conditionQuestions: [
         { id: "plugged_downspouts", label: "Are any downspouts plugged?", priceAdj: 35 },
         { id: "trees_growing", label: "Trees or debris growing out of gutters?", priceAdj: 50 },
@@ -183,7 +212,6 @@ const BASE_CONFIG = {
       ],
       extras: [
         { id: "downspout_clearing", label: "Downspout Clearing", price: 65 },
-        { id: "whitening", label: "Gutter Whitening", price: 120 },
       ],
     },
     {
@@ -196,6 +224,11 @@ const BASE_CONFIG = {
       perWindow: 0,
       perLinFt: 14.99,
       enabled: true,
+      tierFeatures: {
+        standard: "Standard mesh guard install",
+        premium: "Guard install + full gutter cleaning",
+        platinum: "Premium guards + cleaning + downspout upgrade",
+      },
       tiers: [
         { id: "basic", label: "Basic Install", perLinFt: 14.99, description: "Guard installation only" },
         { id: "with_cleaning", label: "Install + Gutter Cleaning", perLinFt: 19.99, description: "Includes full gutter cleaning before install" },
@@ -205,35 +238,38 @@ const BASE_CONFIG = {
     },
   ],
   packages: {
-    basic: {
-      label: "Basic",
-      multiplier: 1.0,
-      color: C.textMid,
-      tag: "Just the essentials",
-      features: ["Service completion", "Standard cleaning", "Basic cleanup"],
-    },
     standard: {
       label: "Standard",
+      multiplier: 1.0,
+      color: C.textMid,
+      tag: "Get the job done",
+      features: [
+        "Standard cleaning products",
+        "Post-job walkthrough & cleanup",
+        "Email receipt & summary",
+      ],
+    },
+    premium: {
+      label: "Premium",
       multiplier: 1.35,
       color: C.primary,
       tag: "Most Popular",
       popular: true,
       features: [
-        "Everything in Basic",
-        "Deep clean treatment",
-        "Before/after photos",
-        "Spot re-treatment guarantee",
+        "Upgraded cleaning products",
+        "Before & after photos",
+        "Pre-job property assessment",
+        "7-day spot re-treatment guarantee",
       ],
     },
-    premium: {
-      label: "Premium",
+    platinum: {
+      label: "Platinum",
       multiplier: 1.75,
       color: C.accent,
       tag: "The Full Treatment",
       features: [
-        "Everything in Standard",
-        "Premium-grade products",
-        "Full property inspection",
+        "Premium restoration-grade products",
+        "Full property inspection report",
         "Priority scheduling",
         "60-day satisfaction guarantee",
       ],
