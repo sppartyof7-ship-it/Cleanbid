@@ -118,3 +118,14 @@ export function getPackagePrice(basePrice, discountPercent, packageMultiplier) {
 export function getEstimatedWindows(sqft, windowsPerSqFt) {
   return Math.round((sqft || 0) * (windowsPerSqFt || 0.0125));
 }
+
+/**
+ * Estimate gutter linear footage from house square footage.
+  * Industry standard: perimeter ~ 4 * sqrt(sqft), gutters run ~1.1x perimeter.
+   * Example: 2000 sqft -> ~197 linear ft
+    */
+export function estimateGutterLinearFt(sqft) {
+    if (!sqft || sqft <= 0) return 0;
+    return Math.round(1.1 * Math.sqrt(sqft) * 4);
+}
+
