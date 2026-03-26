@@ -59,7 +59,7 @@ export default function AdminPanel({ config, setConfig, onExit }) {
             <div style={s.grid2}>
               {Object.entries(config.packages).map(([key, pkg]) => (
                 <div key={key} style={{ padding: 16, background: C.bgCardAlt, borderRadius: 12, border: `1px solid ${C.border}` }}>
-                  <span style={{ fontWeight: 700, color: key === "basic" ? C.textMid : key === "standard" ? C.primary : C.accent }}>{pkg.label}</span>
+                  <span style={{ fontWeight: 700, color: key === "standard" ? C.textMid : key === "premium" ? C.primary : C.accent }}>{pkg.label}</span>
                   <label style={{ ...s.label, marginTop: 10 }}>Multiplier</label>
                   <input type="number" step="0.05" value={pkg.multiplier} onChange={(e) => updateConfig(`packages.${key}.multiplier`, Number(e.target.value))} style={s.input} />
                   <label style={{ ...s.label, marginTop: 10 }}>Tagline</label>
@@ -243,7 +243,7 @@ export default function AdminPanel({ config, setConfig, onExit }) {
           </div>
           <div style={s.card}>
             <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Lead Email Notifications</h3>
-            <p style={{ fontSize: 13, color: C.textLight, marginBottom: 16 }}>Get an email every time a customer submits a quote. Get your free access key at <a href="https://web3forms.com" target="_blank" rel="noopener noreferrer" style={{ color: C.primary }}>web3forms.com</a> — just enter the email address below.</p>
+            <p style={{ fontSize: 13, color: C.textLight, marginBottom: 16 }}>Get an email every time a customer submits a quote. Get your free access key at <a href="https://web3forms.com" target="_blank" rel="noopener noreferrer" style={{ color: C.primary }}>web3forms.com</a> â just enter the email address below.</p>
             <div style={s.grid2}>
               <div><label style={s.label}>Notification Email</label><input type="email" placeholder="tim.sullivan@clouteinc.com" value={config.notificationEmail || ""} onChange={(e) => updateConfig("notificationEmail", e.target.value)} style={s.input} /></div>
               <div><label style={s.label}>Web3Forms Access Key</label><input type="text" placeholder="Paste your access key here" value={config.web3formsKey || ""} onChange={(e) => updateConfig("web3formsKey", e.target.value)} style={s.input} /></div>
