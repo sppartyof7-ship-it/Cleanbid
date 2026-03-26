@@ -3,7 +3,7 @@ import C from "../config/colors";
 import s from "../config/styles";
 import { SERVICES_WITH_STORIES } from "../config/defaults";
 import { fmt, isValidEmail, isValidPhone } from "../utils/helpers";
-import { calculateServicePrice, calculateTotalBase, getDiscountPercent, getPackagePrice, getEstimatedWindows } from "../utils/pricing";
+import { calculateServicePrice, calculateTotalBase, getDiscountPercent, getPackagePrice, getEstimatedWindows, estimateGutterLinearFt } from "../utils/pricing";
 import Badge from "./Badge";
 import CountdownTimer from "./CountdownTimer";
 import PhotoUploader from "./PhotoUploader";
@@ -61,10 +61,66 @@ export default function CustomerFlow({ config, onSubmitLead }) {
   const [globalStories, setGlobalStories] = useState(1);
   const [customerPhotos, setCustomerPhotos] = useState([]);
   const [validationErrors, setValidationErrors] = useState({});
+  const [dismissedUpsells, setDismissedUpsells] = useState([]);
 
   const enabledServices = config.services.filter((sv) => sv.enabled);
 
-  // --- Pricing (uses shared pricing engine — no duplication!) ---
+  // --- Smart Cascade Upsell Logic ---
+  // When house washing (pressure_washing) is selected, suggest window & gutter cleaning
+  const hasHouseWash = selectedServices.includes("pressure_washing");
+  const hasWindows = selectedServices.includes("window_cleaning");
+  const hasGutters = selectedServices.includes("gutter_cleaning");
+  const windowServiceEnabled = enabledServices.some((sv) => sv.id === "window_cleaning");
+  const gutterServiceEnabled = enabledServices.some((sv) => sv.id === "gutter_cleaning");
+
+  // Get sqft from house washing details (used for gutter estimation)
+  const houseWashSqft = details.pressure_washing?.sqft || 0;
+
+  const upsellOffers = [];
+  if (hasHouseWash && !hasWindows && windowServiceEnabled && !dismissedUpsells.includes("window_cleaning")) {
+    upsellOffers.push({
+      id: "window_cleaning",
+      name: "Window Cleaning",
+      icon: "\u{1FA9F}",
+      tagline: "Since we're already at your home, get your windows sparkling too!",
+      color: "#059669",
+      bgColor: "#f0fdf4",
+      borderColor: "#bbf7d0",
+    });
+  }
+  if (hasHouseWash && !hasGutters && gutterServiceEnabled && !dismissedUpsells.includes("gutter_cleaning")) {
+    upsellOffers.push({
+      id: "gutter_cleaning",
+      name: "Gutter Cleaning",
+      icon: "\u{1F327}\u{FE0F}",
+      tagline: houseWashSqft > 0
+        ? `Based on your home size, we estimate ~${estimateGutterLinearFt(houseWashSqft)} linear ft of gutters.`
+        : "Keep your gutters flowing while we're on-site!",
+      color: "#7c3aed",
+      bgColor: "#f5f3ff",
+      borderColor: "#ddd6fe",
+    });
+  }
+
+  const handleAcceptUpsell = (svcId) => {
+    // Add the service
+    setSelectedServices((p) => [...p, svcId]);
+
+    // Auto-populate gutter linear ft from house wash sqft
+    if (svcId === "gutter_cleaning" && houseWashSqft > 0) {
+      const estLinFt = estimateGutterLinearFt(houseWashSqft);
+      setDetails((p) => ({
+        ...p,
+        gutter_cleaning: { ...(p.gutter_cleaning || {}), linearFt: estLinFt },
+      }));
+    }
+  };
+
+  const handleDismissUpsell = (svcId) => {
+    setDismissedUpsells((p) => [...p, svcId]);
+  };
+
+  // --- Pricing (uses shared pricing engine â no duplication!) ---
   const basePrice = useMemo(
     () => calculateTotalBase(selectedServices, config.services, details, selectedExtras, config.globalPriceAdjustment, globalStories),
     [selectedServices, details, selectedExtras, config, globalStories]
@@ -211,7 +267,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         </div>
       )}
 
-      {/* Marketing Banners — on step 1 (services) */}
+      {/* Marketing Banners â on step 1 (services) */}
       {step === 1 && (
         <div style={{ marginBottom: 24, display: "flex", flexDirection: "column", gap: 10 }}>
           {config.marketing.showLimitedOffer && (
@@ -335,7 +391,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                                       <div style={{ fontSize: 12, color: C.textLight }}>{tier.description}</div>
                                     </div>
                                   </div>
-                                  <div style={{ fontSize: 13, fontWeight: 600, color: isActive ? C.primary : C.textMid }}>{isActive ? "✓ Selected" : ""}</div>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: isActive ? C.primary : C.textMid }}>{isActive ? "â Selected" : ""}</div>
                                 </div>
                               );
                             })}
@@ -364,7 +420,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                                   <WindowTypeSVG type={wt.id} active={isActive} />
                                   <div style={{ fontSize: 14, fontWeight: 700, color: isActive ? C.primary : C.text, marginTop: 8 }}>{wt.label}</div>
                                   <div style={{ fontSize: 11, color: C.textLight, marginTop: 2, lineHeight: 1.3 }}>{wt.description}</div>
-                                  {isActive && <div style={{ fontSize: 11, fontWeight: 700, color: C.primary, marginTop: 6 }}>✓ Selected</div>}
+                                  {isActive && <div style={{ fontSize: 11, fontWeight: 700, color: C.primary, marginTop: 6 }}>â Selected</div>}
                                   {wt.id === "combination" && isActive && (
                                     <div style={{ marginTop: 8, padding: "8px 10px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, fontSize: 11, color: "#92400e", lineHeight: 1.4 }}>
                                       Storm windows often require an onsite estimate for accurate pricing. <a href="tel:+19205634101" style={{ color: "#b45309", fontWeight: 700 }}>Call (920) 563-4101</a> for a free quote.
@@ -434,6 +490,57 @@ export default function CustomerFlow({ config, onSubmitLead }) {
               </span>
             </div>
           )}
+
+          {/* Smart Cascade Upsell â triggered when House Washing is selected */}
+          {upsellOffers.length > 0 && (
+            <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.textLight, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                {"\u{1F4A1}"} Recommended Add-Ons
+              </div>
+              {upsellOffers.map((offer) => (
+                <div key={offer.id} style={{
+                  background: offer.bgColor, border: `2px solid ${offer.borderColor}`,
+                  borderRadius: 16, padding: "16px 20px", overflow: "hidden",
+                  animation: "slideUp 0.4s ease-out",
+                }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                    <div style={{ flex: 1, minWidth: 200 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                        <span style={{ fontSize: 20 }}>{offer.icon}</span>
+                        <span style={{ fontWeight: 800, fontSize: 15, color: offer.color }}>Add {offer.name}?</span>
+                        {selectedServices.length >= 1 && (
+                          <span style={{ padding: "2px 8px", borderRadius: 8, background: `${offer.color}15`, color: offer.color, fontSize: 11, fontWeight: 700 }}>
+                            Bundle & Save!
+                          </span>
+                        )}
+                      </div>
+                      <p style={{ fontSize: 13, color: C.textMid, margin: 0, lineHeight: 1.5 }}>
+                        {offer.tagline}
+                      </p>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <button onClick={() => handleAcceptUpsell(offer.id)} style={{
+                        padding: "10px 20px", borderRadius: 10,
+                        background: offer.color, color: "#fff", border: "none",
+                        cursor: "pointer", fontWeight: 800, fontSize: 14,
+                        transition: "transform 0.2s",
+                      }}>
+                        Yes, Add It!
+                      </button>
+                      <button onClick={() => handleDismissUpsell(offer.id)} style={{
+                        padding: "10px 14px", borderRadius: 10,
+                        background: "transparent", color: C.textLight,
+                        border: `1px solid ${C.border}`, cursor: "pointer",
+                        fontSize: 13, fontWeight: 600,
+                      }}>
+                        No thanks
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -483,7 +590,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             })}
           </div>
 
-          {/* Transparent Pricing Breakdown — ClouteBid's differentiator */}
+          {/* Transparent Pricing Breakdown â ClouteBid's differentiator */}
           <div style={{ marginTop: 24 }}>
             <PriceBreakdown
               selectedServices={selectedServices}
@@ -544,7 +651,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
 }
 
 // This is a trick to let the parent read current step for the header stepper
-// In a real app you'd use context or lift state up — but this keeps things simple
+// In a real app you'd use context or lift state up â but this keeps things simple
 function StepExposer() {
   return null; // No-op; parent manages its own step display via view state
 }
