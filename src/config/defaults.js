@@ -72,11 +72,19 @@ const BASE_CONFIG = {
       name: "House Washing",
       icon: "\u{1F3E0}",
       description: "House / Siding Wash",
-      basePrice: 150,
-      perSqFt: 0.15,
+      basePrice: 75,
+      perSqFt: 0,  // replaced by pricingTiers below
       perWindow: 0,
       perLinFt: 0,
       enabled: true,
+      // Tiered bracket pricing â rate drops as sqft goes up (like tax brackets)
+      // 2000 sqft example: $75 base + 1500Ã$0.12 + 500Ã$0.08 = $295 Basic
+      pricingTiers: [
+        { upTo: 1500, rate: 0.12, label: "First 1,500 sqft" },
+        { upTo: 2500, rate: 0.08, label: "1,500â2,500 sqft" },
+        { upTo: 3500, rate: 0.05, label: "2,500â3,500 sqft" },
+        { upTo: Infinity, rate: 0.03, label: "3,500+ sqft" },
+      ],
       extras: [
         { id: "patio", label: "Patio / Porch", price: 75 },
         { id: "garage", label: "Detached Garage", price: 120 },
@@ -99,7 +107,7 @@ const BASE_CONFIG = {
       windowTypes: [
         { id: "casement", label: "Casement", multiplier: 1.0, description: "Single pane, hinged on one side, cranks open", windowImage: "casement" },
         { id: "double_hung", label: "Double Hung", multiplier: 1.6, description: "Two sashes that slide up & down, tilt-in for cleaning", windowImage: "double_hung" },
-        { id: "combination", label: "Combination / Storm", multiplier: 2.0, description: "Inner window + outer storm pane — extra glass to clean", windowImage: "combination" },
+        { id: "combination", label: "Combination / Storm", multiplier: 2.0, description: "Inner window + outer storm pane â extra glass to clean", windowImage: "combination" },
       ],
       extras: [],
     },
@@ -139,11 +147,19 @@ const BASE_CONFIG = {
       name: "Roof Cleaning",
       icon: "\u{1F9F9}",
       description: "Soft wash moss & algae removal",
-      basePrice: 250,
-      perSqFt: 0.18,
+      basePrice: 150,
+      perSqFt: 0,  // replaced by pricingTiers below
       perWindow: 0,
       perLinFt: 0,
       enabled: true,
+      // Tiered bracket pricing for roof cleaning
+      // 2000 sqft example: $150 base + 1500Ã$0.10 + 500Ã$0.07 = $335 Basic
+      pricingTiers: [
+        { upTo: 1500, rate: 0.10, label: "First 1,500 sqft" },
+        { upTo: 2500, rate: 0.07, label: "1,500â2,500 sqft" },
+        { upTo: 3500, rate: 0.04, label: "2,500â3,500 sqft" },
+        { upTo: Infinity, rate: 0.03, label: "3,500+ sqft" },
+      ],
       extras: [
         { id: "moss_treatment", label: "Moss Prevention Treatment", price: 150 },
         { id: "chimney", label: "Chimney Wash", price: 75 },
@@ -174,7 +190,7 @@ const BASE_CONFIG = {
       id: "gutter_guard_install",
       name: "Gutter Guard Installation",
       icon: "\u{1F6E1}\u{FE0F}",
-      description: "Professional gutter guard installation — priced per linear foot",
+      description: "Professional gutter guard installation â priced per linear foot",
       basePrice: 0,
       perSqFt: 0,
       perWindow: 0,
