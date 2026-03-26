@@ -3,7 +3,7 @@ import C from "../config/colors";
 import s from "../config/styles";
 import { SERVICES_WITH_STORIES } from "../config/defaults";
 import { fmt, isValidEmail, isValidPhone } from "../utils/helpers";
-import { calculateServicePrice, calculateTotalBase, getDiscountPercent, getPackagePrice, getEstimatedWindows, estimateGutterLinearFt } from "../utils/pricing";
+import { calculateServicePrice, calculateTotalBase, getDiscountPercent, getPackagePrice, calculateTotalPackagePrice, getEstimatedWindows, estimateGutterLinearFt } from "../utils/pricing";
 import Badge from "./Badge";
 import CountdownTimer from "./CountdownTimer";
 import PhotoUploader from "./PhotoUploader";
@@ -53,7 +53,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
   const [selectedServices, setSelectedServices] = useState([]);
   const [details, setDetails] = useState({});
   const [selectedExtras, setSelectedExtras] = useState({});
-  const [selectedPackage, setSelectedPackage] = useState("standard");
+  const [selectedPackage, setSelectedPackage] = useState("premium");
   const [contact, setContact] = useState({
     name: "", email: "", phone: "", address: "", notes: "", leadSource: "", projectType: "residential",
   });
@@ -132,12 +132,17 @@ export default function CustomerFlow({ config, onSubmitLead }) {
 
   const bundleDiscount = getDiscountPercent(selectedServices, config.bundleDiscounts, appliedBundle, seasonalBundle);
 
-  const svcPrice = (svcId) => {
+  const svcPrice = (svcId, packageKey) => {
     const svc = config.services.find((sv) => sv.id === svcId);
-    return calculateServicePrice(svc, details[svcId], selectedExtras[svcId], config.globalPriceAdjustment, globalStories);
+    return calculateServicePrice(svc, details[svcId], selectedExtras[svcId], config.globalPriceAdjustment, globalStories, packageKey);
   };
 
-  const pkgPrice = (pkg) => getPackagePrice(basePrice, bundleDiscount, config.packages[pkg].multiplier);
+  // Package price â uses per-service pricing for services that have it (window cleaning)
+  const pkgPrice = (pkg) => calculateTotalPackagePrice(
+    selectedServices, config.services, details, selectedExtras,
+    config.globalPriceAdjustment, globalStories, bundleDiscount,
+    pkg, config.packages[pkg].multiplier
+  );
 
   // --- Helpers ---
   const toggleService = (id) =>
@@ -189,9 +194,9 @@ export default function CustomerFlow({ config, onSubmitLead }) {
       package: selectedPackage,
       total: pkgPrice(selectedPackage),
       allPackagePrices: {
-        basic: pkgPrice("basic"),
         standard: pkgPrice("standard"),
         premium: pkgPrice("premium"),
+        elite: pkgPrice("platinum"),
       },
       status: "pending",
       date: new Date().toISOString().slice(0, 10),
@@ -210,7 +215,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     setSelectedServices([]);
     setDetails({});
     setSelectedExtras({});
-    setSelectedPackage("standard");
+    setSelectedPackage("premium");
     setContact({ name: "", email: "", phone: "", address: "", notes: "", leadSource: "", projectType: "residential" });
     setAppliedBundle(null);
     setCustomerPhotos([]);
@@ -430,6 +435,14 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                               );
                             })}
                           </div>
+                          {/* Door count question */}
+                          {svc.doorPrice && (
+                            <div style={{ marginTop: 16 }}>
+                              <label style={s.label}>How many glass doors need cleaning? <span style={{ fontWeight: 400, color: C.textLight }}>(sliding, French, storm doors)</span></label>
+                              <input type="number" placeholder="0" value={d.doors || ""} onChange={(e) => updateDetail(svc.id, "doors", Math.max(0, Number(e.target.value)))} style={{ ...s.input, maxWidth: 120 }} />
+                              {d.doors > 0 && <div style={{ fontSize: 12, color: C.textLight, marginTop: 4 }}>{d.doors} door{d.doors > 1 ? "s" : ""} Ã ${svc.doorPrice} = ${d.doors * svc.doorPrice}</div>}
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -464,17 +477,26 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                         </div>
                       )}
 
-                      {svc.extras && svc.extras.length > 0 && (
-                        <div style={{ marginTop: 12 }}>
-                          <label style={s.label}>Add-Ons</label>
-                          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                            {svc.extras.map((ext) => {
-                              const a = (selectedExtras[svc.id] || []).includes(ext.id);
-                              return <button key={ext.id} onClick={() => toggleExtra(svc.id, ext.id)} style={{ padding: "7px 14px", borderRadius: 20, border: `1px solid ${a ? C.primary : C.border}`, background: a ? `${C.primary}12` : C.white, color: a ? C.primary : C.textMid, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>{a ? "\u2713 " : "+ "}{ext.label}</button>;
-                            })}
+                      {svc.extras && svc.extras.length > 0 && (() => {
+                        const tierOrder = ["standard", "premium", "platinum"];
+                        const availableExtras = svc.extras.filter((ext) => {
+                          if (!ext.minPackage) return true;
+                          return tierOrder.indexOf(selectedPackage) >= tierOrder.indexOf(ext.minPackage);
+                        });
+                        if (availableExtras.length === 0) return null;
+                        return (
+                          <div style={{ marginTop: 12 }}>
+                            <label style={s.label}>Add-Ons</label>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                              {availableExtras.map((ext) => {
+                                const a = (selectedExtras[svc.id] || []).includes(ext.id);
+                                const priceLabel = ext.pricePerUnit ? `$${ext.pricePerUnit}/${ext.unit}` : ext.price ? `$${ext.price}` : "";
+                                return <button key={ext.id} onClick={() => toggleExtra(svc.id, ext.id)} style={{ padding: "7px 14px", borderRadius: 20, border: `1px solid ${a ? C.primary : C.border}`, background: a ? `${C.primary}12` : C.white, color: a ? C.primary : C.textMid, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>{a ? "\u2713 " : "+ "}{ext.label}{priceLabel ? ` (${priceLabel})` : ""}</button>;
+                              })}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
@@ -574,7 +596,13 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             {Object.entries(config.packages).map(([key, pkg]) => {
               const price = pkgPrice(key);
               const act = selectedPackage === key;
-              const pkgColor = key === "basic" ? C.textMid : key === "standard" ? C.primary : C.accent;
+              const pkgColor = key === "standard" ? C.textMid : key === "premium" ? C.primary : C.accent;
+              // Build service-specific features for this tier
+              const svcFeatures = selectedServices.map((svcId) => {
+                const svc = config.services.find((s) => s.id === svcId);
+                if (!svc || !svc.tierFeatures) return null;
+                return { name: svc.name, feature: svc.tierFeatures[key] };
+              }).filter(Boolean);
               return (
                 <div key={key} onClick={() => setSelectedPackage(key)} style={{ background: act ? `${pkgColor}08` : C.white, border: `2px solid ${act ? pkgColor : C.border}`, borderRadius: 20, padding: 28, cursor: "pointer", transition: "all 0.2s", transform: act ? "scale(1.03)" : "scale(1)", position: "relative", boxShadow: act ? C.shadowHover : C.shadow }}>
                   {pkg.popular && <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: C.gradient, color: C.white, fontSize: 11, fontWeight: 700, padding: "4px 16px", borderRadius: 20, textTransform: "uppercase" }}>Most Popular</div>}
@@ -582,8 +610,22 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                   <p style={{ fontSize: 13, color: C.textLight, marginBottom: 20 }}>{pkg.tag}</p>
                   <div style={{ fontSize: 36, fontWeight: 800, color: C.text, marginBottom: 4 }}>{fmt(price)}</div>
                   {bundleDiscount > 0 && <div style={{ fontSize: 12, color: C.secondaryDark, marginBottom: 16 }}>Includes {bundleDiscount}% discount</div>}
+                  {/* Service-specific features */}
+                  {svcFeatures.length > 0 && (
+                    <ul style={{ listStyle: "none", padding: 0, margin: "0 0 12px 0" }}>
+                      {svcFeatures.map((sf, i) => (
+                        <li key={i} style={{ padding: "5px 0", fontSize: 13, color: C.text, display: "flex", gap: 8, alignItems: "flex-start" }}>
+                          <span style={{ color: pkgColor, fontWeight: 700, flexShrink: 0 }}>{"\u2713"}</span>
+                          <span><strong style={{ color: C.text }}>{sf.name}:</strong> {sf.feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {/* Divider between service features and universal features */}
+                  {svcFeatures.length > 0 && <div style={{ borderTop: `1px solid ${C.border}`, margin: "8px 0 12px" }} />}
+                  {/* Universal package features */}
                   <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                    {(pkg.features || []).map((item, i) => <li key={i} style={{ padding: "6px 0", fontSize: 14, color: C.textMid, display: "flex", gap: 8 }}><span style={{ color: pkgColor }}>{"\u2713"}</span>{item}</li>)}
+                    {(pkg.features || []).map((item, i) => <li key={i} style={{ padding: "5px 0", fontSize: 13, color: C.textMid, display: "flex", gap: 8 }}><span style={{ color: pkgColor, flexShrink: 0 }}>{"\u2713"}</span>{item}</li>)}
                   </ul>
                 </div>
               );
