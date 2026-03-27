@@ -76,10 +76,10 @@ export default function LeadsPanel({ leads, setLeads, config }) {
                 <Badge color={lead.status === "won" ? C.secondary : lead.status === "pending" ? C.warning : C.danger}>{lead.status}</Badge>
                 {lead.projectType === "commercial" && <Badge color={C.accent}>Commercial</Badge>}
               </div>
-              <div style={{ fontSize: 13, color: C.textLight }}>{lead.email} · {lead.phone}</div>
+              <div style={{ fontSize: 13, color: C.textLight }}>{lead.email} {"\u00B7"} {lead.phone}</div>
               <div style={{ fontSize: 12, color: C.textMuted, marginTop: 4 }}>
-                {lead.services.map((sid) => config.services.find((sv) => sv.id === sid)?.icon || "").join(" ")} · {config.packages[lead.package]?.label} · {lead.date}
-                {lead.leadSource && <span> · via {lead.leadSource}</span>}
+                {lead.services.map((sid) => config.services.find((sv) => sv.id === sid)?.icon || "").join(" ")} {"\u00B7"} {config.packages[lead.package]?.label} {"\u00B7"} {lead.date}
+                {lead.leadSource && <span> {"\u00B7"} via {lead.leadSource}</span>}
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
