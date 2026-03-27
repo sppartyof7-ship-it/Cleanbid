@@ -58,7 +58,7 @@ export default function PhotoUploader({
           Click or drag photos here
         </div>
         <div style={{ fontSize: 12, color: C.textLight, marginTop: 4 }}>
-          JPG, PNG, GIF, WEBP — Max {maxPhotos}
+          JPG, PNG, GIF, WEBP {"\u2014"} Max {maxPhotos}
         </div>
         <input
           ref={fileInputRef}
