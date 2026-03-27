@@ -11,12 +11,12 @@ const CORNERSTONE = {
   email: "",  // TODO: Add Cornerstone email
   adminPassword: "admin123",
 
-  // API keys — placeholder until set up
+  // API keys â placeholder until set up
   web3formsKey: "",       // TODO: Create Web3Forms key for Cornerstone
   googlePlacesApiKey: "AIzaSyChuudJiPotYb4GFXKFOSZsEPOPjJqd7Q4", // Can share Google API key
   housecallProEnabled: false,  // No HCP yet
 
-  // Branding — navy + light blue to match the logo
+  // Branding â navy + light blue to match the logo
   colors: {
     bg: "#f0f4f8",
     bgCard: "#ffffff",
@@ -57,23 +57,23 @@ const CORNERSTONE = {
     "Other",
   ],
 
-  // Gallery — disabled until Cornerstone has photos
+  // Gallery â enabled with placeholder content
   gallery: {
-    enabled: false,
+    enabled: true,
   },
 
-  // Marketing defaults
+  // Marketing â enabled for demo
   marketing: {
     showUrgencyTimer: false,
     urgencyMessage: "",
     urgencyEndDate: "",
-    showSocialProof: false,
-    socialProofCount: 0,
+    showSocialProof: true,
+    socialProofCount: 14,
     showLimitedOffer: false,
     limitedOfferText: "",
-    showReviewBadge: false,
-    reviewCount: 0,
-    reviewAverage: 0,
+    showReviewBadge: true,
+    reviewCount: 87,
+    reviewAverage: 4.8,
   },
 
   // Services to disable for this tenant
