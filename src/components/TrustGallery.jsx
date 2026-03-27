@@ -1,7 +1,7 @@
 import { useState } from "react";
 import C from "../config/colors";
 
-/* ââ Per-tenant gallery & review content ââ */
+/* ── Per-tenant gallery & review content ── */
 const TENANT_GALLERY = {
   cloute: {
     beforeAfter: [
@@ -11,7 +11,7 @@ const TENANT_GALLERY = {
     ],
     reviews: [
       { name: "Deborah Biddle", location: "Google Review", stars: 5, text: "Cloute cleaned our windows and washed our home and concrete patio. The staff were courteous, professional and did a fantastic job!" },
-      { name: "Nathan Freie", location: "Google Review", stars: 5, text: "Tim and his crew are professional and do an excellent job. They walked our property before and after â our house looks brand new." },
+      { name: "Nathan Freie", location: "Google Review", stars: 5, text: "Tim and his crew are professional and do an excellent job. They walked our property before and after \u2014 our house looks brand new." },
       { name: "Tywana German", location: "Google Review", stars: 5, text: "Tim and his staff were extremely easy to work with. They arrived on time, prepared, and the house looked amazing when they were done." },
     ],
     rating: "4.9",
@@ -82,7 +82,7 @@ export default function TrustGallery({ config }) {
               onClick={() => { setActiveSlide(i); setSliderPos(50); }}
               style={{
                 padding: "6px 16px", borderRadius: 20, border: `1px solid ${i === activeSlide ? C.primary : C.border}`,
-              background: i === activeSlide ? `${C.primary}12` : C.white, color: i === activeSlide ? C.primary : C.textMid,
+                background: i === activeSlide ? `${C.primary}12` : C.white, color: i === activeSlide ? C.primary : C.textMid,
                 fontSize: 13, fontWeight: 600, cursor: "pointer",
               }}
             >
@@ -113,7 +113,7 @@ export default function TrustGallery({ config }) {
           {/* Slider line */}
           <div style={{ position: "absolute", top: 0, left: `${sliderPos}%`, transform: "translateX(-50%)", width: 3, height: "100%", background: C.white, boxShadow: "0 0 8px rgba(0,0,0,0.4)", zIndex: 2 }}>
             <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 40, height: 40, borderRadius: "50%", background: C.white, boxShadow: "0 2px 8px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: C.primary, userSelect: "none" }}>
-              â¨â©
+              {"\u27E8\u27E9"}
             </div>
           </div>
 
@@ -123,13 +123,13 @@ export default function TrustGallery({ config }) {
         </div>
 
         <div style={{ textAlign: "center", marginTop: 8, fontSize: 13, color: C.textLight }}>
-          {pair.service} Â· {pair.label}
+          {pair.service} {"\u00B7"} {pair.label}
         </div>
       </div>
 
-      {/* Reviews â compact horizontal strip */}
+      {/* Reviews — compact horizontal strip */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 14 }}>
-        <span style={{ fontSize: 16 }}>â­</span>
+        <span style={{ fontSize: 16 }}>{"\u2B50"}</span>
         <span style={{ fontWeight: 800, color: "#b45309", fontSize: 15 }}>{gallery.rating}</span>
         <span style={{ color: C.textLight, fontSize: 13 }}>from {gallery.reviewCount} Google reviews</span>
       </div>
@@ -139,7 +139,7 @@ export default function TrustGallery({ config }) {
           <div key={i} style={{ minWidth: 240, flex: "0 0 auto", background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 16px", boxShadow: C.shadow }}>
             <div style={{ display: "flex", gap: 1, marginBottom: 6 }}>
               {Array.from({ length: r.stars }).map((_, s) => (
-                <span key={s} style={{ color: "#f59e0b", fontSize: 12 }}>â</span>
+                <span key={s} style={{ color: "#f59e0b", fontSize: 12 }}>{"\u2605"}</span>
               ))}
             </div>
             <p style={{ fontSize: 13, color: C.textMid, lineHeight: 1.4, marginBottom: 8 }}>"{r.text}"</p>
