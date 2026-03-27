@@ -120,7 +120,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     setDismissedUpsells((p) => [...p, svcId]);
   };
 
-  // --- Pricing (uses shared pricing engine â no duplication!) ---
+  // --- Pricing (uses shared pricing engine — no duplication!) ---
   const basePrice = useMemo(
     () => calculateTotalBase(selectedServices, config.services, details, selectedExtras, config.globalPriceAdjustment, globalStories),
     [selectedServices, details, selectedExtras, config, globalStories]
@@ -137,7 +137,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     return calculateServicePrice(svc, details[svcId], selectedExtras[svcId], config.globalPriceAdjustment, globalStories, packageKey);
   };
 
-  // Package price â uses per-service pricing for services that have it (window cleaning)
+  // Package price — uses per-service pricing for services that have it (window cleaning)
   const pkgPrice = (pkg) => calculateTotalPackagePrice(
     selectedServices, config.services, details, selectedExtras,
     config.globalPriceAdjustment, globalStories, bundleDiscount,
@@ -272,7 +272,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         </div>
       )}
 
-      {/* Marketing Banners â on step 1 (services) */}
+      {/* Marketing Banners — on step 1 (services) */}
       {step === 1 && (
         <div style={{ marginBottom: 24, display: "flex", flexDirection: "column", gap: 10 }}>
           {config.marketing.showLimitedOffer && (
@@ -396,7 +396,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                                       <div style={{ fontSize: 12, color: C.textLight }}>{tier.description}</div>
                                     </div>
                                   </div>
-                                  <div style={{ fontSize: 13, fontWeight: 600, color: isActive ? C.primary : C.textMid }}>{isActive ? "â Selected" : ""}</div>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: isActive ? C.primary : C.textMid }}>{isActive ? "\u2713 Selected" : ""}</div>
                                 </div>
                               );
                             })}
@@ -425,7 +425,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                                   <WindowTypeSVG type={wt.id} active={isActive} />
                                   <div style={{ fontSize: 14, fontWeight: 700, color: isActive ? C.primary : C.text, marginTop: 8 }}>{wt.label}</div>
                                   <div style={{ fontSize: 11, color: C.textLight, marginTop: 2, lineHeight: 1.3 }}>{wt.description}</div>
-                                  {isActive && <div style={{ fontSize: 11, fontWeight: 700, color: C.primary, marginTop: 6 }}>â Selected</div>}
+                                  {isActive && <div style={{ fontSize: 11, fontWeight: 700, color: C.primary, marginTop: 6 }}>{"\u2713"} Selected</div>}
                                   {wt.id === "combination" && isActive && (
                                     <div style={{ marginTop: 8, padding: "8px 10px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, fontSize: 11, color: "#92400e", lineHeight: 1.4 }}>
                                       Storm windows often require an onsite estimate for accurate pricing. <a href="tel:+19205634101" style={{ color: "#b45309", fontWeight: 700 }}>Call (920) 563-4101</a> for a free quote.
@@ -440,7 +440,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                             <div style={{ marginTop: 16 }}>
                               <label style={s.label}>How many glass doors need cleaning? <span style={{ fontWeight: 400, color: C.textLight }}>(sliding, French, storm doors)</span></label>
                               <input type="number" placeholder="0" value={d.doors || ""} onChange={(e) => updateDetail(svc.id, "doors", Math.max(0, Number(e.target.value)))} style={{ ...s.input, maxWidth: 120 }} />
-                              {d.doors > 0 && <div style={{ fontSize: 12, color: C.textLight, marginTop: 4 }}>{d.doors} door{d.doors > 1 ? "s" : ""} Ã ${svc.doorPrice} = ${d.doors * svc.doorPrice}</div>}
+                              {d.doors > 0 && <div style={{ fontSize: 12, color: C.textLight, marginTop: 4 }}>{d.doors} door{d.doors > 1 ? "s" : ""} {"\u00D7"} ${svc.doorPrice} = ${d.doors * svc.doorPrice}</div>}
                             </div>
                           )}
                         </div>
@@ -513,7 +513,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             </div>
           )}
 
-          {/* Smart Cascade Upsell â triggered when House Washing is selected */}
+          {/* Smart Cascade Upsell — triggered when House Washing is selected */}
           {upsellOffers.length > 0 && (
             <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.textLight, textTransform: "uppercase", letterSpacing: 0.5 }}>
@@ -632,7 +632,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             })}
           </div>
 
-          {/* Transparent Pricing Breakdown â ClouteBid's differentiator */}
+          {/* Transparent Pricing Breakdown — ClouteBid's differentiator */}
           <div style={{ marginTop: 24 }}>
             <PriceBreakdown
               selectedServices={selectedServices}
@@ -693,7 +693,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
 }
 
 // This is a trick to let the parent read current step for the header stepper
-// In a real app you'd use context or lift state up â but this keeps things simple
+// In a real app you'd use context or lift state up — but this keeps things simple
 function StepExposer() {
   return null; // No-op; parent manages its own step display via view state
 }
