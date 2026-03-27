@@ -19,7 +19,7 @@ const NATIONAL_AVERAGES = {
 };
 
 /**
- * PriceBreakdown â Simple, clean pricing with national average comparison.
+ * PriceBreakdown — Simple, clean pricing with national average comparison.
  * Shows customers where their quote falls vs. what others pay nationally.
  */
 export default function PriceBreakdown({
@@ -54,7 +54,7 @@ export default function PriceBreakdown({
             onError={(e) => { e.target.parentElement.style.display = "none"; }}
           />
           <div style={{ padding: "10px 16px", background: C.white, display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 14 }}>ð</span>
+            <span style={{ fontSize: 14 }}>{"\u{1F4CD}"}</span>
             <span style={{ fontSize: 13, color: C.textMid, fontWeight: 500 }}>{contact.address}</span>
           </div>
         </div>
@@ -89,7 +89,7 @@ export default function PriceBreakdown({
           <div style={{ padding: "10px 24px", borderTop: `1px solid ${C.borderLight}`, background: "#f0fdf4" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: 14, color: "#16a34a", fontWeight: 600 }}>Bundle discount ({bundleDiscount}%)</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "#16a34a" }}>â{fmt(basePrice * bundleDiscount / 100)}</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#16a34a" }}>{"\u2212"}{fmt(basePrice * bundleDiscount / 100)}</span>
             </div>
           </div>
         )}
@@ -114,7 +114,7 @@ export default function PriceBreakdown({
       <div style={{ ...s.card, marginTop: 20, padding: 0, overflow: "hidden" }}>
         <div style={{ padding: "16px 24px 12px", borderBottom: `1px solid ${C.borderLight}` }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 16 }}>ð</span>
+            <span style={{ fontSize: 16 }}>{"\u{1F4CA}"}</span>
             <h4 style={{ fontSize: 15, fontWeight: 700, color: C.text, margin: 0 }}>How Your Quote Compares</h4>
           </div>
           <p style={{ fontSize: 12, color: C.textLight, margin: "4px 0 0" }}>Your price vs. national averages</p>
@@ -174,7 +174,7 @@ export default function PriceBreakdown({
 
       {/* Trust note */}
       <div style={{ marginTop: 16, padding: "12px 16px", background: C.white, borderRadius: 12, border: `1px solid ${C.borderLight}`, display: "flex", alignItems: "flex-start", gap: 10 }}>
-        <span style={{ fontSize: 14, flexShrink: 0 }}>ð</span>
+        <span style={{ fontSize: 14, flexShrink: 0 }}>{"\u{1F512}"}</span>
         <div style={{ fontSize: 12, color: C.textLight, lineHeight: 1.5 }}>
           <strong style={{ color: C.textMid }}>No surprises.</strong> Final pricing confirmed at your free on-site walkthrough. We never charge more than quoted without your approval.
         </div>
