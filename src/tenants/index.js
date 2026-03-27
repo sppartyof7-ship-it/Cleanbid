@@ -1,23 +1,27 @@
 /**
  * Multi-Tenant Resolver
  *
- * Detects which business (tenant) to load based on the URL hostname.
- * This is what lets one ClouteBid codebase power multiple cleaning businesses.
+ * Detects which business (tenant) to load based on the URL.
  *
  * Detection order:
  * 1. ?tenant=xxx query param (dev/testing)
- * 2. Hostname matching
- * 3. Falls back to "cloute" (default)
+ * 2. Subdomain extraction (cloute-cleaning.mybidquick.com â "cloute-cleaning")
+ * 3. Hostname matching (legacy â for existing custom domains)
+ * 4. Falls back to "cloute" (default)
+ *
+ * For Supabase-backed tenants, resolveSlug() returns the slug string,
+ * and App.jsx fetches the full config asynchronously.
  */
 import CLOUTE from "./cloute";
 import CORNERSTONE from "./cornerstone";
 
+// ââ Hardcoded tenants (legacy â will be phased out as tenants move to Supabase) ââ
 const TENANTS = {
   cloute: CLOUTE,
   cornerstone: CORNERSTONE,
 };
 
-// Map hostnames → tenant IDs
+// ââ Legacy hostname â tenant ID map ââ
 const HOST_MAP = {
   // Cloute (default)
   "cleanbid.vercel.app": "cloute",
@@ -32,35 +36,99 @@ const HOST_MAP = {
   "www.cornerstonewash.com": "cornerstone",
 
   // Local dev
-  "localhost": "cloute",
+  localhost: "cloute",
 };
 
+// ââ Domains where subdomains map to tenant slugs ââ
+const SUBDOMAIN_ROOTS = [
+  "mybidquick.com",
+  "mybidquick.io",
+  "mybidquick.org",
+  "mybidquick.vercel.app",
+];
+
 /**
- * Resolve current tenant from the URL.
+ * Extract the tenant slug from a subdomain.
+ * e.g., "cloute-cleaning.mybidquick.com" â "cloute-cleaning"
+ *       "mybidquick.com" (root) â null
+ *       "www.mybidquick.com" â null
  */
-export function resolveTenant() {
-  // 1. Check query param (for testing: ?tenant=cornerstone)
+export function extractSubdomainSlug() {
+  const host = window.location.hostname.toLowerCase();
+
+  for (const root of SUBDOMAIN_ROOTS) {
+    if (host.endsWith(`.${root}`)) {
+      const sub = host.slice(0, -(root.length + 1)); // strip ".mybidquick.com"
+      if (sub && sub !== "www") return sub;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Resolve the tenant slug from the URL.
+ * Returns: { slug: string, source: "param"|"subdomain"|"hostname"|"default" }
+ *
+ * This is the FIRST step â just figures out WHAT to load.
+ * The actual config fetch happens in App.jsx.
+ */
+export function resolveSlug() {
+  // 1. Check query param (for testing: ?tenant=cloute-cleaning)
   const params = new URLSearchParams(window.location.search);
   const paramTenant = params.get("tenant");
-  if (paramTenant && TENANTS[paramTenant]) {
-    return TENANTS[paramTenant];
+  if (paramTenant) {
+    return { slug: paramTenant, source: "param" };
   }
 
-  // 2. Check hostname (exact match)
+  // 2. Check subdomain (cloute-cleaning.mybidquick.com)
+  const subSlug = extractSubdomainSlug();
+  if (subSlug) {
+    return { slug: subSlug, source: "subdomain" };
+  }
+
+  // 3. Check legacy hostname map
   const host = window.location.hostname.toLowerCase();
-  const tenantId = HOST_MAP[host];
-  if (tenantId && TENANTS[tenantId]) {
-    return TENANTS[tenantId];
+  const legacyId = HOST_MAP[host];
+  if (legacyId) {
+    return { slug: legacyId, source: "hostname" };
   }
 
-  // 3. Fuzzy match — handles Vercel preview URLs like
-  //    cornerstonebid-abc123-team.vercel.app
+  // 4. Fuzzy match for Vercel preview URLs
   if (host.includes("cornerstonebid") || host.includes("cornerstone")) {
-    return TENANTS.cornerstone;
+    return { slug: "cornerstone", source: "hostname" };
   }
 
-  // 4. Default to Cloute
+  // 5. Default
+  return { slug: "cloute", source: "default" };
+}
+
+/**
+ * Resolve the tenant synchronously from hardcoded configs.
+ * Used as a FALLBACK when Supabase is unavailable.
+ */
+export function resolveTenant() {
+  const { slug } = resolveSlug();
+
+  // Check hardcoded tenants first
+  if (TENANTS[slug]) return TENANTS[slug];
+
+  // Default to Cloute
   return TENANTS.cloute;
+}
+
+/**
+ * Check if a slug matches a hardcoded tenant (no Supabase needed).
+ */
+export function isHardcodedTenant(slug) {
+  return slug in TENANTS;
+}
+
+/**
+ * Get the hardcoded tenant config by slug.
+ */
+export function getHardcodedTenant(slug) {
+  return TENANTS[slug] || null;
 }
 
 /**
