@@ -1,8 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import C, { setTenantColors } from "./config/colors";
 import s from "./config/styles";
-import DEFAULT_CONFIG, { buildDefaultConfig } from "./config/defaults";
-import { resolveTenant } from "./tenants";
+import { buildDefaultConfig } from "./config/defaults";
+import { resolveSlug, isHardcodedTenant, getHardcodedTenant, resolveTenant } from "./tenants";
+import { isSupabaseConnected, fetchTenantBySlug } from "./lib/supabase";
+import { adaptSupabaseConfig, extractColors } from "./lib/configAdapter";
 import { deepClone } from "./utils/helpers";
 import { saveConfig, loadConfig, saveLeads, loadLeads } from "./utils/storage";
 import { sendLeadNotification } from "./utils/email";
@@ -11,9 +13,14 @@ import AdminPanel from "./components/AdminPanel";
 import LeadsPanel from "./components/LeadsPanel";
 import CustomerFlow from "./components/CustomerFlow";
 
-// Resolve tenant once at module load (before any renders)
-const TENANT = resolveTenant();
-setTenantColors(TENANT.colors);
+// ââ Resolve slug synchronously (fast â no network) ââ
+const { slug: TENANT_SLUG, source: SLUG_SOURCE } = resolveSlug();
+
+// ââ If it's a hardcoded tenant, load synchronously (backwards compatible) ââ
+const HARDCODED = getHardcodedTenant(TENANT_SLUG);
+if (HARDCODED) {
+  setTenantColors(HARDCODED.colors);
+}
 
 const DEFAULT_LEADS = [
   { id: 1, name: "Sarah Johnson", email: "sarah@email.com", phone: "(555) 234-5678", services: ["pressure_washing", "gutter_cleaning"], package: "premium", total: 485, status: "pending", date: "2026-03-12", followUpStep: 2, notes: "Two-story home, large driveway", leadSource: "Online Organic", projectType: "residential", photos: [] },
@@ -23,40 +30,23 @@ const DEFAULT_LEADS = [
 ];
 
 export default function App() {
+  // ââ Loading states ââ
+  const [loading, setLoading] = useState(!HARDCODED); // Only loading if we need to fetch
+  const [error, setError] = useState(null);
+
+  // ââ Config â initialized immediately for hardcoded tenants ââ
   const [config, setConfig] = useState(() => {
-    const tenantDefaults = buildDefaultConfig(TENANT);
+    if (!HARDCODED) return null; // Will be set after Supabase fetch
+
+    const tenantDefaults = buildDefaultConfig(HARDCODED);
     const saved = loadConfig();
     if (!saved) return deepClone(tenantDefaults);
-    const defaults = deepClone(tenantDefaults);
-    // Deep merge: start with defaults, overlay saved top-level keys
-    const merged = { ...defaults, ...saved };
-    // Always sync services from defaults (names, descriptions, extras, options)
-    // but preserve any admin price overrides
-    merged.services = defaults.services.map((defSvc) => {
-      const savedSvc = saved.services?.find((s) => s.id === defSvc.id);
-      if (!savedSvc) return defSvc;
-      return {
-        ...defSvc,
-        // Preserve admin-editable fields from saved config
-        basePrice: savedSvc.basePrice ?? defSvc.basePrice,
-        perSqFt: savedSvc.perSqFt ?? defSvc.perSqFt,
-        perWindow: savedSvc.perWindow ?? defSvc.perWindow,
-        perLinFt: savedSvc.perLinFt ?? defSvc.perLinFt,
-        enabled: savedSvc.enabled ?? defSvc.enabled,
-      };
-    });
-    // Always use tenant lead sources
-    merged.leadSources = defaults.leadSources;
-    // Always preserve tenant identity
-    merged.tenantId = defaults.tenantId;
-    merged.businessName = defaults.businessName;
-    merged.logoLetter = defaults.logoLetter;
-    merged.tagline = defaults.tagline;
-    merged.housecallProEnabled = defaults.housecallProEnabled;
-    return merged;
+    return mergeConfigWithDefaults(saved, tenantDefaults);
   });
+
   const [leads, setLeads] = useState(() => loadLeads() || DEFAULT_LEADS);
-  // Read initial view from URL hash (#admin, #leads) â defaults to customer
+
+  // ââ View routing (hash-based) ââ
   const getViewFromHash = () => {
     const hash = window.location.hash.replace("#", "").toLowerCase();
     if (hash === "admin") return "admin";
@@ -69,29 +59,82 @@ export default function App() {
   const [adminPw, setAdminPw] = useState("");
   const [animate, setAnimate] = useState(false);
 
-  // Set page title from tenant
+  // ââ Fetch config from Supabase for non-hardcoded tenants ââ
   useEffect(() => {
-    document.title = `${config.businessName} - ${config.tagline || "Instant Cleaning Service Quotes"}`;
-  }, [config.businessName, config.tagline]);
+    if (HARDCODED) return; // Already loaded synchronously
 
-  // Sync view when the URL hash changes (browser back/forward)
+    async function fetchConfig() {
+      try {
+        if (!isSupabaseConnected()) {
+          // No Supabase env vars â fall back to default Cloute config
+          console.warn("[App] Supabase not configured, using default config");
+          const fallback = resolveTenant();
+          setTenantColors(fallback.colors);
+          const cfg = buildDefaultConfig(fallback);
+          setConfig(deepClone(cfg));
+          setLoading(false);
+          return;
+        }
+
+        // Try fetching by slug from Supabase
+        const tenantRow = await fetchTenantBySlug(TENANT_SLUG);
+
+        if (!tenantRow) {
+          setError({
+            title: "Business Not Found",
+            message: `We couldn't find a cleaning company with the URL "${TENANT_SLUG}".`,
+            suggestion: "Double-check the URL or contact the business directly.",
+          });
+          setLoading(false);
+          return;
+        }
+
+        // Set colors FIRST (before render) so all components get the right palette
+        const colors = extractColors(tenantRow);
+        setTenantColors(colors);
+
+        // Build the full Cleanbid config from the Supabase data
+        const fullConfig = adaptSupabaseConfig(tenantRow);
+        setConfig(fullConfig);
+        setLoading(false);
+      } catch (err) {
+        console.error("[App] Failed to fetch tenant config:", err);
+        // Graceful fallback â use default config
+        const fallback = resolveTenant();
+        setTenantColors(fallback.colors);
+        const cfg = buildDefaultConfig(fallback);
+        setConfig(deepClone(cfg));
+        setLoading(false);
+      }
+    }
+
+    fetchConfig();
+  }, []);
+
+  // ââ Set page title from tenant ââ
+  useEffect(() => {
+    if (config) {
+      document.title = `${config.businessName} - ${config.tagline || "Instant Cleaning Service Quotes"}`;
+    }
+  }, [config?.businessName, config?.tagline]);
+
+  // ââ Sync view when the URL hash changes (browser back/forward) ââ
   useEffect(() => {
     const onHashChange = () => setView(getViewFromHash());
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
-  // Keep hash in sync when view changes programmatically
   const changeView = (newView) => {
     window.location.hash = newView === "customer" ? "" : newView;
     setView(newView);
   };
 
-  // Persist config and leads to localStorage whenever they change
-  useEffect(() => { saveConfig(config); }, [config]);
+  // ââ Persist config and leads to localStorage whenever they change ââ
+  useEffect(() => { if (config) saveConfig(config); }, [config]);
   useEffect(() => { saveLeads(leads); }, [leads]);
 
-  // Page transition animation
+  // ââ Page transition animation ââ
   useEffect(() => {
     setAnimate(true);
     const t = setTimeout(() => setAnimate(false), 350);
@@ -110,14 +153,105 @@ export default function App() {
 
   const handleSubmitLead = (newLead) => {
     setLeads((prev) => [newLead, ...prev]);
-    // Send email notification (fire-and-forget â doesn't block the UI)
     sendLeadNotification(newLead, config);
-    // Sync to Housecall Pro CRM (fire-and-forget â creates customer + estimate)
     if (config.housecallProEnabled) {
       sendToHousecallPro(newLead, config.services);
     }
   };
 
+  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // LOADING STATE
+  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#f0f7ff",
+        fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
+      }}>
+        <div style={{
+          width: 60, height: 60, borderRadius: 16,
+          background: "linear-gradient(135deg, #3b9cff, #6dd19e)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 28, fontWeight: 800, color: "#fff",
+          animation: "pulse 1.5s ease-in-out infinite",
+          marginBottom: 20,
+        }}>
+          BQ
+        </div>
+        <p style={{ color: "#4a6d94", fontSize: 16 }}>Loading your quote page...</p>
+        <style>{`
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.08); opacity: 0.8; }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ERROR STATE (tenant not found)
+  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  if (error) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#f0f7ff",
+        fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
+        padding: 24,
+      }}>
+        <div style={{
+          background: "#fff",
+          borderRadius: 16,
+          padding: "48px 40px",
+          maxWidth: 440,
+          textAlign: "center",
+          boxShadow: "0 4px 24px rgba(59,156,255,0.1)",
+        }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>{"\u{1F50D}"}</div>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1e3a5f", marginBottom: 8 }}>
+            {error.title}
+          </h1>
+          <p style={{ fontSize: 15, color: "#4a6d94", lineHeight: 1.6, marginBottom: 20 }}>
+            {error.message}
+          </p>
+          <p style={{ fontSize: 13, color: "#7a9bbc" }}>
+            {error.suggestion}
+          </p>
+          <div style={{ marginTop: 28, paddingTop: 20, borderTop: "1px solid #e8f0fa" }}>
+            <a
+              href="https://mybidquick.com"
+              style={{
+                display: "inline-block",
+                padding: "10px 24px",
+                background: "linear-gradient(135deg, #3b9cff, #6dd19e)",
+                color: "#fff",
+                borderRadius: 8,
+                textDecoration: "none",
+                fontWeight: 600,
+                fontSize: 14,
+              }}
+            >
+              Visit MyBidQuick
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // MAIN APP (config loaded)
+  // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif", color: C.text }}>
       {/* HEADER */}
@@ -130,7 +264,6 @@ export default function App() {
             <div style={{ width: 38, height: 38, borderRadius: 10, background: C.gradient, display: config.logoImage ? "none" : "flex", alignItems: "center", justifyContent: "center", fontSize: config.logoLetter?.length > 1 ? 13 : 18, fontWeight: 800, color: C.white }}>{config.logoLetter || "C"}</div>
             {!config.logoImage && <span style={{ fontSize: 20, fontWeight: 800, color: C.text }}>{config.businessName}</span>}
           </div>
-          {/* Admin nav â only visible when on admin/leads views (accessed via #admin or #leads URL) */}
           {(view === "admin" || view === "leads") && (
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <button onClick={() => changeView("leads")} style={{ ...s.btnSecondary, padding: "8px 14px", fontSize: 12, background: view === "leads" ? `${C.primary}12` : C.white, color: view === "leads" ? C.primary : C.textLight, borderColor: view === "leads" ? C.primary : C.border }}>
@@ -184,4 +317,41 @@ export default function App() {
 
     </div>
   );
+}
+
+// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// HELPERS
+// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+
+/**
+ * Merge a saved localStorage config with fresh defaults.
+ * Preserves admin price overrides while syncing new features.
+ */
+function mergeConfigWithDefaults(saved, defaults) {
+  const merged = { ...deepClone(defaults), ...saved };
+
+  // Always sync services from defaults (names, descriptions, extras, options)
+  // but preserve any admin price overrides
+  merged.services = defaults.services.map((defSvc) => {
+    const savedSvc = saved.services?.find((s) => s.id === defSvc.id);
+    if (!savedSvc) return defSvc;
+    return {
+      ...defSvc,
+      basePrice: savedSvc.basePrice ?? defSvc.basePrice,
+      perSqFt: savedSvc.perSqFt ?? defSvc.perSqFt,
+      perWindow: savedSvc.perWindow ?? defSvc.perWindow,
+      perLinFt: savedSvc.perLinFt ?? defSvc.perLinFt,
+      enabled: savedSvc.enabled ?? defSvc.enabled,
+    };
+  });
+
+  // Always use tenant lead sources & identity
+  merged.leadSources = defaults.leadSources;
+  merged.tenantId = defaults.tenantId;
+  merged.businessName = defaults.businessName;
+  merged.logoLetter = defaults.logoLetter;
+  merged.tagline = defaults.tagline;
+  merged.housecallProEnabled = defaults.housecallProEnabled;
+
+  return merged;
 }
