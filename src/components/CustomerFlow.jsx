@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import C from "../config/colors";
 import s from "../config/styles";
 import { SERVICES_WITH_STORIES } from "../config/defaults";
@@ -9,7 +9,39 @@ import CountdownTimer from "./CountdownTimer";
 import PhotoUploader from "./PhotoUploader";
 import AddressAutocomplete from "./AddressAutocomplete";
 import TrustGallery from "./TrustGallery";
-import PriceBreakdown from "./PriceBreakdown";
+
+/**
+ * National average price ranges for exterior cleaning services.
+ * Source: HomeAdvisor, Angi, Thumbtack aggregated data.
+ */
+const NATIONAL_AVERAGES = {
+  pressure_washing: { low: 200, high: 600, label: "House Washing" },
+  window_cleaning: { low: 150, high: 500, label: "Window Cleaning" },
+  deck_cleaning: { low: 175, high: 500, label: "Deck Cleaning" },
+  concrete_cleaning: { low: 125, high: 400, label: "Concrete Cleaning" },
+  roof_cleaning: { low: 300, high: 800, label: "Roof Cleaning" },
+  gutter_cleaning: { low: 100, high: 350, label: "Gutter Cleaning" },
+  gutter_guard_install: { low: 800, high: 2500, label: "Gutter Guards" },
+};
+
+// Session storage helpers for persistence
+const CF_STORAGE_KEY = 'mbq_customer_flow_progress'
+
+function loadCustomerProgress() {
+  try {
+    const raw = sessionStorage.getItem(CF_STORAGE_KEY)
+    if (!raw) return null
+    return JSON.parse(raw)
+  } catch { return null }
+}
+
+function saveCustomerProgress(data) {
+  try { sessionStorage.setItem(CF_STORAGE_KEY, JSON.stringify(data)) } catch {}
+}
+
+function clearCustomerProgress() {
+  try { sessionStorage.removeItem(CF_STORAGE_KEY) } catch {}
+}
 
 function WindowTypeSVG({ type, active }) {
   const color = active ? "#3b9cff" : "#94a3b8";
@@ -49,19 +81,27 @@ function WindowTypeSVG({ type, active }) {
 }
 
 export default function CustomerFlow({ config, onSubmitLead }) {
-  const [step, setStep] = useState(0);
-  const [selectedServices, setSelectedServices] = useState([]);
-  const [details, setDetails] = useState({});
-  const [selectedExtras, setSelectedExtras] = useState({});
-  const [selectedPackage, setSelectedPackage] = useState("premium");
-  const [contact, setContact] = useState({
+  // Load saved progress from sessionStorage
+  const saved = loadCustomerProgress()
+
+  const [step, setStep] = useState(saved?.step ?? 0);
+  const [selectedServices, setSelectedServices] = useState(saved?.selectedServices ?? []);
+  const [details, setDetails] = useState(saved?.details ?? {});
+  const [selectedExtras, setSelectedExtras] = useState(saved?.selectedExtras ?? {});
+  const [selectedPackage, setSelectedPackage] = useState(saved?.selectedPackage ?? "premium");
+  const [contact, setContact] = useState(saved?.contact ?? {
     name: "", email: "", phone: "", address: "", notes: "", leadSource: "", projectType: "residential",
   });
   const [appliedBundle, setAppliedBundle] = useState(null);
-  const [globalStories, setGlobalStories] = useState(1);
-  const [customerPhotos, setCustomerPhotos] = useState([]);
+  const [globalStories, setGlobalStories] = useState(saved?.globalStories ?? 1);
+  const [customerPhotos, setCustomerPhotos] = useState([]); // Can't serialize file objects
   const [validationErrors, setValidationErrors] = useState({});
   const [dismissedUpsells, setDismissedUpsells] = useState([]);
+
+  // Auto-save progress to sessionStorage
+  useEffect(() => {
+    saveCustomerProgress({ step, selectedServices, details, selectedExtras, selectedPackage, contact, globalStories })
+  }, [step, selectedServices, details, selectedExtras, selectedPackage, contact, globalStories])
 
   const enabledServices = config.services.filter((sv) => sv.enabled);
 
@@ -81,6 +121,31 @@ export default function CustomerFlow({ config, onSubmitLead }) {
 
   // Track which services were added via upsell (to apply discount in pricing)
   const [upsellAccepted, setUpsellAccepted] = useState([]);
+
+  // Smart auto-populate: house wash sqft â other services
+  useEffect(() => {
+    const hwSqft = details.pressure_washing?.sqft
+    if (!hwSqft || hwSqft <= 0) return
+    setDetails(prev => {
+      const next = { ...prev }
+      // Auto-fill roof cleaning sqft if selected and not manually set
+      if (selectedServices.includes('roof_cleaning') && !prev.roof_cleaning?.sqft) {
+        next.roof_cleaning = { ...(prev.roof_cleaning || {}), sqft: hwSqft }
+      }
+      // Auto-fill window cleaning sqft if selected and not manually set
+      if (selectedServices.includes('window_cleaning') && !prev.window_cleaning?.sqft) {
+        next.window_cleaning = { ...(prev.window_cleaning || {}), sqft: hwSqft }
+      }
+      return next
+    })
+  }, [details.pressure_washing?.sqft, selectedServices])
+
+  // Satellite map URL computation
+  const satelliteUrl = useMemo(() => {
+    if (!contact?.address || !config.googlePlacesApiKey) return null
+    const encoded = encodeURIComponent(contact.address)
+    return `https://maps.googleapis.com/maps/api/staticmap?center=${encoded}&zoom=19&size=600x300&maptype=satellite&key=${config.googlePlacesApiKey}`
+  }, [contact?.address, config.googlePlacesApiKey])
 
   const upsellOffers = [];
   if (upsellConfig.enabled !== false && hasHouseWash) {
@@ -237,6 +302,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
       photos: customerPhotos.map((p) => ({ ...p })),
     };
     onSubmitLead(newLead);
+    clearCustomerProgress();
     next();
   };
 
@@ -251,6 +317,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     setCustomerPhotos([]);
     setGlobalStories(1);
     setValidationErrors({});
+    clearCustomerProgress();
   };
 
   const stepLabels = ["Your Info", "Services & Details", "Photos", "Your Quote"];
@@ -356,6 +423,13 @@ export default function CustomerFlow({ config, onSubmitLead }) {
           <h1 style={s.h1}>Tell us about your project</h1>
           <p style={{ color: C.textLight, marginBottom: 24, fontSize: 15 }}>Select your services and fill in the details. We'll build your custom quote!</p>
 
+          {/* Satellite map â show if address is provided */}
+          {satelliteUrl && (
+            <div style={{ marginBottom: 24 }}>
+              <img src={satelliteUrl} alt="Property satellite view" style={{ width: "100%", maxHeight: 300, borderRadius: 16, border: `1px solid ${C.border}`, objectFit: "cover" }} />
+            </div>
+          )}
+
           {/* Global property info */}
           <div style={s.card}>
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-end" }}>
@@ -441,7 +515,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                             <input type="number" placeholder="e.g. 2000" value={d.sqft || ""} onChange={(e) => updateDetail(svc.id, "sqft", Math.max(0, Number(e.target.value)))} style={s.input} />
                             {d.sqft > 0 && (
                               <div style={{ marginTop: 6, fontSize: 12, color: C.textLight }}>
-                                Estimated windows: {getEstimatedWindows(d.sqft, svc.windowsPerSqFt)} (based on WI home averages)
+                                Estimated windows: ~{getEstimatedWindows(d.sqft, svc.windowsPerSqFt)} (based on WI home averages)
                               </div>
                             )}
                           </div>
@@ -459,7 +533,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                                   {wt.id === "combination" && isActive && (
                                     <div style={{ marginTop: 8, padding: "8px 10px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, fontSize: 11, color: "#92400e", lineHeight: 1.4 }}>
                                       Storm windows often require an onsite estimate for accurate pricing. <a href="tel:+19205634101" style={{ color: "#b45309", fontWeight: 700 }}>Call (920) 563-4101</a> for a free quote.
-                                    </div>
+                                                            </div>
                                   )}
                                 </div>
                               );
@@ -468,9 +542,9 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                           {/* Door count question */}
                           {svc.doorPrice && (
                             <div style={{ marginTop: 16 }}>
-                              <label style={s.label}>Ow many glass doors need cleaning? <span style={{ fontWeight: 400, color: C.textLight }}>(sliding, French, storm doors)</span></label>
+                              <label style={s.label}>How many glass doors need cleaning? <span style={{ fontWeight: 400, color: C.textLight }}>(sliding, French, storm doors)</span></label>
                               <input type="number" placeholder="0" value={d.doors || ""} onChange={(e) => updateDetail(svc.id, "doors", Math.max(0, Number(e.target.value)))} style={{ ...s.input, maxWidth: 120 }} />
-                              {d.doors > 0 && <div style={{ fontSize: 12, color: C.textLight, marginTop: 4 }}>{d.doors} door{d.doors > 1 ? "s" : ""} {"\u00D7}"} ${svc.doorPrice} = ${d.doors * svc.doorPrice}</div>}
+                              {d.doors > 0 && <div style={{ fontSize: 12, color: C.textLight, marginTop: 4 }}>{d.doors} door{d.doors > 1 ? "s" : ""}</div>}
                             </div>
                           )}
                         </div>
@@ -499,7 +573,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                                   <div style={{ flex: 1 }}>
                                     <span style={{ fontSize: 14, fontWeight: 600, color: checked ? C.accent : C.text }}>{q.label}</span>
                                   </div>
-                                  <span style={{ fontSize: 12, color: C.textLiight }}></span>
+                                  <span style={{ fontSize: 12, color: C.textLight }}></span>
                                 </div>
                               );
                             })}
@@ -520,8 +594,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                               {availableExtras.map((ext) => {
                                 const a = (selectedExtras[svc.id] || []).includes(ext.id);
-                                const priceLabel = ext.pricePerUnit ? `$${ext.pricePerUnit}/${ext.unit}` : ext.price ? `$${ext.price}` : "";
-                                return <button key={ext.id} onClick={() => toggleExtra(svc.id, ext.id)} style={{ padding: "7px 14px", borderRadius: 20, border: `1px solid ${a ? C.primary : C.border}`, background: a ? `${C.primary}12` : C.white, color: a ? C.primary : C.textMid, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>{a ? "\u2713 " : "+ "}{ext.label}{priceLabel ? ` (${priceLabel})` : ""}</button>;
+                                return <button key={ext.id} onClick={() => toggleExtra(svc.id, ext.id)} style={{ padding: "7px 14px", borderRadius: 20, border: `1px solid ${a ? C.primary : C.border}`, background: a ? `${C.primary}12` : C.white, color: a ? C.primary : C.textMid, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>{a ? "\u2713 " : "+ "}{ext.label}</button>;
                               })}
                             </div>
                           </div>
@@ -535,11 +608,16 @@ export default function CustomerFlow({ config, onSubmitLead }) {
           </div>
 
           {bundleDiscount > 0 && (
-            <div style={{ marginTop: 16, padding: "12px 20px", background: C.bgAccent, border: "1px solid #bbf7d0", borderRadius: 12, display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 18 }}>{"\u{1F389}"}</span>
-              <span style={{ color: C.secondaryDark, fontWeight: 600, fontSize: 14 }}>
-                {appliedBundle && seasonalBundle ? `${seasonalBundle.name}: ${bundleDiscount}% off!` : `Bundle Discount: ${bundleDiscount}% off for ${selectedServices.length} services!`}
-              </span>
+            <div style={{ marginTop: 20, padding: "20px 24px", background: "linear-gradient(135deg, #ecfdf5, #f0fdf4)", border: "2px solid #86efac", borderRadius: 20, display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ fontSize: 36, fontWeight: 900, color: "#16a34a", lineHeight: 1 }}>{bundleDiscount}%</div>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: "#15803d" }}>
+                  {appliedBundle && seasonalBundle ? seasonalBundle.name : "Bundle Discount!"}
+                </div>
+                <div style={{ fontSize: 14, color: "#166534", marginTop: 2 }}>
+                  {"\u{1F389}"} {selectedServices.length} services selected â saving you {bundleDiscount}%
+                </div>
+              </div>
             </div>
           )}
 
@@ -620,67 +698,161 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         </div>
       )}
 
-      {/* STEP 3: Quote + Submit */}
+      {/* STEP 3: Review & Submit (no quote pricing â shows national averages) */}
       {step === 3 && (
         <div>
-          <h1 style={s.h1}>Here's your custom quote!</h1>
-          <p style={{ color: C.textLight, marginBottom: 24, fontSize: 15 }}>Choose the package that fits your needs, then submit to lock in your price.</p>
+          <h1 style={s.h1}>Review Your Quote Request</h1>
+          <p style={{ color: C.textLight, marginBottom: 24, fontSize: 15 }}>Here's a summary of what we'll quote for you. Submit and we'll get back to you fast!</p>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 20 }}>
-            {Object.entries(config.packages).map(([key, pkg]) => {
-              const price = pkgPrice(key);
-              const act = selectedPackage === key;
-              const pkgColor = key === "standard" ? C.textMid : key === "premium" ? C.primary : C.accent;
-              // Build service-specific features for this tier
-              const svcFeatures = selectedServices.map((svcId) => {
-                const svc = config.services.find((s) => s.id === svcId);
-                if (!svc || !svc.tierFeatures) return null;
-                return { name: svc.name, feature: svc.tierFeatures[key] };
-              }).filter(Boolean);
+          {/* Satellite map on review page */}
+          {satelliteUrl && (
+            <div style={{ marginBottom: 24, borderRadius: 16, overflow: "hidden", border: `1px solid ${C.border}`, boxShadow: C.shadow }}>
+              <img src={satelliteUrl} alt="Your property" style={{ width: "100%", height: 200, objectFit: "cover", display: "block" }} onError={(e) => { e.target.parentElement.style.display = "none"; }} />
+              <div style={{ padding: "10px 16px", background: C.white, display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 14 }}>{"\u{1F4CD}"}</span>
+                <span style={{ fontSize: 13, color: C.textMid, fontWeight: 500 }}>{contact.address}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Bundle discount â BIG and prominent */}
+          {bundleDiscount > 0 && (
+            <div style={{ marginBottom: 24, padding: "20px 28px", background: "linear-gradient(135deg, #ecfdf5, #f0fdf4)", border: "2px solid #86efac", borderRadius: 20, textAlign: "center" }}>
+              <div style={{ fontSize: 42, fontWeight: 900, color: "#16a34a", lineHeight: 1.1 }}>{bundleDiscount}% OFF</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#15803d", marginTop: 6 }}>
+                {"\u{1F389}"} Bundle Discount for {selectedServices.length} Services!
+              </div>
+              <div style={{ fontSize: 13, color: "#166534", marginTop: 4 }}>Applied automatically â no code needed</div>
+            </div>
+          )}
+
+          {/* Summary of selections */}
+          <div style={s.card}>
+            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: C.text }}>Your Selection</h3>
+
+            {/* Services summary */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: C.textMid, marginBottom: 8 }}>Services:</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {selectedServices.map((svcId) => {
+                  const svc = config.services.find((s) => s.id === svcId);
+                  return (
+                    <div key={svcId} style={{ padding: "8px 14px", borderRadius: 20, background: `${C.primary}10`, color: C.primary, fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                      <span>{svc?.icon}</span> {svc?.name}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Property details summary */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: C.textMid, marginBottom: 8 }}>Property Details:</div>
+              <div style={{ fontSize: 13, color: C.text, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
+                <div><strong>Type:</strong> {contact.projectType === "residential" ? "\u{1F3E1} Residential" : "\u{1F3E2} Commercial"}</div>
+                <div><strong>Stories:</strong> {globalStories === 1 ? "1" : globalStories === 2 ? "2" : "3+"}</div>
+                {contact.address && <div><strong>Address:</strong> {contact.address}</div>}
+              </div>
+            </div>
+
+            {/* Service-specific details summary */}
+            {selectedServices.some((svcId) => details[svcId]) && (
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: C.textMid, marginBottom: 8 }}>Service Details:</div>
+                <div style={{ fontSize: 13, color: C.text, display: "flex", flexDirection: "column", gap: 6 }}>
+                  {selectedServices.map((svcId) => {
+                    const d = details[svcId];
+                    if (!d || Object.keys(d).length === 0) return null;
+                    const svc = config.services.find((s) => s.id === svcId);
+                    return (
+                      <div key={svcId}>
+                        <strong>{svc?.name}:</strong> {d.sqft ? `${d.sqft} sqft` : ""} {d.windows ? `${d.windows} windows` : ""} {d.linearFt ? `${d.linearFt} linear ft` : ""} {d.doors ? `${d.doors} doors` : ""}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Photos summary */}
+            {customerPhotos.length > 0 && (
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: C.textMid, marginBottom: 8 }}>{"\u{1F4F7}"} Photos Attached: {customerPhotos.length}</div>
+              </div>
+            )}
+          </div>
+
+          {/* National Average Price Comparison â shows ranges, NOT the customer's quote price */}
+          <div style={{ ...s.card, marginTop: 20, padding: 0, overflow: "hidden" }}>
+            <div style={{ padding: "16px 24px 12px", borderBottom: `1px solid ${C.borderLight}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 16 }}>{"\u{1F4CA}"}</span>
+                <h4 style={{ fontSize: 15, fontWeight: 700, color: C.text, margin: 0 }}>What People Typically Pay</h4>
+              </div>
+              <p style={{ fontSize: 12, color: C.textLight, margin: "4px 0 0" }}>National average ranges for your selected services</p>
+            </div>
+
+            {selectedServices.map((svcId) => {
+              const svc = config.services.find((sv) => sv.id === svcId);
+              const avg = NATIONAL_AVERAGES[svcId];
+              if (!svc || !avg) return null;
+
               return (
-                <div key={key} onClick={() => setSelectedPackage(key)} style={{ background: act ? `${pkgColor}08` : C.white, border: `2px solid ${act ? pkgColor : C.border}`, borderRadius: 20, padding: 28, cursor: "pointer", transition: "all 0.2s", transform: act ? "scale(1.03)" : "scale(1)", position: "relative", boxShadow: act ? C.shadowHover : C.shadow }}>
-                  {pkg.popular && <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: C.gradient, color: C.white, fontSize: 11, fontWeight: 700, padding: "4px 16px", borderRadius: 20, textTransform: "uppercase" }}>Most Popular</div>}
-                  <h3 style={{ fontSize: 22, fontWeight: 800, color: pkgColor, marginBottom: 4 }}>{pkg.label}</h3>
-                  <p style={{ fontSize: 13, color: C.textLight, marginBottom: 20 }}>{pkg.tag}</p>
-                  <div style={{ fontSize: 36, fontWeight: 800, color: C.text, marginBottom: 4 }}>{fmt(price)}</div>
-                  {bundleDiscount > 0 && <div style={{ fontSize: 12, color: C.secondaryDark, marginBottom: 16 }}>Includes {bundleDiscount}% discount</div>}
-                  {/* Service-specific features */}
-                  {svcFeatures.length > 0 && (
-                    <ul style={{ listStyle: "none", padding: 0, margin: "0 0 12px 0" }}>
-                      {svcFeatures.map((sf, i) => (
-                        <li key={i} style={{ padding: "5px 0", fontSize: 13, color: C.text, display: "flex", gap: 8, alignItems: "flex-start" }}>
-                          <span style={{ color: pkgColor, fontWeight: 700, flexShrink: 0 }}>{"\u2713"}</span>
-                          <span><strong style={{ color: C.text }}>{sf.name}:</strong> {sf.feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {/* Divider between service features and universal features */}
-                  {svcFeatures.length > 0 && <div style={{ borderTop: `1px solid ${C.border}`, margin: "8px 0 12px" }} />}
-                  {/* Universal package features */}
-                  <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                    {(pkg.features || []).map((item, i) => <li key={i} style={{ padding: "5px 0", fontSize: 13, color: C.textMid, display: "flex", gap: 8 }}><span style={{ color: pkgColor, flexShrink: 0 }}>{"\u2713"}</span>{item}</li>)}
-                  </ul>
+                <div key={svcId} style={{ padding: "14px 24px", borderTop: `1px solid ${C.borderLight}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{svc.icon} {avg.label}</span>
+                    <span style={{ fontSize: 12, color: C.textLight }}>{fmt(avg.low)} â {fmt(avg.high)}</span>
+                  </div>
+
+                  {/* Comparison bar â just the range, no marker for their price */}
+                  <div style={{ position: "relative" }}>
+                    <div style={{ height: 8, borderRadius: 4, background: `linear-gradient(90deg, #bbf7d0, #fde68a, #fecaca)`, overflow: "visible", position: "relative" }} />
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+                      <span style={{ fontSize: 10, color: "#16a34a", fontWeight: 600 }}>Below avg</span>
+                      <span style={{ fontSize: 10, color: C.textLight }}>National range</span>
+                      <span style={{ fontSize: 10, color: "#dc2626", fontWeight: 600 }}>Above avg</span>
+                    </div>
+                  </div>
                 </div>
               );
             })}
+
+            <div style={{ padding: "12px 24px", borderTop: `1px solid ${C.borderLight}`, background: `${C.primary}04` }}>
+              <div style={{ fontSize: 12, color: C.textMid, lineHeight: 1.5 }}>
+                {"\u{1F4A1}"} <strong>Our goal:</strong> Beat these averages while delivering premium quality. Your personalized quote will be ready within 24 hours.
+              </div>
+            </div>
           </div>
 
-          {/* Transparent Pricing Breakdown â MyBidQuick's differentiator */}
-          <div style={{ marginTop: 24 }}>
-            <PriceBreakdown
-              selectedServices={selectedServices}
-              config={config}
-              details={details}
-              selectedExtras={selectedExtras}
-              globalStories={globalStories}
-              svcPrice={svcPrice}
-              bundleDiscount={bundleDiscount}
-              basePrice={basePrice}
-              selectedPackage={selectedPackage}
-              pkgPrice={pkgPrice}
-              contact={contact}
-            />
+          {/* Trust note */}
+          <div style={{ marginTop: 16, padding: "12px 16px", background: C.white, borderRadius: 12, border: `1px solid ${C.borderLight}`, display: "flex", alignItems: "flex-start", gap: 10 }}>
+            <span style={{ fontSize: 14, flexShrink: 0 }}>{"\u{1F512}"}</span>
+            <div style={{ fontSize: 12, color: C.textLight, lineHeight: 1.5 }}>
+              <strong style={{ color: C.textMid }}>No surprises.</strong> Final pricing confirmed at your free on-site walkthrough. We never charge more than quoted without your approval.
+            </div>
+          </div>
+
+          {/* Submit button prominently displayed */}
+          <div style={{ marginTop: 28, display: "flex", justifyContent: "center" }}>
+            <button
+              onClick={submitQuote}
+              style={{
+                padding: "16px 40px",
+                borderRadius: 12,
+                background: C.gradient,
+                color: C.white,
+                border: "none",
+                fontSize: 16,
+                fontWeight: 800,
+                cursor: "pointer",
+                boxShadow: "0 4px 16px rgba(59,156,255,0.25)",
+                transition: "transform 0.2s",
+              }}
+              onMouseEnter={(e) => e.target.style.transform = "scale(1.05)"}
+              onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
+            >
+              Submit Quote Request
+            </button>
           </div>
         </div>
       )}
@@ -690,7 +862,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         <div style={{ textAlign: "center", padding: "50px 20px" }}>
           <div style={{ width: 80, height: 80, borderRadius: "50%", background: C.gradient, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: 40, color: C.white }}>{"\u2713"}</div>
           <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>Quote Submitted!</h1>
-          <p style={{ color: C.textMid, fontSize: 16, maxWidth: 480, margin: "0 auto 28px" }}>Thanks, {contact.name}! Your quote for {fmt(pkgPrice(selectedPackage))} has been received. We'll follow up within 24 hours.</p>
+          <p style={{ color: C.textMid, fontSize: 16, maxWidth: 480, margin: "0 auto 28px" }}>Thanks, {contact.name}! Your quote request has been received. We'll follow up within 24 hours.</p>
           {config.followUp.enabled && (
             <div style={{ ...s.card, maxWidth: 500, margin: "0 auto 24px", textAlign: "left" }}>
               <h4 style={{ ...s.label, marginBottom: 12 }}>What happens next</h4>
