@@ -106,7 +106,7 @@ const BASE_CONFIG = {
       tierFeatures: {
         standard: "Exterior glass only",
         premium: "Interior & exterior + optional screen cleaning",
-        platinum: "Full detail â interior, exterior, tracks, sills & screens included",
+        platinum: "Full detail - interior, exterior, tracks, sills & screens included",
       },
       windowTypes: [
         {
@@ -121,7 +121,7 @@ const BASE_CONFIG = {
         },
         {
           id: "combination", label: "Combination / Storm", multiplier: 2.0,
-          description: "Inner window + outer storm pane â extra glass to clean", windowImage: "combination",
+          description: "Inner window + outer storm pane - extra glass to clean", windowImage: "combination",
           priceByPackage: { standard: 30, premium: 45, platinum: 55 },
         },
       ],
@@ -218,7 +218,7 @@ const BASE_CONFIG = {
       id: "gutter_guard_install",
       name: "Gutter Guard Installation",
       icon: "\u{1F6E1}\u{FE0F}",
-      description: "Professional gutter guard installation â priced per linear foot",
+      description: "Professional gutter guard installation - priced per linear foot",
       basePrice: 0,
       perSqFt: 0,
       perWindow: 0,
