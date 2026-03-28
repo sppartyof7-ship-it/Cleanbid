@@ -122,7 +122,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
   // Track which services were added via upsell (to apply discount in pricing)
   const [upsellAccepted, setUpsellAccepted] = useState([]);
 
-  // Smart auto-populate: house wash sqft â other services
+  // Smart auto-populate: house wash sqft -> other services
   useEffect(() => {
     const hwSqft = details.pressure_washing?.sqft
     if (!hwSqft || hwSqft <= 0) return
@@ -155,7 +155,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         name: "Window Cleaning",
         icon: "\u{1FA9F}",
         tagline: upsellDiscount > 0
-          ? `Since we're already at your home â save ${upsellDiscount}% on window cleaning!`
+          ? `Since we're already at your home  - save ${upsellDiscount}% on window cleaning!`
           : "Since we're already at your home, get your windows sparkling too!",
         color: "#059669",
         bgColor: "#f0fdf4",
@@ -195,7 +195,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     setDismissedUpsells((p) => [...p, svcId]);
   };
 
-  // --- Pricing (uses shared pricing engine â no duplication!) ---
+  // --- Pricing (uses shared pricing engine  - no duplication!) ---
   const basePrice = useMemo(
     () => calculateTotalBase(selectedServices, config.services, details, selectedExtras, config.globalPriceAdjustment, globalStories),
     [selectedServices, details, selectedExtras, config, globalStories]
@@ -217,7 +217,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     return price;
   };
 
-  // Package price â uses per-service pricing for services that have it (window cleaning)
+  // Package price  - uses per-service pricing for services that have it (window cleaning)
   // Applies upsell discount to services accepted via upsell
   const pkgPrice = (pkg) => {
     let total = calculateTotalPackagePrice(
@@ -369,7 +369,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         </div>
       )}
 
-      {/* Marketing Banners â on step 1 (services) */}
+      {/* Marketing Banners  - on step 1 (services) */}
       {step === 1 && (
         <div style={{ marginBottom: 24, display: "flex", flexDirection: "column", gap: 10 }}>
           {config.marketing.showLimitedOffer && (
@@ -423,7 +423,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
           <h1 style={s.h1}>Tell us about your project</h1>
           <p style={{ color: C.textLight, marginBottom: 24, fontSize: 15 }}>Select your services and fill in the details. We'll build your custom quote!</p>
 
-          {/* Satellite map â show if address is provided */}
+          {/* Satellite map  - show if address is provided */}
           {satelliteUrl && (
             <div style={{ marginBottom: 24 }}>
               <img src={satelliteUrl} alt="Property satellite view" style={{ width: "100%", maxHeight: 300, borderRadius: 16, border: `1px solid ${C.border}`, objectFit: "cover" }} />
@@ -533,7 +533,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                                   {wt.id === "combination" && isActive && (
                                     <div style={{ marginTop: 8, padding: "8px 10px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, fontSize: 11, color: "#92400e", lineHeight: 1.4 }}>
                                       Storm windows often require an onsite estimate for accurate pricing. <a href="tel:+19205634101" style={{ color: "#b45309", fontWeight: 700 }}>Call (920) 563-4101</a> for a free quote.
-                                                            </div>
+                                    </div>
                                   )}
                                 </div>
                               );
@@ -615,13 +615,13 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                   {appliedBundle && seasonalBundle ? seasonalBundle.name : "Bundle Discount!"}
                 </div>
                 <div style={{ fontSize: 14, color: "#166534", marginTop: 2 }}>
-                  {"\u{1F389}"} {selectedServices.length} services selected â saving you {bundleDiscount}%
+                  {"\u{1F389}"} {selectedServices.length} services selected  - saving you {bundleDiscount}%
                 </div>
               </div>
             </div>
           )}
 
-          {/* Smart Cascade Upsell â triggered when House Washing is selected */}
+          {/* Smart Cascade Upsell  - triggered when House Washing is selected */}
           {upsellOffers.length > 0 && (
             <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.textLight, textTransform: "uppercase", letterSpacing: 0.5 }}>
@@ -698,7 +698,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         </div>
       )}
 
-      {/* STEP 3: Review & Submit (no quote pricing â shows national averages) */}
+      {/* STEP 3: Review & Submit (no quote pricing  - shows national averages) */}
       {step === 3 && (
         <div>
           <h1 style={s.h1}>Review Your Quote Request</h1>
@@ -715,14 +715,14 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             </div>
           )}
 
-          {/* Bundle discount â BIG and prominent */}
+          {/* Bundle discount  - BIG and prominent */}
           {bundleDiscount > 0 && (
             <div style={{ marginBottom: 24, padding: "20px 28px", background: "linear-gradient(135deg, #ecfdf5, #f0fdf4)", border: "2px solid #86efac", borderRadius: 20, textAlign: "center" }}>
               <div style={{ fontSize: 42, fontWeight: 900, color: "#16a34a", lineHeight: 1.1 }}>{bundleDiscount}% OFF</div>
               <div style={{ fontSize: 16, fontWeight: 700, color: "#15803d", marginTop: 6 }}>
                 {"\u{1F389}"} Bundle Discount for {selectedServices.length} Services!
               </div>
-              <div style={{ fontSize: 13, color: "#166534", marginTop: 4 }}>Applied automatically â no code needed</div>
+              <div style={{ fontSize: 13, color: "#166534", marginTop: 4 }}>Applied automatically  - no code needed</div>
             </div>
           )}
 
@@ -782,7 +782,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             )}
           </div>
 
-          {/* National Average Price Comparison â shows ranges, NOT the customer's quote price */}
+          {/* National Average Price Comparison  - shows ranges, NOT the customer's quote price */}
           <div style={{ ...s.card, marginTop: 20, padding: 0, overflow: "hidden" }}>
             <div style={{ padding: "16px 24px 12px", borderBottom: `1px solid ${C.borderLight}` }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -801,10 +801,10 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                 <div key={svcId} style={{ padding: "14px 24px", borderTop: `1px solid ${C.borderLight}` }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{svc.icon} {avg.label}</span>
-                    <span style={{ fontSize: 12, color: C.textLight }}>{fmt(avg.low)} â {fmt(avg.high)}</span>
+                    <span style={{ fontSize: 12, color: C.textLight }}>{fmt(avg.low)} - {fmt(avg.high)}</span>
                   </div>
 
-                  {/* Comparison bar â just the range, no marker for their price */}
+                  {/* Comparison bar  - just the range, no marker for their price */}
                   <div style={{ position: "relative" }}>
                     <div style={{ height: 8, borderRadius: 4, background: `linear-gradient(90deg, #bbf7d0, #fde68a, #fecaca)`, overflow: "visible", position: "relative" }} />
                     <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
@@ -899,7 +899,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
 }
 
 // This is a trick to let the parent read current step for the header stepper
-// In a real app you'd use context or lift state up â but this keeps things simple
+// In a real app you'd use context or lift state up  - but this keeps things simple
 function StepExposer() {
   return null; // No-op; parent manages its own step display via view state
 }
