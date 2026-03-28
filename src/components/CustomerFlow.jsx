@@ -470,7 +470,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                             <div style={{ marginTop: 16 }}>
                               <label style={s.label}>Ow many glass doors need cleaning? <span style={{ fontWeight: 400, color: C.textLight }}>(sliding, French, storm doors)</span></label>
                               <input type="number" placeholder="0" value={d.doors || ""} onChange={(e) => updateDetail(svc.id, "doors", Math.max(0, Number(e.target.value)))} style={{ ...s.input, maxWidth: 120 }} />
-                              {*.doors > 0 && <div style={{ fontSize: 12, color: C.textLight, marginTop: 4 }}>{d.doors} door{d.doors > 1 ? "s" : ""} {"\u00D7}"} ${svc.doorPrice} = ${d.doors * svc.doorPrice}</div>}
+                              {d.doors > 0 && <div style={{ fontSize: 12, color: C.textLight, marginTop: 4 }}>{d.doors} door{d.doors > 1 ? "s" : ""} {"\u00D7}"} ${svc.doorPrice} = ${d.doors * svc.doorPrice}</div>}
                             </div>
                           )}
                         </div>
