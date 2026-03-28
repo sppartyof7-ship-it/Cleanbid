@@ -46,7 +46,7 @@ export function buildDefaultConfig(tenant) {
 }
 
 const BASE_CONFIG = {
-  businessName: "ClouteBid",
+  businessName: "MyBidQuick",
   adminPassword: "admin123",
   globalPriceAdjustment: 0,
   web3formsKey: "6cf87767-154f-42e1-8920-4988ef3cf5a3",
@@ -274,6 +274,12 @@ const BASE_CONFIG = {
         "60-day satisfaction guarantee",
       ],
     },
+  },
+  upsell: {
+    enabled: true,
+    triggerService: "pressure_washing",
+    offerServices: ["window_cleaning", "gutter_cleaning"],
+    discountPercent: 15,
   },
   bundleDiscounts: { 2: 5, 3: 10 },
   seasonalBundles: [
