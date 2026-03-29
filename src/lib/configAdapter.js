@@ -1,16 +1,16 @@
 /**
- * Config Adapter â MyBidQuick Supabase â Cleanbid Format
+ * Config Adapter â MyBidQuick Supabase â Engine Format
  *
  * MyBidQuick stores tenant configs in a simplified JSONB format.
- * Cleanbid's pricing engine expects a richer structure (windowTypes,
+ * The engine's pricing system expects a richer structure (windowTypes,
  * tiers, conditionQuestions, package features, etc.).
  *
  * Strategy:
  * 1. Build a "tenant object" from the Supabase row (matches what buildDefaultConfig expects)
- * 2. Let buildDefaultConfig() generate the full Cleanbid config with all rich features
+ * 2. Let buildDefaultConfig() generate the full engine config with all rich features
  * 3. Overlay the Supabase config's custom values (prices, enabled services, marketing, etc.)
  *
- * This way, new Cleanbid features are always available, and tenants only customize
+ * This way, new engine features are always available, and tenants only customize
  * the simple knobs exposed in MyBidQuick's dashboard.
  */
 
@@ -22,7 +22,7 @@ import { deepClone } from "../utils/helpers";
  * Each MyBidQuick tenant picks one color; we derive the full 20+ palette from it.
  */
 function generatePalette(primaryHex) {
-  // Default to Cloute blue if no color provided
+  // Default to MyBidQuick blue if no color provided
   const hex = primaryHex || "#3b9cff";
 
   // Parse hex â RGB
@@ -102,12 +102,12 @@ function rowToTenantObject(row) {
     logoImage: row.logo_url || cfg.logoImage || null,
 
     // Lead sources
-    leadSources: cfg.leadSources || ["Google", "Facebook", "Referral", "Direct"],
+    leadSources: cfg.leadSources || ["Google Search", "Facebook / Instagram", "Friend / Referral", "Nextdoor", "Yard Sign", "Saw Our Truck / Trailer", "Repeat Customer", "Thumbtack / Angi / HomeAdvisor", "Other"],
 
     // Gallery
     gallery: { enabled: cfg.gallery?.enabled ?? true },
 
-    // Marketing â translate nested MyBidQuick format â flat Cleanbid format
+    // Marketing â translate nested MyBidQuick format â flat engine format
     marketing: adaptMarketing(cfg.marketing),
 
     // Disabled services (any service in config with enabled: false)
@@ -118,15 +118,15 @@ function rowToTenantObject(row) {
 }
 
 /**
- * Adapt MyBidQuick's nested marketing format to Cleanbid's flat format.
+ * Adapt MyBidQuick's nested marketing format to the engine's flat format.
  *
  * MyBidQuick: { urgencyTimer: {enabled, message, endDate}, socialProof: {enabled, count}, ... }
- * Cleanbid:   { showUrgencyTimer, urgencyMessage, urgencyEndDate, showSocialProof, socialProofCount, ... }
+ * Engine:     { showUrgencyTimer, urgencyMessage, urgencyEndDate, showSocialProof, socialProofCount, ... }
  */
 function adaptMarketing(mkt) {
   if (!mkt) return {};
 
-  // If it's already in Cleanbid's flat format (has showUrgencyTimer), pass through
+  // If it's already in the engine's flat format (has showUrgencyTimer), pass through
   if ("showUrgencyTimer" in mkt) return mkt;
 
   return {
@@ -144,10 +144,10 @@ function adaptMarketing(mkt) {
 }
 
 /**
- * Adapt MyBidQuick's package names to Cleanbid's names.
+ * Adapt MyBidQuick's package names to the engine's names.
  *
  * MyBidQuick uses: basic / standard / premium
- * Cleanbid uses:   standard / premium / platinum
+ * Engine uses:     standard / premium / platinum
  *
  * We map:  basic â standard,  standard â premium,  premium â platinum
  */
@@ -156,19 +156,19 @@ function adaptPackages(mbqPackages, defaultPackages) {
 
   const result = deepClone(defaultPackages);
 
-  // Map MyBidQuick basic â Cleanbid standard
+  // Map MyBidQuick basic â engine standard
   if (mbqPackages.basic) {
     result.standard.multiplier = mbqPackages.basic.multiplier ?? result.standard.multiplier;
     if (mbqPackages.basic.tagline) result.standard.tag = mbqPackages.basic.tagline;
   }
 
-  // Map MyBidQuick standard â Cleanbid premium
+  // Map MyBidQuick standard â engine premium
   if (mbqPackages.standard) {
     result.premium.multiplier = mbqPackages.standard.multiplier ?? result.premium.multiplier;
     if (mbqPackages.standard.tagline) result.premium.tag = mbqPackages.standard.tagline;
   }
 
-  // Map MyBidQuick premium â Cleanbid platinum
+  // Map MyBidQuick premium â engine platinum
   if (mbqPackages.premium) {
     result.platinum.multiplier = mbqPackages.premium.multiplier ?? result.platinum.multiplier;
     if (mbqPackages.premium.tagline) result.platinum.tag = mbqPackages.premium.tagline;
@@ -181,12 +181,12 @@ function adaptPackages(mbqPackages, defaultPackages) {
  * Adapt MyBidQuick's bundle discounts format.
  *
  * MyBidQuick: { twoServices: 10, threeServices: 15 }
- * Cleanbid:   { 2: 10, 3: 15 }
+ * Engine:     { 2: 10, 3: 15 }
  */
 function adaptBundleDiscounts(mbqDiscounts) {
   if (!mbqDiscounts) return { 2: 5, 3: 10 };
 
-  // If already in Cleanbid format (numeric keys), pass through
+  // If already in engine format (numeric keys), pass through
   if (mbqDiscounts[2] !== undefined) return mbqDiscounts;
 
   return {
@@ -199,15 +199,15 @@ function adaptBundleDiscounts(mbqDiscounts) {
  * Adapt MyBidQuick's follow-up format.
  *
  * MyBidQuick: [ {id, delay (int), type, subject, body, active} ]
- * Cleanbid:   { enabled: true, sequences: [ {id, delay (string), type, subject, body, active} ] }
+ * Engine:     { enabled: true, sequences: [ {id, delay (string), type, subject, body, active} ] }
  */
 function adaptFollowUp(mbqFollowUp) {
   if (!mbqFollowUp) return undefined; // Let defaults handle it
 
-  // If it's already in Cleanbid format (has .sequences), pass through
+  // If it's already in engine format (has .sequences), pass through
   if (mbqFollowUp.sequences) return mbqFollowUp;
 
-  // Convert array format â Cleanbid object format
+  // Convert array format â engine object format
   const delayLabels = { 0: "Immediate", 1: "1 day", 2: "2 days", 3: "3 days", 5: "5 days", 7: "7 days", 14: "14 days" };
 
   return {
@@ -224,12 +224,12 @@ function adaptFollowUp(mbqFollowUp) {
 }
 
 /**
- * Merge MyBidQuick service pricing into Cleanbid's rich service config.
+ * Merge MyBidQuick service pricing into the engine's rich service config.
  *
  * MyBidQuick stores simple: { id, name, enabled, basePrice, perSqFt, perWindow, perLinFt, extras }
- * Cleanbid has rich:        { ...above + windowTypes, tiers, conditionQuestions, tierFeatures, etc. }
+ * Engine has rich:          { ...above + windowTypes, tiers, conditionQuestions, tierFeatures, etc. }
  *
- * We keep all of Cleanbid's rich structure and only override the price values.
+ * We keep all of the engine's rich structure and only override the price values.
  */
 function adaptServices(mbqServices, defaultServices) {
   if (!mbqServices || mbqServices.length === 0) return defaultServices;
@@ -247,7 +247,7 @@ function adaptServices(mbqServices, defaultServices) {
       perLinFt: mbqSvc.perLinFt ?? defSvc.perLinFt,
       enabled: mbqSvc.enabled ?? defSvc.enabled,
       name: mbqSvc.name || defSvc.name,
-      // Merge extras: keep Cleanbid's rich extras, override prices from MyBidQuick
+      // Merge extras: keep engine's rich extras, override prices from MyBidQuick
       extras: defSvc.extras.map((defExtra) => {
         const mbqExtra = (mbqSvc.extras || []).find(
           (e) => e.label === defExtra.label || e.id === defExtra.id
@@ -260,7 +260,7 @@ function adaptServices(mbqServices, defaultServices) {
 }
 
 /**
- * Adapt MyBidQuick's seasonal bundles to Cleanbid's format.
+ * Adapt MyBidQuick's seasonal bundles to the engine's format.
  */
 function adaptBundles(mbqBundles) {
   if (!mbqBundles) return undefined; // Let defaults handle it
@@ -281,10 +281,10 @@ function adaptBundles(mbqBundles) {
 // âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 /**
- * Transform a Supabase tenant row into a complete Cleanbid config.
+ * Transform a Supabase tenant row into a complete engine config.
  *
  * @param {Object} row â Full tenant row from Supabase (with .config JSONB)
- * @returns {Object} â Complete Cleanbid config ready for the app
+ * @returns {Object} â Complete engine config ready for the app
  */
 export function adaptSupabaseConfig(row) {
   const cfg = row.config || {};
@@ -292,7 +292,7 @@ export function adaptSupabaseConfig(row) {
   // Step 1: Build the tenant object (same shape as cloute.js)
   const tenantObj = rowToTenantObject(row);
 
-  // Step 2: Generate full Cleanbid config from defaults + tenant identity
+  // Step 2: Generate full engine config from defaults + tenant identity
   const fullConfig = buildDefaultConfig(tenantObj);
 
   // Step 3: Overlay MyBidQuick's custom pricing/settings
