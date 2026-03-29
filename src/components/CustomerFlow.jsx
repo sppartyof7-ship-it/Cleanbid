@@ -607,6 +607,58 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             })}
           </div>
 
+          {/* Package Selector â Standard / Premium / Platinum */}
+          {selectedServices.length > 0 && (
+            <div style={{ marginTop: 24 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.textLight, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 12 }}>
+                {"\u2B50"} Choose Your Service Level
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+                {["standard", "premium", "platinum"].map((pkgKey) => {
+                  const pkg = config.packages[pkgKey];
+                  if (!pkg) return null;
+                  const isActive = selectedPackage === pkgKey;
+                  const price = pkgPrice(pkgKey);
+                  return (
+                    <div key={pkgKey} onClick={() => setSelectedPackage(pkgKey)}
+                      style={{
+                        padding: "16px 12px", borderRadius: 16, cursor: "pointer",
+                        border: `2px solid ${isActive ? (pkg.color || C.primary) : C.border}`,
+                        background: isActive ? `${pkg.color || C.primary}08` : C.white,
+                        textAlign: "center", position: "relative", transition: "all 0.2s",
+                      }}>
+                      {pkg.popular && (
+                        <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", padding: "2px 10px", borderRadius: 10, background: pkg.color || C.primary, color: "#fff", fontSize: 10, fontWeight: 700, whiteSpace: "nowrap" }}>
+                          MOST POPULAR
+                        </div>
+                      )}
+                      <div style={{ fontSize: 15, fontWeight: 800, color: isActive ? (pkg.color || C.primary) : C.text, marginTop: pkg.popular ? 4 : 0 }}>
+                        {pkg.label}
+                      </div>
+                      <div style={{ fontSize: 11, color: C.textLight, marginTop: 2 }}>{pkg.tag}</div>
+                      <div style={{ fontSize: 22, fontWeight: 900, color: isActive ? (pkg.color || C.primary) : C.text, marginTop: 8 }}>
+                        {fmt(price)}
+                      </div>
+                      <div style={{ marginTop: 8, textAlign: "left" }}>
+                        {pkg.features.map((f, i) => (
+                          <div key={i} style={{ fontSize: 11, color: C.textMid, lineHeight: 1.6, display: "flex", alignItems: "flex-start", gap: 4 }}>
+                            <span style={{ color: isActive ? "#16a34a" : C.textLight, flexShrink: 0 }}>{"\u2713"}</span>
+                            <span>{f}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {isActive && (
+                        <div style={{ marginTop: 8, padding: "4px 0", borderTop: `1px solid ${C.borderLight}` }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: pkg.color || C.primary }}>{"\u2713"} Selected</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {bundleDiscount > 0 && (
             <div style={{ marginTop: 20, padding: "20px 24px", background: "linear-gradient(135deg, #ecfdf5, #f0fdf4)", border: "2px solid #86efac", borderRadius: 20, display: "flex", alignItems: "center", gap: 16 }}>
               <div style={{ fontSize: 36, fontWeight: 900, color: "#16a34a", lineHeight: 1 }}>{bundleDiscount}%</div>
@@ -666,7 +718,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                         background: "transparent", color: C.textLight,
                         border: `1px solid ${C.border}`, cursor: "pointer",
                         fontSize: 13, fontWeight: 600,
-                      }}>
+                            }}>
                         No thanks
                       </button>
                     </div>
