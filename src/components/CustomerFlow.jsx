@@ -372,8 +372,25 @@ export default function CustomerFlow({ config, onSubmitLead }) {
       {/* STEP 0: Contact Info (first!) */}
       {step === 0 && (
         <div>
+          {/* ââ Welcome Hero ââ */}
+          <div style={{
+            background: C.gradient,
+            borderRadius: 16,
+            padding: "28px 24px 24px",
+            marginBottom: 20,
+            textAlign: "center",
+            color: C.white,
+          }}>
+            <h1 style={{ fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 800, letterSpacing: "-0.02em", margin: "0 0 6px" }}>
+              {config.businessName}
+            </h1>
+            <p style={{ fontSize: 15, opacity: 0.92, margin: 0 }}>
+              Instant online quotes for professional exterior cleaning {config.serviceArea ? `in ${config.serviceArea}` : ""}
+            </p>
+          </div>
+
           <TrustGallery config={config} />
-          <h1 style={s.h1}>Let's get started!</h1>
+          <h2 style={{ ...s.h1, fontSize: 22 }}>Let's get started!</h2>
           <p style={{ color: C.textLight, marginBottom: 24, fontSize: 15 }}>Tell us a bit about yourself so we can build your custom quote.</p>
           <div style={s.card}>
             <div style={s.grid2}>
@@ -410,6 +427,71 @@ export default function CustomerFlow({ config, onSubmitLead }) {
               <label style={s.label}>Notes</label>
               <textarea placeholder="Anything we should know about your property..." value={contact.notes} onChange={(e) => setContact((c) => ({ ...c, notes: e.target.value }))} rows={3} style={{ ...s.input, resize: "vertical", fontFamily: "inherit" }} />
             </div>
+          </div>
+
+          {/* ââ Trust Badges ââ */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+            gap: 10,
+            marginTop: 20,
+          }}>
+            {[
+              { icon: "\u2705", text: "Fully Insured & Bonded" },
+              { icon: "\u{1F3C6}", text: "100% Satisfaction Guarantee" },
+              { icon: "\u{1F4C5}", text: "Same-Week Scheduling" },
+            ].map((badge) => (
+              <div key={badge.text} style={{
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "10px 14px",
+                background: C.bgCard,
+                borderRadius: 10,
+                border: `1px solid ${C.borderLight}`,
+                fontSize: 13,
+                fontWeight: 600,
+                color: C.textMid,
+              }}>
+                <span style={{ fontSize: 16 }}>{badge.icon}</span>
+                {badge.text}
+              </div>
+            ))}
+          </div>
+
+          {/* ââ Mini FAQ ââ */}
+          <div style={{ marginTop: 24 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 12 }}>Common Questions</h3>
+            {[
+              { q: "How soon can I get scheduled?", a: "Most jobs are scheduled within 3\u20135 business days of your quote request." },
+              { q: "What payment methods do you accept?", a: "We accept all major credit cards, cash, check, and digital payments like Venmo and Zelle." },
+              { q: "Do I need to be home during the service?", a: "Nope! As long as we can access the exterior areas, you\u2019re free to go about your day." },
+              { q: "Is there a satisfaction guarantee?", a: "Absolutely. If you\u2019re not happy with any part of the job, we\u2019ll come back and make it right at no extra charge." },
+            ].map((faq) => (
+              <details key={faq.q} style={{
+                marginBottom: 8,
+                background: C.bgCard,
+                borderRadius: 10,
+                border: `1px solid ${C.borderLight}`,
+                overflow: "hidden",
+              }}>
+                <summary style={{
+                  padding: "12px 16px",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: C.text,
+                  cursor: "pointer",
+                  listStyle: "none",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}>
+                  {faq.q}
+                  <span style={{ fontSize: 12, color: C.textLight, flexShrink: 0, marginLeft: 8 }}>{"\u25BC"}</span>
+                </summary>
+                <div style={{ padding: "0 16px 14px", fontSize: 13, color: C.textMid, lineHeight: 1.6 }}>
+                  {faq.a}
+                </div>
+              </details>
+            ))}
           </div>
         </div>
       )}
@@ -1040,3 +1122,4 @@ export default function CustomerFlow({ config, onSubmitLead }) {
 function StepExposer() {
   return null; // No-op; parent manages its own step display via view state
 }
+
