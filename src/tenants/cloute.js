@@ -12,7 +12,7 @@ const CLOUTE = {
 
   // API keys
   web3formsKey: "6cf87767-154f-42e1-8920-4988ef3cf5a3",
-  googlePlacesApiKey: "AIzaSyChuudJiPotYb4GFXKFOSZsEPOPjJqd7Q4",
+  googlePlacesApiKey: "AIzaSyAnLy1iRt0_fkMJqyBxrC0meEJD0qpshvU",
   housecallProEnabled: true,
 
   // Branding
