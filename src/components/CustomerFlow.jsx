@@ -122,23 +122,48 @@ export default function CustomerFlow({ config, onSubmitLead }) {
   // Track which services were added via upsell (to apply discount in pricing)
   const [upsellAccepted, setUpsellAccepted] = useState([]);
 
-  // Smart auto-populate: house wash sqft -> other services
+  // Smart auto-populate: sync sqft across services + estimate gutter LF
+  // Finds the best available sqft from any service and shares it everywhere
   useEffect(() => {
-    const hwSqft = details.pressure_washing?.sqft
-    if (!hwSqft || hwSqft <= 0) return
+    const hwSqft = details.pressure_washing?.sqft || 0
+    const winSqft = details.window_cleaning?.sqft || 0
+    // Use whichever sqft the customer entered (house wash takes priority)
+    const bestSqft = hwSqft || winSqft
+    if (!bestSqft || bestSqft <= 0) return
+
     setDetails(prev => {
       const next = { ...prev }
-      // Auto-fill roof cleaning sqft if selected and not manually set
-      if (selectedServices.includes('roof_cleaning') && !prev.roof_cleaning?.sqft) {
-        next.roof_cleaning = { ...(prev.roof_cleaning || {}), sqft: hwSqft }
+      let changed = false
+
+      // Sync sqft to house washing if not manually set
+      if (selectedServices.includes('pressure_washing') && !prev.pressure_washing?.sqft) {
+        next.pressure_washing = { ...(prev.pressure_washing || {}), sqft: bestSqft }
+        changed = true
       }
-      // Auto-fill window cleaning sqft if selected and not manually set
+      // Sync sqft to window cleaning if not manually set
       if (selectedServices.includes('window_cleaning') && !prev.window_cleaning?.sqft) {
-        next.window_cleaning = { ...(prev.window_cleaning || {}), sqft: hwSqft }
+        next.window_cleaning = { ...(prev.window_cleaning || {}), sqft: bestSqft }
+        changed = true
       }
-      return next
+      // Sync sqft to roof cleaning if not manually set
+      if (selectedServices.includes('roof_cleaning') && !prev.roof_cleaning?.sqft) {
+        next.roof_cleaning = { ...(prev.roof_cleaning || {}), sqft: bestSqft }
+        changed = true
+      }
+      // Auto-estimate gutter cleaning linear ft from sqft
+      if (selectedServices.includes('gutter_cleaning') && !prev.gutter_cleaning?.linearFt) {
+        next.gutter_cleaning = { ...(prev.gutter_cleaning || {}), linearFt: estimateGutterLinearFt(bestSqft) }
+        changed = true
+      }
+      // Auto-estimate gutter guard install linear ft from sqft
+      if (selectedServices.includes('gutter_guard_install') && !prev.gutter_guard_install?.linearFt) {
+        next.gutter_guard_install = { ...(prev.gutter_guard_install || {}), linearFt: estimateGutterLinearFt(bestSqft) }
+        changed = true
+      }
+
+      return changed ? next : prev
     })
-  }, [details.pressure_washing?.sqft, selectedServices])
+  }, [details.pressure_washing?.sqft, details.window_cleaning?.sqft, selectedServices])
 
   // Satellite map URL computation
   const satelliteUrl = useMemo(() => {
@@ -181,12 +206,13 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     setSelectedServices((p) => [...p, svcId]);
     setUpsellAccepted((p) => [...p, svcId]);
 
-    // Auto-populate gutter linear ft from house wash sqft
-    if (svcId === "gutter_cleaning" && houseWashSqft > 0) {
-      const estLinFt = estimateGutterLinearFt(houseWashSqft);
+    // Auto-populate gutter/guard linear ft from best available sqft
+    const bestSqft = houseWashSqft || details.window_cleaning?.sqft || 0;
+    if ((svcId === "gutter_cleaning" || svcId === "gutter_guard_install") && bestSqft > 0) {
+      const estLinFt = estimateGutterLinearFt(bestSqft);
       setDetails((p) => ({
         ...p,
-        gutter_cleaning: { ...(p.gutter_cleaning || {}), linearFt: estLinFt },
+        [svcId]: { ...(p[svcId] || {}), linearFt: estLinFt },
       }));
     }
   };
@@ -240,8 +266,27 @@ export default function CustomerFlow({ config, onSubmitLead }) {
   };
 
   // --- Helpers ---
-  const toggleService = (id) =>
-    setSelectedServices((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+  const toggleService = (id) => {
+    setSelectedServices((p) => {
+      const isRemoving = p.includes(id);
+      if (isRemoving) return p.filter((x) => x !== id);
+
+      // Adding a service â auto-populate details from best available sqft
+      const bestSqft = details.pressure_washing?.sqft || details.window_cleaning?.sqft || 0;
+      if (bestSqft > 0) {
+        // Auto-populate sqft for services that need it
+        if ((id === "window_cleaning" || id === "roof_cleaning" || id === "pressure_washing") && !details[id]?.sqft) {
+          setDetails((prev) => ({ ...prev, [id]: { ...(prev[id] || {}), sqft: bestSqft } }));
+        }
+        // Auto-populate linear ft for gutter services
+        if ((id === "gutter_cleaning" || id === "gutter_guard_install") && !details[id]?.linearFt) {
+          setDetails((prev) => ({ ...prev, [id]: { ...(prev[id] || {}), linearFt: estimateGutterLinearFt(bestSqft) } }));
+        }
+      }
+
+      return [...p, id];
+    });
+  };
 
   const toggleExtra = (svcId, extId) =>
     setSelectedExtras((p) => ({
@@ -555,7 +600,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12, paddingTop: svc.tiers ? 0 : 16 }}>
                           {svc.perSqFt > 0 && <div><label style={s.label}>Square Footage</label><input type="number" placeholder="e.g. 1500" value={d.sqft || ""} onChange={(e) => updateDetail(svc.id, "sqft", Math.max(0, Number(e.target.value)))} style={s.input} /></div>}
                           {svc.perWindow > 0 && !svc.windowTypes && <div><label style={s.label}>Number of Windows</label><input type="number" placeholder="e.g. 20" value={d.windows || ""} onChange={(e) => updateDetail(svc.id, "windows", Math.max(0, Number(e.target.value)))} style={s.input} /></div>}
-                          {(svc.perLinFt > 0 || (svc.tiers && svc.tiers.length > 0)) && <div><label style={s.label}>Linear Feet of Gutters</label><input type="number" placeholder="e.g. 150" value={d.linearFt || ""} onChange={(e) => updateDetail(svc.id, "linearFt", Math.max(0, Number(e.target.value)))} style={s.input} /></div>}
+                          {(svc.perLinFt > 0 || (svc.tiers && svc.tiers.length > 0)) && <div><label style={s.label}>Linear Feet of Gutters</label><input type="number" placeholder="e.g. 150" value={d.linearFt || ""} onChange={(e) => updateDetail(svc.id, "linearFt", Math.max(0, Number(e.target.value)))} style={s.input} />{d.linearFt > 0 && (details.pressure_washing?.sqft || details.window_cleaning?.sqft) ? <div style={{ marginTop: 4, fontSize: 11, color: C.textLight }}>{"\u{2139}\u{FE0F}"} Estimated from your home size â adjust if needed</div> : null}</div>}
                         </div>
                       )}
 
@@ -718,7 +763,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                         background: "transparent", color: C.textLight,
                         border: `1px solid ${C.border}`, cursor: "pointer",
                         fontSize: 13, fontWeight: 600,
-                            }}>
+                      }}>
                         No thanks
                       </button>
                     </div>
