@@ -698,11 +698,11 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         </div>
       )}
 
-      {/* STEP 3: Review & Submit (no quote pricing  - shows national averages) */}
+      {/* STEP 3: Review & Submit â clean sales flow: selections â big price â trust â submit */}
       {step === 3 && (
         <div>
-          <h1 style={s.h1}>Review Your Quote Request</h1>
-          <p style={{ color: C.textLight, marginBottom: 24, fontSize: 15 }}>Here's a summary of what we'll quote for you. Submit and we'll get back to you fast!</p>
+          <h1 style={s.h1}>Your Instant Quote</h1>
+          <p style={{ color: C.textLight, marginBottom: 24, fontSize: 15 }}>Here's your personalized price based on your property details.</p>
 
           {/* Satellite map on review page */}
           {satelliteUrl && (
@@ -715,144 +715,184 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             </div>
           )}
 
-          {/* Bundle discount  - BIG and prominent */}
-          {bundleDiscount > 0 && (
-            <div style={{ marginBottom: 24, padding: "20px 28px", background: "linear-gradient(135deg, #ecfdf5, #f0fdf4)", border: "2px solid #86efac", borderRadius: 20, textAlign: "center" }}>
-              <div style={{ fontSize: 42, fontWeight: 900, color: "#16a34a", lineHeight: 1.1 }}>{bundleDiscount}% OFF</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#15803d", marginTop: 6 }}>
-                {"\u{1F389}"} Bundle Discount for {selectedServices.length} Services!
+          {/* THE BIG PRICE â hero moment of the entire flow */}
+          <div style={{
+            marginBottom: 24,
+            padding: "32px 24px",
+            background: `linear-gradient(135deg, ${C.primary}08, ${C.primary}15)`,
+            border: `2px solid ${C.primary}30`,
+            borderRadius: 20,
+            textAlign: "center",
+          }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: C.textMid, marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>Your Price</div>
+            <div style={{ fontSize: 52, fontWeight: 900, color: C.text, lineHeight: 1, marginBottom: 4 }}>{fmt(pkgPrice(selectedPackage))}</div>
+            {bundleDiscount > 0 && (
+              <div style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 16px", borderRadius: 20, background: "#f0fdf4", border: "1px solid #86efac" }}>
+                <span style={{ fontSize: 14 }}>{"\u{1F389}"}</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#16a34a" }}>{bundleDiscount}% bundle discount applied!</span>
               </div>
-              <div style={{ fontSize: 13, color: "#166534", marginTop: 4 }}>Applied automatically  - no code needed</div>
+            )}
+            <div style={{ fontSize: 13, color: C.textLight, marginTop: 12 }}>
+              {selectedServices.length} service{selectedServices.length > 1 ? "s" : ""} included
+              {selectedPackage !== "standard" && ` \u2022 ${config.packages[selectedPackage]?.label} package`}
             </div>
-          )}
+          </div>
 
-          {/* Summary of selections */}
-          <div style={s.card}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: C.text }}>Your Selection</h3>
-
-            {/* Services summary */}
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: C.textMid, marginBottom: 8 }}>Services:</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {selectedServices.map((svcId) => {
-                  const svc = config.services.find((s) => s.id === svcId);
-                  return (
-                    <div key={svcId} style={{ padding: "8px 14px", borderRadius: 20, background: `${C.primary}10`, color: C.primary, fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-                      <span>{svc?.icon}</span> {svc?.name}
-                    </div>
-                  );
-                })}
-              </div>
+          {/* Services included â show price per service, but NOT how it was calculated */}
+          <div style={{ ...s.card, padding: 0, overflow: "hidden" }}>
+            <div style={{ padding: "16px 24px 12px" }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: C.text }}>What's Included</h3>
             </div>
-
-            {/* Property details summary */}
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: C.textMid, marginBottom: 8 }}>Property Details:</div>
-              <div style={{ fontSize: 13, color: C.text, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
-                <div><strong>Type:</strong> {contact.projectType === "residential" ? "\u{1F3E1} Residential" : "\u{1F3E2} Commercial"}</div>
-                <div><strong>Stories:</strong> {globalStories === 1 ? "1" : globalStories === 2 ? "2" : "3+"}</div>
-                {contact.address && <div><strong>Address:</strong> {contact.address}</div>}
-              </div>
-            </div>
-
-            {/* Service-specific details summary */}
-            {selectedServices.some((svcId) => details[svcId]) && (
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: C.textMid, marginBottom: 8 }}>Service Details:</div>
-                <div style={{ fontSize: 13, color: C.text, display: "flex", flexDirection: "column", gap: 6 }}>
-                  {selectedServices.map((svcId) => {
-                    const d = details[svcId];
-                    if (!d || Object.keys(d).length === 0) return null;
-                    const svc = config.services.find((s) => s.id === svcId);
-                    return (
-                      <div key={svcId}>
-                        <strong>{svc?.name}:</strong> {d.sqft ? `${d.sqft} sqft` : ""} {d.windows ? `${d.windows} windows` : ""} {d.linearFt ? `${d.linearFt} linear ft` : ""} {d.doors ? `${d.doors} doors` : ""}
+            {selectedServices.map((svcId) => {
+              const svc = config.services.find((s) => s.id === svcId);
+              if (!svc) return null;
+              const price = svc.hasPackagePricing ? svcPrice(svcId, selectedPackage) : svcPrice(svcId);
+              const tierLabel = svc.tierFeatures?.[selectedPackage];
+              return (
+                <div key={svcId} style={{ padding: "12px 24px", borderTop: `1px solid ${C.borderLight}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 20 }}>{svc.icon}</span>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{svc.name}</div>
+                        {tierLabel && <div style={{ fontSize: 12, color: C.textLight, marginTop: 1 }}>{tierLabel}</div>}
                       </div>
-                    );
-                  })}
+                    </div>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{fmt(price)}</span>
+                  </div>
+                </div>
+              );
+            })}
+            {bundleDiscount > 0 && (
+              <div style={{ padding: "10px 24px", borderTop: `1px solid ${C.borderLight}`, background: "#f0fdf4" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 13, color: "#16a34a", fontWeight: 600 }}>{"\u{1F389}"} Bundle discount ({bundleDiscount}%)</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: "#16a34a" }}>{"\u2212"}{fmt(basePrice * bundleDiscount / 100)}</span>
                 </div>
               </div>
             )}
 
-            {/* Photos summary */}
-            {customerPhotos.length > 0 && (
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: C.textMid, marginBottom: 8 }}>{"\u{1F4F7}"} Photos Attached: {customerPhotos.length}</div>
-              </div>
-            )}
+            {/* Property summary row */}
+            <div style={{ padding: "10px 24px", borderTop: `1px solid ${C.borderLight}`, display: "flex", flexWrap: "wrap", gap: 8 }}>
+              <span style={{ fontSize: 11, color: C.textMid, padding: "3px 8px", background: C.bgSoft, borderRadius: 6 }}>
+                {contact.projectType === "residential" ? "\u{1F3E1} Residential" : "\u{1F3E2} Commercial"}
+              </span>
+              <span style={{ fontSize: 11, color: C.textMid, padding: "3px 8px", background: C.bgSoft, borderRadius: 6 }}>
+                {globalStories === 1 ? "1 Story" : globalStories === 2 ? "2 Stories" : "3+ Stories"}
+              </span>
+              {customerPhotos.length > 0 && (
+                <span style={{ fontSize: 11, color: C.textMid, padding: "3px 8px", background: C.bgSoft, borderRadius: 6 }}>
+                  {"\u{1F4F7}"} {customerPhotos.length} photo{customerPhotos.length > 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
           </div>
 
-          {/* National Average Price Comparison  - shows ranges, NOT the customer's quote price */}
+          {/* National Average Comparison â shows their price on the bar vs national range */}
           <div style={{ ...s.card, marginTop: 20, padding: 0, overflow: "hidden" }}>
             <div style={{ padding: "16px 24px 12px", borderBottom: `1px solid ${C.borderLight}` }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 16 }}>{"\u{1F4CA}"}</span>
-                <h4 style={{ fontSize: 15, fontWeight: 700, color: C.text, margin: 0 }}>What People Typically Pay</h4>
+                <h4 style={{ fontSize: 15, fontWeight: 700, color: C.text, margin: 0 }}>How Your Quote Compares</h4>
               </div>
-              <p style={{ fontSize: 12, color: C.textLight, margin: "4px 0 0" }}>National average ranges for your selected services</p>
+              <p style={{ fontSize: 12, color: C.textLight, margin: "4px 0 0" }}>Your price vs. what others pay nationally</p>
             </div>
 
             {selectedServices.map((svcId) => {
               const svc = config.services.find((sv) => sv.id === svcId);
               const avg = NATIONAL_AVERAGES[svcId];
               if (!svc || !avg) return null;
+              const price = svc.hasPackagePricing ? svcPrice(svcId, selectedPackage) : svcPrice(svcId);
+              if (price <= 0) return null;
+
+              const range = avg.high - avg.low;
+              const position = Math.min(100, Math.max(0, ((price - avg.low) / range) * 100));
+              const isGoodValue = price <= avg.low + range * 0.5;
 
               return (
                 <div key={svcId} style={{ padding: "14px 24px", borderTop: `1px solid ${C.borderLight}` }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{svc.icon} {avg.label}</span>
-                    <span style={{ fontSize: 12, color: C.textLight }}>{fmt(avg.low)} - {fmt(avg.high)}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: C.primary }}>{fmt(price)}</span>
+                      {isGoodValue && (
+                        <span style={{ fontSize: 10, fontWeight: 700, color: "#16a34a", background: "#f0fdf4", padding: "2px 8px", borderRadius: 10, border: "1px solid #bbf7d0" }}>Great value</span>
+                      )}
+                    </div>
                   </div>
-
-                  {/* Comparison bar  - just the range, no marker for their price */}
                   <div style={{ position: "relative" }}>
-                    <div style={{ height: 8, borderRadius: 4, background: `linear-gradient(90deg, #bbf7d0, #fde68a, #fecaca)`, overflow: "visible", position: "relative" }} />
+                    <div style={{ height: 8, borderRadius: 4, background: `linear-gradient(90deg, #bbf7d0, #fde68a, #fecaca)`, overflow: "visible", position: "relative" }}>
+                      <div style={{
+                        position: "absolute",
+                        left: `${Math.min(96, Math.max(2, position))}%`,
+                        top: "50%",
+                        transform: "translate(-50%, -50%)",
+                        width: 18,
+                        height: 18,
+                        borderRadius: "50%",
+                        background: C.white,
+                        border: `3px solid ${C.primary}`,
+                        boxShadow: "0 1px 6px rgba(0,0,0,0.15)",
+                        zIndex: 2,
+                      }} />
+                    </div>
                     <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
-                      <span style={{ fontSize: 10, color: "#16a34a", fontWeight: 600 }}>Below avg</span>
-                      <span style={{ fontSize: 10, color: C.textLight }}>National range</span>
-                      <span style={{ fontSize: 10, color: "#dc2626", fontWeight: 600 }}>Above avg</span>
+                      <span style={{ fontSize: 10, color: C.textLight }}>{fmt(avg.low)}</span>
+                      <span style={{ fontSize: 10, color: C.textLight }}>National avg range</span>
+                      <span style={{ fontSize: 10, color: C.textLight }}>{fmt(avg.high)}</span>
                     </div>
                   </div>
                 </div>
               );
             })}
+          </div>
 
-            <div style={{ padding: "12px 24px", borderTop: `1px solid ${C.borderLight}`, background: `${C.primary}04` }}>
-              <div style={{ fontSize: 12, color: C.textMid, lineHeight: 1.5 }}>
-                {"\u{1F4A1}"} <strong>Our goal:</strong> Beat these averages while delivering premium quality. Your personalized quote will be ready within 24 hours.
+          {/* Trust signals */}
+          <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ padding: "12px 16px", background: C.white, borderRadius: 12, border: `1px solid ${C.borderLight}`, display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 18 }}>{"\u2705"}</span>
+              <div style={{ fontSize: 13, color: C.textMid, lineHeight: 1.4 }}>
+                <strong>Price locked in.</strong> We honor this quote for 30 days.
+              </div>
+            </div>
+            <div style={{ padding: "12px 16px", background: C.white, borderRadius: 12, border: `1px solid ${C.borderLight}`, display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 18 }}>{"\u{1F512}"}</span>
+              <div style={{ fontSize: 13, color: C.textMid, lineHeight: 1.4 }}>
+                <strong>No hidden fees.</strong> Final pricing confirmed at your free on-site walkthrough.
+              </div>
+            </div>
+            <div style={{ padding: "12px 16px", background: C.white, borderRadius: 12, border: `1px solid ${C.borderLight}`, display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 18 }}>{"\u{2B50}"}</span>
+              <div style={{ fontSize: 13, color: C.textMid, lineHeight: 1.4 }}>
+                <strong>100% satisfaction guaranteed</strong> or we'll make it right.
               </div>
             </div>
           </div>
 
-          {/* Trust note */}
-          <div style={{ marginTop: 16, padding: "12px 16px", background: C.white, borderRadius: 12, border: `1px solid ${C.borderLight}`, display: "flex", alignItems: "flex-start", gap: 10 }}>
-            <span style={{ fontSize: 14, flexShrink: 0 }}>{"\u{1F512}"}</span>
-            <div style={{ fontSize: 12, color: C.textLight, lineHeight: 1.5 }}>
-              <strong style={{ color: C.textMid }}>No surprises.</strong> Final pricing confirmed at your free on-site walkthrough. We never charge more than quoted without your approval.
-            </div>
-          </div>
-
-          {/* Submit button prominently displayed */}
-          <div style={{ marginTop: 28, display: "flex", justifyContent: "center" }}>
+          {/* Submit button â big, prominent, action-oriented */}
+          <div style={{ marginTop: 28, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
             <button
               onClick={submitQuote}
               style={{
-                padding: "16px 40px",
-                borderRadius: 12,
+                width: "100%",
+                maxWidth: 400,
+                padding: "18px 40px",
+                borderRadius: 14,
                 background: C.gradient,
                 color: C.white,
                 border: "none",
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: 800,
                 cursor: "pointer",
-                boxShadow: "0 4px 16px rgba(59,156,255,0.25)",
+                boxShadow: "0 4px 20px rgba(59,156,255,0.3)",
                 transition: "transform 0.2s",
               }}
-              onMouseEnter={(e) => e.target.style.transform = "scale(1.05)"}
+              onMouseEnter={(e) => e.target.style.transform = "scale(1.03)"}
               onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
             >
-              Submit Quote Request
+              Lock In My Price
             </button>
+            <span style={{ fontSize: 12, color: C.textLight }}>No payment required. We'll reach out to schedule your service.</span>
           </div>
         </div>
       )}
