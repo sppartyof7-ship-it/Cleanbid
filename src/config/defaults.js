@@ -59,11 +59,14 @@ const BASE_CONFIG = {
   housecallProEnabled: true,
   gallery: { enabled: true },
   leadSources: [
-    "Google",
-    "Social Media: Facebook / Instagram",
+    "Google Search",
+    "Facebook / Instagram",
     "Friend / Referral",
-    "Saw Our Truck",
+    "Nextdoor",
+    "Yard Sign",
+    "Saw Our Truck / Trailer",
     "Repeat Customer",
+    "Thumbtack / Angi / HomeAdvisor",
     "Other",
   ],
   services: [
