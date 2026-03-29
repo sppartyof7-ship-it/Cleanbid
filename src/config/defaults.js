@@ -92,7 +92,7 @@ const BASE_CONFIG = {
       id: "window_cleaning",
       name: "Window Cleaning",
       icon: "\u{1FA9F}",
-      description: "Interior & exterior window washing",
+      description: "Professional window cleaning \u2014 choose your level",
       basePrice: 0,
       perSqFt: 0,
       perWindow: 8,
@@ -281,7 +281,7 @@ const BASE_CONFIG = {
     offerServices: ["window_cleaning", "gutter_cleaning"],
     discountPercent: 15,
   },
-  bundleDiscounts: { 2: 5, 3: 10 },
+  bundleDiscounts: { 2: 10, 3: 15, 4: 22.5 },
   seasonalBundles: [
     {
       id: "spring_refresh",
