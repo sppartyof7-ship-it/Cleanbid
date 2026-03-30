@@ -5,8 +5,9 @@ import { deepClone } from "../utils/helpers";
 import TabBar from "./TabBar";
 import Toggle from "./Toggle";
 import Badge from "./Badge";
+import QRCodePanel from "./QRCodePanel";
 
-export default function AdminPanel({ config, setConfig, onExit }) {
+export default function AdminPanel({ config, setConfig, onExit, tenantSlug }) {
   const [adminTab, setAdminTab] = useState("pricing");
 
   const updateConfig = (path, value) => {
@@ -35,6 +36,7 @@ export default function AdminPanel({ config, setConfig, onExit }) {
           { id: "marketing", icon: "\u{1F4E3}", label: "Marketing" },
           { id: "followup", icon: "\u{1F4EC}", label: "Follow-Up" },
           { id: "settings", icon: "\u2699\uFE0F", label: "Settings" },
+          { id: "qrcode", icon: "\u{1F4F1}", label: "QR Code" },
         ]}
         active={adminTab}
         onChange={setAdminTab}
@@ -254,6 +256,11 @@ export default function AdminPanel({ config, setConfig, onExit }) {
             <button onClick={() => navigator.clipboard?.writeText(JSON.stringify(config, null, 2))} style={s.btnPrimary}>Copy Config to Clipboard</button>
           </div>
         </div>
+      )}
+
+      {/* QR Code Tab */}
+      {adminTab === "qrcode" && (
+        <QRCodePanel tenantSlug={tenantSlug} businessName={config.businessName} />
       )}
     </div>
   );
