@@ -48,7 +48,7 @@ function initGoogleMapsLoader(apiKey) {
   })({ key: apiKey, v: "beta" });
 }
 
-const FALLBACK_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+const FALLBACK_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyAnLy1iRt0_fkMJqyBxrC0meEJD0qpshvU";
 
 export default function AddressAutocomplete({ value, onChange, style, placeholder, apiKey }) {
   const resolvedKey = apiKey || FALLBACK_KEY;
