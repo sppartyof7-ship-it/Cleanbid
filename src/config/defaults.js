@@ -17,7 +17,6 @@ export function buildDefaultConfig(tenant) {
   const cfg = { ...BASE_CONFIG, services: BASE_CONFIG.services.map((s) => ({ ...s })) };
 
   if (tenant) {
-    // Overlay tenant-level settings
     if (tenant.businessName) cfg.businessName = tenant.businessName;
     if (tenant.adminPassword) cfg.adminPassword = tenant.adminPassword;
     if (tenant.web3formsKey) cfg.web3formsKey = tenant.web3formsKey;
@@ -33,7 +32,6 @@ export function buildDefaultConfig(tenant) {
     cfg.housecallProEnabled = tenant.housecallProEnabled ?? true;
     if (tenant.gallery) cfg.gallery = tenant.gallery;
 
-    // Disable specific services for this tenant
     if (tenant.disabledServices?.length) {
       cfg.services = cfg.services.map((svc) => ({
         ...svc,
@@ -46,6 +44,7 @@ export function buildDefaultConfig(tenant) {
 }
 
 const BASE_CONFIG = {
+  configVersion: 2,  // Bump this when default pricing changes — forces localStorage refresh
   businessName: "MyBidQuick",
   adminPassword: "admin123",
   globalPriceAdjustment: 0,
@@ -101,9 +100,7 @@ const BASE_CONFIG = {
       perWindow: 5.5,
       perLinFt: 0,
       enabled: true,
-      // Wisconsin avg: ~1 window per 80 sq ft of living space
       windowsPerSqFt: 0.0125,
-      // Window cleaning has its own per-package pricing (overrides global multiplier)
       hasPackagePricing: true,
       doorPrice: 8,
       tierFeatures: {
