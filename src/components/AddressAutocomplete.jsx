@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Address input with Google Places Autocomplete.
- * Uses the classic google.maps.places.Autocomplete widget
- * which attaches directly to a standard <input> element.
+ * Uses the classic google.maps.places.Autocomplete widget.
+ * IMPORTANT: This is an UNCONTROLLED input — Google's Autocomplete
+ * manages the input value directly. React only reads it on change/select.
  * Falls back to a plain text input if no API key is configured.
  */
 
@@ -38,9 +39,16 @@ export default function AddressAutocomplete({ value, onChange, style, placeholde
   const [ready, setReady] = useState(false);
   const [useFallback, setUseFallback] = useState(!resolvedKey);
 
-  // Stable callback ref to avoid re-initializing autocomplete
+  // Stable callback ref so we don't re-init autocomplete when onChange changes
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+
+  // Set initial value once on mount (uncontrolled)
+  useEffect(() => {
+    if (inputRef.current && value && !inputRef.current.value) {
+      inputRef.current.value = value;
+    }
+  }, [value]);
 
   useEffect(() => {
     if (!resolvedKey) {
@@ -101,13 +109,33 @@ export default function AddressAutocomplete({ value, onChange, style, placeholde
     }
   }, []);
 
+  // Manual typing handler
+  const handleInput = (e) => {
+    onChangeRef.current(e.target.value);
+  };
+
+  if (useFallback) {
+    // Fallback: fully controlled plain text input (no Google)
+    return (
+      <input
+        type="text"
+        placeholder={placeholder || "123 Main St, City, ST"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={style}
+        autoComplete="off"
+      />
+    );
+  }
+
+  // Google Autocomplete: UNCONTROLLED input — no value prop
   return (
     <input
       ref={inputRef}
       type="text"
-      placeholder={useFallback ? (placeholder || "123 Main St, City, ST") : (placeholder || "Start typing an address...")}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder || "Start typing an address..."}
+      defaultValue={value || ""}
+      onChange={handleInput}
       style={style}
       autoComplete="off"
     />
