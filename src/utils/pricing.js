@@ -126,10 +126,11 @@ export function getDiscountPercent(selectedServices, bundleDiscounts, appliedBun
     return seasonalBundle.discount;
   }
   const count = selectedServices.length;
-  if (count >= 5) return bundleDiscounts[5] || 25;
-  if (count >= 4) return bundleDiscounts[4] || 20;
-  if (count >= 3) return bundleDiscounts[3] || 15;
-  if (count >= 2) return bundleDiscounts[2] || 10;
+  const d = bundleDiscounts || {};
+  if (count >= 5) return d[5] ?? d[4] ?? 20;
+  if (count >= 4) return d[4] ?? 15;
+  if (count >= 3) return d[3] ?? 10;
+  if (count >= 2) return d[2] ?? 5;
   return 0;
 }
 
