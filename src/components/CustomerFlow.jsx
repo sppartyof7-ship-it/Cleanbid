@@ -15,13 +15,13 @@ import TrustGallery from "./TrustGallery";
  * Source: HomeAdvisor, Angi, Thumbtack aggregated data.
  */
 const NATIONAL_AVERAGES = {
-  pressure_washing: { low: 200, high: 600, label: "House Washing" },
-  window_cleaning: { low: 150, high: 500, label: "Window Cleaning" },
-  deck_cleaning: { low: 175, high: 500, label: "Deck Cleaning" },
-  concrete_cleaning: { low: 125, high: 400, label: "Concrete Cleaning" },
-  roof_cleaning: { low: 300, high: 800, label: "Roof Cleaning" },
-  gutter_cleaning: { low: 100, high: 350, label: "Gutter Cleaning" },
-  gutter_guard_install: { low: 800, high: 2500, label: "Gutter Guards" },
+  pressure_washing: { low: 150, high: 1200, label: "House Washing" },
+  window_cleaning: { low: 100, high: 800, label: "Window Cleaning" },
+  deck_cleaning: { low: 125, high: 700, label: "Deck Cleaning" },
+  concrete_cleaning: { low: 100, high: 600, label: "Concrete Cleaning" },
+  roof_cleaning: { low: 250, high: 1200, label: "Roof Cleaning" },
+  gutter_cleaning: { low: 75, high: 500, label: "Gutter Cleaning" },
+  gutter_guard_install: { low: 800, high: 3000, label: "Gutter Guards" },
 };
 
 // Session storage helpers for persistence
@@ -271,7 +271,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
       const isRemoving = p.includes(id);
       if (isRemoving) return p.filter((x) => x !== id);
 
-      // Adding a service â auto-populate details from best available sqft
+      // Adding a service — auto-populate details from best available sqft
       const bestSqft = details.pressure_washing?.sqft || details.window_cleaning?.sqft || 0;
       if (bestSqft > 0) {
         // Auto-populate sqft for services that need it
@@ -372,7 +372,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
       {/* STEP 0: Contact Info (first!) */}
       {step === 0 && (
         <div>
-          {/* ââ Welcome Hero ââ */}
+          {/* ── Welcome Hero ── */}
           <div style={{
             background: C.gradient,
             borderRadius: 16,
@@ -429,7 +429,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             </div>
           </div>
 
-          {/* ââ Trust Badges ââ */}
+          {/* ── Trust Badges ── */}
           <div style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
@@ -457,7 +457,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             ))}
           </div>
 
-          {/* ââ Mini FAQ ââ */}
+          {/* ── Mini FAQ ── */}
           <div style={{ marginTop: 24 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 12 }}>Common Questions</h3>
             {[
@@ -682,7 +682,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12, paddingTop: svc.tiers ? 0 : 16 }}>
                           {svc.perSqFt > 0 && <div><label style={s.label}>Square Footage</label><input type="number" placeholder="e.g. 1500" value={d.sqft || ""} onChange={(e) => updateDetail(svc.id, "sqft", Math.max(0, Number(e.target.value)))} style={s.input} /></div>}
                           {svc.perWindow > 0 && !svc.windowTypes && <div><label style={s.label}>Number of Windows</label><input type="number" placeholder="e.g. 20" value={d.windows || ""} onChange={(e) => updateDetail(svc.id, "windows", Math.max(0, Number(e.target.value)))} style={s.input} /></div>}
-                          {(svc.perLinFt > 0 || (svc.tiers && svc.tiers.length > 0)) && <div><label style={s.label}>Linear Feet of Gutters</label><input type="number" placeholder="e.g. 150" value={d.linearFt || ""} onChange={(e) => updateDetail(svc.id, "linearFt", Math.max(0, Number(e.target.value)))} style={s.input} />{d.linearFt > 0 && (details.pressure_washing?.sqft || details.window_cleaning?.sqft) ? <div style={{ marginTop: 4, fontSize: 11, color: C.textLight }}>{"\u{2139}\u{FE0F}"} Estimated from your home size â adjust if needed</div> : null}</div>}
+                          {(svc.perLinFt > 0 || (svc.tiers && svc.tiers.length > 0)) && <div><label style={s.label}>Linear Feet of Gutters</label><input type="number" placeholder="e.g. 150" value={d.linearFt || ""} onChange={(e) => updateDetail(svc.id, "linearFt", Math.max(0, Number(e.target.value)))} style={s.input} />{d.linearFt > 0 && (details.pressure_washing?.sqft || details.window_cleaning?.sqft) ? <div style={{ marginTop: 4, fontSize: 11, color: C.textLight }}>{"\u{2139}\u{FE0F}"} Estimated from your home size — adjust if needed</div> : null}</div>}
                         </div>
                       )}
 
@@ -734,7 +734,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             })}
           </div>
 
-          {/* Package Selector â Standard / Premium / Platinum */}
+          {/* Package Selector — Standard / Premium / Platinum */}
           {selectedServices.length > 0 && (
             <div style={{ marginTop: 24 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.textLight, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 12 }}>
@@ -877,7 +877,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         </div>
       )}
 
-      {/* STEP 3: Review & Submit â clean sales flow: selections â big price â trust â submit */}
+      {/* STEP 3: Review & Submit — clean sales flow: selections → big price → trust → submit */}
       {step === 3 && (
         <div>
           <h1 style={s.h1}>Your Instant Quote</h1>
@@ -894,7 +894,30 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             </div>
           )}
 
-          {/* THE BIG PRICE â hero moment of the entire flow */}
+          {/* Compact Package Toggle on Quote Page */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 20, justifyContent: "center" }}>
+            {["standard", "premium", "platinum"].map((pkgKey) => {
+              const pkg = config.packages[pkgKey];
+              if (!pkg) return null;
+              const isActive = selectedPackage === pkgKey;
+              return (
+                <button key={pkgKey} onClick={() => setSelectedPackage(pkgKey)}
+                  style={{
+                    padding: "10px 20px", borderRadius: 30, cursor: "pointer",
+                    border: `2px solid ${isActive ? (pkg.color || C.primary) : C.border}`,
+                    background: isActive ? (pkg.color || C.primary) : C.white,
+                    color: isActive ? "#fff" : C.textMid,
+                    fontSize: 14, fontWeight: 700, transition: "all 0.2s",
+                    position: "relative",
+                  }}>
+                  {pkg.label}
+                  {pkg.popular && <span style={{ marginLeft: 6, fontSize: 10, opacity: 0.85 }}>{"\u2B50"}</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* THE BIG PRICE — hero moment of the entire flow */}
           <div style={{
             marginBottom: 24,
             padding: "32px 24px",
@@ -917,7 +940,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             </div>
           </div>
 
-          {/* Services included â show price per service, but NOT how it was calculated */}
+          {/* Services included — show price per service, but NOT how it was calculated */}
           <div style={{ ...s.card, padding: 0, overflow: "hidden" }}>
             <div style={{ padding: "16px 24px 12px" }}>
               <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: C.text }}>What's Included</h3>
@@ -969,7 +992,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             </div>
           </div>
 
-          {/* National Average Comparison â shows their price on the bar vs national range */}
+          {/* National Average Comparison — shows their price on the bar vs national range */}
           <div style={{ ...s.card, marginTop: 20, padding: 0, overflow: "hidden" }}>
             <div style={{ padding: "16px 24px 12px", borderBottom: `1px solid ${C.borderLight}` }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1052,7 +1075,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             </div>
           </div>
 
-          {/* Submit button â big, prominent, action-oriented */}
+          {/* Submit button — big, prominent, action-oriented */}
           <div style={{ marginTop: 28, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
             <button
               onClick={submitQuote}
@@ -1126,4 +1149,3 @@ export default function CustomerFlow({ config, onSubmitLead }) {
 function StepExposer() {
   return null; // No-op; parent manages its own step display via view state
 }
-
