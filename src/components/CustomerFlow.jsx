@@ -925,7 +925,9 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             {selectedServices.map((svcId) => {
               const svc = config.services.find((s) => s.id === svcId);
               if (!svc) return null;
-              const price = svc.hasPackagePricing ? svcPrice(svcId, selectedPackage) : svcPrice(svcId);
+              const baseServicePrice = svcPrice(svcId, svc.hasPackagePricing ? selectedPackage : undefined);
+              const pkgMult = svc.hasPackagePricing ? 1 : (config.packages[selectedPackage]?.multiplier || 1);
+              const price = Math.round(baseServicePrice * pkgMult);
               const tierLabel = svc.tierFeatures?.[selectedPackage];
               return (
                 <div key={svcId} style={{ padding: "12px 24px", borderTop: `1px solid ${C.borderLight}` }}>
@@ -981,7 +983,9 @@ export default function CustomerFlow({ config, onSubmitLead }) {
               const svc = config.services.find((sv) => sv.id === svcId);
               const avg = NATIONAL_AVERAGES[svcId];
               if (!svc || !avg) return null;
-              const price = svc.hasPackagePricing ? svcPrice(svcId, selectedPackage) : svcPrice(svcId);
+              const baseCompPrice = svcPrice(svcId, svc.hasPackagePricing ? selectedPackage : undefined);
+              const compMult = svc.hasPackagePricing ? 1 : (config.packages[selectedPackage]?.multiplier || 1);
+              const price = Math.round(baseCompPrice * compMult);
               if (price <= 0) return null;
 
               const range = avg.high - avg.low;
