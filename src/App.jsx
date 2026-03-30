@@ -301,7 +301,7 @@ export default function App() {
 
         {/* Admin Panel */}
         {view === "admin" && adminAuth && (
-          <AdminPanel config={config} setConfig={setConfig} onExit={handleAdminExit} />
+          <AdminPanel config={config} setConfig={setConfig} onExit={handleAdminExit} tenantSlug={TENANT_SLUG} />
         )}
 
         {/* Leads / CRM */}
