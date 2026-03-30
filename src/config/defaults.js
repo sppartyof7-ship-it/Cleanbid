@@ -44,7 +44,7 @@ export function buildDefaultConfig(tenant) {
 }
 
 const BASE_CONFIG = {
-  configVersion: 3,  // Bump this when default pricing changes — forces localStorage refresh
+  configVersion: 4,  // Bump this when default pricing changes — forces localStorage refresh
   businessName: "MyBidQuick",
   adminPassword: "admin123",
   globalPriceAdjustment: 0,
@@ -112,17 +112,17 @@ const BASE_CONFIG = {
         {
           id: "casement", label: "Casement", multiplier: 1.0,
           description: "Single pane, hinged on one side, cranks open", windowImage: "casement",
-          priceByPackage: { standard: 5.5, premium: 9, platinum: 13.5 },
+          priceByPackage: { standard: 5.5, premium: 12, platinum: 18 },
         },
         {
           id: "double_hung", label: "Double Hung", multiplier: 1.6,
           description: "Two sashes that slide up & down, tilt-in for cleaning", windowImage: "double_hung",
-          priceByPackage: { standard: 8, premium: 12, platinum: 17 },
+          priceByPackage: { standard: 8, premium: 16, platinum: 24 },
         },
         {
           id: "combination", label: "Combination / Storm", multiplier: 2.0,
           description: "Inner window + outer storm pane - extra glass to clean", windowImage: "combination",
-          priceByPackage: { standard: 14, premium: 22, platinum: 30 },
+          priceByPackage: { standard: 14, premium: 28, platinum: 38 },
         },
       ],
       extras: [
