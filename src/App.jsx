@@ -328,6 +328,29 @@ export default function App() {
  * Preserves admin price overrides while syncing new features.
  */
 function mergeConfigWithDefaults(saved, defaults) {
+  // If pricing version changed, discard saved pricing — use fresh defaults
+  // This prevents stale localStorage from overriding updated default prices
+  const pricingStale = (saved.configVersion || 0) !== (defaults.configVersion || 0);
+
+  if (pricingStale) {
+    console.info("[Config] Pricing version changed — resetting to new defaults");
+    // Keep non-pricing admin settings, reset all pricing to defaults
+    const merged = deepClone(defaults);
+    // Preserve non-pricing settings the admin may have customized
+    if (saved.marketing) merged.marketing = saved.marketing;
+    if (saved.followUp) merged.followUp = saved.followUp;
+    if (saved.contactEmail) merged.contactEmail = saved.contactEmail;
+    if (saved.web3formsKey) merged.web3formsKey = saved.web3formsKey;
+    if (saved.googlePlacesApiKey) merged.googlePlacesApiKey = saved.googlePlacesApiKey;
+    // Preserve service enabled/disabled state (but not prices)
+    merged.services = defaults.services.map((defSvc) => {
+      const savedSvc = saved.services?.find((s) => s.id === defSvc.id);
+      if (!savedSvc) return defSvc;
+      return { ...defSvc, enabled: savedSvc.enabled ?? defSvc.enabled };
+    });
+    return merged;
+  }
+
   const merged = { ...deepClone(defaults), ...saved };
 
   // Always sync services from defaults (names, descriptions, extras, options)
