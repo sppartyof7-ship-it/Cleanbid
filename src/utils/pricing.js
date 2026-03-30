@@ -127,10 +127,10 @@ export function getDiscountPercent(selectedServices, bundleDiscounts, appliedBun
   }
   const count = selectedServices.length;
   const d = bundleDiscounts || {};
-  if (count >= 5) return d[5] ?? d[4] ?? 20;
-  if (count >= 4) return d[4] ?? 15;
-  if (count >= 3) return d[3] ?? 10;
-  if (count >= 2) return d[2] ?? 5;
+  if (count >= 5) return d[5] ?? 25;
+  if (count >= 4) return d[4] ?? 20;
+  if (count >= 3) return d[3] ?? 15;
+  if (count >= 2) return d[2] ?? 10;
   return 0;
 }
 
