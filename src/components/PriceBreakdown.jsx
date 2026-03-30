@@ -9,13 +9,13 @@ import { fmt } from "../utils/helpers";
  * Source: HomeAdvisor, Angi, Thumbtack aggregated data.
  */
 const NATIONAL_AVERAGES = {
-  pressure_washing: { low: 200, high: 600, label: "House Washing" },
-  window_cleaning: { low: 150, high: 500, label: "Window Cleaning" },
-  deck_cleaning: { low: 175, high: 500, label: "Deck Cleaning" },
-  concrete_cleaning: { low: 125, high: 400, label: "Concrete Cleaning" },
-  roof_cleaning: { low: 300, high: 800, label: "Roof Cleaning" },
-  gutter_cleaning: { low: 100, high: 350, label: "Gutter Cleaning" },
-  gutter_guard_install: { low: 800, high: 2500, label: "Gutter Guards" },
+  pressure_washing: { low: 150, high: 1200, label: "House Washing" },
+  window_cleaning: { low: 100, high: 800, label: "Window Cleaning" },
+  deck_cleaning: { low: 125, high: 700, label: "Deck Cleaning" },
+  concrete_cleaning: { low: 100, high: 600, label: "Concrete Cleaning" },
+  roof_cleaning: { low: 250, high: 1200, label: "Roof Cleaning" },
+  gutter_cleaning: { low: 75, high: 500, label: "Gutter Cleaning" },
+  gutter_guard_install: { low: 800, high: 3000, label: "Gutter Guards" },
 };
 
 /**
