@@ -462,8 +462,8 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             <h3 style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 12 }}>Common Questions</h3>
             {[
               { q: "How soon can I get scheduled?", a: "Most jobs are scheduled within 3\u20135 business days of your quote request." },
-              { q: "What payment methods do you accept?", a: "We accept all major credit cards, cash, check, and digital payments like Venmo and Zelle." },
-              { q: "Do I need to be home during the service?", a: "Nope! As long as we can access the exterior areas, you\u2019re free to go about your day." },
+              { q: "What payment methods do you accept?", a: "We accept cards, cash, check, and ACH." },
+              { q: "Do I need to be home during the service?", a: "For exterior-only work, nope! You\u2019re free to go about your day. If we need to remove screens or you\u2019re having interior windows done, we\u2019ll need access inside \u2014 some customers give us their garage code." },
               { q: "Is there a satisfaction guarantee?", a: "Absolutely. If you\u2019re not happy with any part of the job, we\u2019ll come back and make it right at no extra charge." },
             ].map((faq) => (
               <details key={faq.q} style={{
