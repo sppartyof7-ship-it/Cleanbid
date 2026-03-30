@@ -1,6 +1,30 @@
 import { SERVICES_WITH_STORIES } from "../config/defaults";
 
 /**
+ * Calculate tiered per-sqft cost.
+ * Larger homes get a declining rate so quotes stay competitive.
+ * Tiers: 0-2000 sqft at full rate, 2001-3000 at 67%, 3001+ at 47%.
+ */
+function tieredSqFtCost(sqft, perSqFt, tiers) {
+  const t = tiers || [
+    { upTo: 2000, rate: 1.0 },
+    { upTo: 3000, rate: 0.67 },
+    { upTo: 99999, rate: 0.47 },
+  ];
+  let remaining = sqft;
+  let cost = 0;
+  let prev = 0;
+  for (const tier of t) {
+    const band = Math.min(remaining, tier.upTo - prev);
+    if (band <= 0) break;
+    cost += band * perSqFt * tier.rate;
+    remaining -= band;
+    prev = tier.upTo;
+  }
+  return cost;
+}
+
+/**
  * Calculate the price for a single service.
  * This is the SINGLE source of truth for pricing â no more duplicated logic!
  *
@@ -79,7 +103,7 @@ export function calculateServicePrice(svc, details, selectedExtras, globalPriceA
 
   let total = applyGlobal(svc.basePrice);
 
-  if (svc.perSqFt) total += (d.sqft || 0) * applyGlobal(svc.perSqFt);
+  if (svc.perSqFt) total += tieredSqFtCost(d.sqft || 0, applyGlobal(svc.perSqFt), svc.sqftTiers);
   if (svc.perWindow) total += (d.windows || 0) * applyGlobal(svc.perWindow);
   if (svc.perLinFt) total += (d.linearFt || 0) * applyGlobal(svc.perLinFt);
 
