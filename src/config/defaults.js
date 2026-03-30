@@ -281,7 +281,7 @@ const BASE_CONFIG = {
     offerServices: ["window_cleaning", "gutter_cleaning"],
     discountPercent: 15,
   },
-  bundleDiscounts: { 2: 5, 3: 10, 4: 15 },
+  bundleDiscounts: { 2: 10, 3: 15, 4: 20, 5: 25 },
   seasonalBundles: [
     {
       id: "spring_refresh",
