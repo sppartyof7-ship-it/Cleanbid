@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Address input with Google Places Autocomplete.
- * Uses the classic google.maps.places.Autocomplete widget.
- * IMPORTANT: This is an UNCONTROLLED input — Google's Autocomplete
- * manages the input value directly. React only reads it on change/select.
- * Falls back to a plain text input if no API key is configured.
+ * Address input with Google Places Autocomplete (classic widget).
+ *
+ * KEY DESIGN DECISION: This input is fully UNCONTROLLED when Google is active.
+ * Google's Autocomplete widget manages the <input> directly.
+ * We only notify the parent (onChange) when:
+ *   1. The user picks a suggestion (place_changed event)
+ *   2. The user leaves the field (onBlur)
+ * This prevents React re-renders from fighting with Google.
  */
 
-const FALLBACK_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyAnLy1iRt0_fkMJqyBxrC0meEJD0qpshvU";
+const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyAnLy1iRt0_fkMJqyBxrC0meEJD0qpshvU";
 
-// Load the Google Maps script once
 let loadPromise = null;
 function loadGoogleMaps(apiKey) {
   if (loadPromise) return loadPromise;
@@ -18,109 +20,76 @@ function loadGoogleMaps(apiKey) {
     loadPromise = Promise.resolve();
     return loadPromise;
   }
-
   loadPromise = new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.src = `https://maps.googleapis.com/maps/api/js?libraries=places&key=${apiKey}`;
     script.async = true;
     script.defer = true;
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Google Maps script failed to load"));
+    script.onerror = () => { loadPromise = null; reject(new Error("Google Maps failed")); };
     document.head.appendChild(script);
   });
-
   return loadPromise;
 }
 
 export default function AddressAutocomplete({ value, onChange, style, placeholder, apiKey }) {
-  const resolvedKey = apiKey || FALLBACK_KEY;
+  const key = apiKey || MAPS_KEY;
   const inputRef = useRef(null);
-  const autocompleteRef = useRef(null);
-  const [ready, setReady] = useState(false);
-  const [useFallback, setUseFallback] = useState(!resolvedKey);
+  const acRef = useRef(null);
+  const cbRef = useRef(onChange);
+  cbRef.current = onChange;
 
-  // Stable callback ref so we don't re-init autocomplete when onChange changes
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
+  const [fallback, setFallback] = useState(!key);
 
-  // Set initial value once on mount (uncontrolled)
+  // Load Google Maps + attach Autocomplete (runs once)
   useEffect(() => {
-    if (inputRef.current && value && !inputRef.current.value) {
-      inputRef.current.value = value;
-    }
-  }, [value]);
+    if (!key) return;
+    let dead = false;
 
-  useEffect(() => {
-    if (!resolvedKey) {
-      setUseFallback(true);
-      return;
-    }
-
-    let cancelled = false;
-
-    async function init() {
+    (async () => {
       try {
-        await loadGoogleMaps(resolvedKey);
-        if (cancelled) return;
-        setReady(true);
-      } catch (err) {
-        console.warn("Google Maps failed to load, using fallback input:", err);
-        if (!cancelled) setUseFallback(true);
+        await loadGoogleMaps(key);
+        if (dead || !inputRef.current || acRef.current) return;
+
+        const ac = new window.google.maps.places.Autocomplete(inputRef.current, {
+          componentRestrictions: { country: "us" },
+          types: ["address"],
+          fields: ["formatted_address"],
+        });
+
+        ac.addListener("place_changed", () => {
+          const place = ac.getPlace();
+          if (place?.formatted_address) {
+            cbRef.current(place.formatted_address);
+          }
+        });
+
+        acRef.current = ac;
+      } catch {
+        if (!dead) setFallback(true);
       }
-    }
+    })();
 
-    init();
-    return () => { cancelled = true; };
-  }, [resolvedKey]);
+    return () => { dead = true; };
+  }, [key]);
 
-  // Attach the classic Autocomplete widget once Maps is ready
+  // z-index fix for the dropdown
   useEffect(() => {
-    if (!ready || !inputRef.current || autocompleteRef.current) return;
-
-    try {
-      const ac = new window.google.maps.places.Autocomplete(inputRef.current, {
-        componentRestrictions: { country: "us" },
-        types: ["address"],
-        fields: ["formatted_address"],
-      });
-
-      ac.addListener("place_changed", () => {
-        const place = ac.getPlace();
-        if (place?.formatted_address) {
-          onChangeRef.current(place.formatted_address);
-        }
-      });
-
-      autocompleteRef.current = ac;
-    } catch (err) {
-      console.warn("Autocomplete widget failed:", err);
-      setUseFallback(true);
-    }
-  }, [ready]);
-
-  // Fix z-index so the dropdown shows above everything
-  useEffect(() => {
-    const styleId = "pac-container-fix";
-    if (!document.getElementById(styleId)) {
+    if (!document.getElementById("pac-fix")) {
       const s = document.createElement("style");
-      s.id = styleId;
-      s.textContent = `.pac-container { z-index: 99999 !important; }`;
+      s.id = "pac-fix";
+      s.textContent = ".pac-container{z-index:99999!important}";
       document.head.appendChild(s);
     }
   }, []);
 
-  // Manual typing handler
-  const handleInput = (e) => {
-    onChangeRef.current(e.target.value);
-  };
-
-  if (useFallback) {
-    // Fallback: fully controlled plain text input (no Google)
+  // Controlled fallback (no Google)
+  if (fallback) {
     return (
       <input
         type="text"
         placeholder={placeholder || "123 Main St, City, ST"}
-        value={value}
+        value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         style={style}
         autoComplete="off"
@@ -128,14 +97,14 @@ export default function AddressAutocomplete({ value, onChange, style, placeholde
     );
   }
 
-  // Google Autocomplete: UNCONTROLLED input — no value prop
+  // Uncontrolled Google input — NO value prop, NO onChange per-keystroke
   return (
     <input
       ref={inputRef}
       type="text"
       placeholder={placeholder || "Start typing an address..."}
       defaultValue={value || ""}
-      onChange={handleInput}
+      onBlur={(e) => cbRef.current(e.target.value)}
       style={style}
       autoComplete="off"
     />
