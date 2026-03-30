@@ -44,7 +44,7 @@ export function buildDefaultConfig(tenant) {
 }
 
 const BASE_CONFIG = {
-  configVersion: 2,  // Bump this when default pricing changes — forces localStorage refresh
+  configVersion: 3,  // Bump this when default pricing changes — forces localStorage refresh
   businessName: "MyBidQuick",
   adminPassword: "admin123",
   globalPriceAdjustment: 0,
@@ -74,8 +74,8 @@ const BASE_CONFIG = {
       name: "House Washing",
       icon: "\u{1F3E0}",
       description: "House / Siding Wash",
-      basePrice: 75,
-      perSqFt: 0.08,
+      basePrice: 125,
+      perSqFt: 0.15,
       perWindow: 0,
       perLinFt: 0,
       enabled: true,
