@@ -1080,18 +1080,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
           <div style={{ width: 80, height: 80, borderRadius: "50%", background: C.gradient, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: 40, color: C.white }}>{"\u2713"}</div>
           <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>Quote Submitted!</h1>
           <p style={{ color: C.textMid, fontSize: 16, maxWidth: 480, margin: "0 auto 28px" }}>Thanks, {contact.name}! Your quote request has been received. We'll follow up within 24 hours.</p>
-          {config.followUp.enabled && (
-            <div style={{ ...s.card, maxWidth: 500, margin: "0 auto 24px", textAlign: "left" }}>
-              <h4 style={{ ...s.label, marginBottom: 12 }}>What happens next</h4>
-              {config.followUp.sequences.filter((sq) => sq.active).map((sq, i) => (
-                <div key={sq.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }}>
-                  <div style={{ width: 24, height: 24, borderRadius: "50%", background: `${C.primary}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: C.primary, flexShrink: 0 }}>{i + 1}</div>
-                  <span style={{ fontSize: 13, color: C.textMid }}><Badge color={sq.type === "sms" ? C.secondary : C.primary}>{sq.type}</Badge> {sq.delay}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          <button onClick={resetQuote} style={s.btnSecondary}>Start a New Quote</button>
+                    <button onClick={resetQuote} style={s.btnSecondary}>Start a New Quote</button>
         </div>
       )}
 
