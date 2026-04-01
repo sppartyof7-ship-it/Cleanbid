@@ -1,4 +1,4 @@
-himport { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import C from "../config/colors";
 import s from "../config/styles";
 import { SERVICES_WITH_STORIES } from "../config/defaults";
