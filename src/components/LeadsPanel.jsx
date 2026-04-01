@@ -74,7 +74,7 @@ export default function LeadsPanel({ leads, setLeads, config }) {
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
                 <span style={{ fontWeight: 700, fontSize: 15 }}>{lead.name}</span>
                 <Badge color={lead.status === "won" ? C.secondary : lead.status === "pending" ? C.warning : C.danger}>{lead.status}</Badge>
-                {lead.projectType === "commercial" && <Badge color={C.accent}>Commercial</Badge>}
+                {/* Residential only — commercial badge removed */}
               </div>
               <div style={{ fontSize: 13, color: C.textLight }}>{lead.email} {"\u00B7"} {lead.phone}</div>
               <div style={{ fontSize: 12, color: C.textMuted, marginTop: 4 }}>

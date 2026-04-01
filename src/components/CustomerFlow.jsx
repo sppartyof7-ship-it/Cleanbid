@@ -557,20 +557,9 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             </div>
           )}
 
-          {/* Global property info */}
+          {/* Global property info — residential only */}
           <div style={s.card}>
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-end" }}>
-              <div>
-                <label style={s.label}>Project Type</label>
-                <div style={{ display: "flex", gap: 8 }}>
-                  {["residential", "commercial"].map((t) => (
-                    <button key={t} onClick={() => setContact((c) => ({ ...c, projectType: t }))}
-                      style={{ padding: "8px 20px", borderRadius: 10, border: `1px solid ${contact.projectType === t ? C.primary : C.border}`, background: contact.projectType === t ? `${C.primary}12` : C.white, color: contact.projectType === t ? C.primary : C.textMid, fontSize: 14, fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
-                      {t === "residential" ? "\u{1F3E1}" : "\u{1F3E2}"} {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
               <div style={{ minWidth: 180 }}>
                 <label style={s.label}>Number of Stories</label>
                 <select value={globalStories} onChange={(e) => setGlobalStories(Number(e.target.value))} style={s.input}>
@@ -988,7 +977,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             {/* Property summary row */}
             <div style={{ padding: "10px 24px", borderTop: `1px solid ${C.borderLight}`, display: "flex", flexWrap: "wrap", gap: 8 }}>
               <span style={{ fontSize: 11, color: C.textMid, padding: "3px 8px", background: C.bgSoft, borderRadius: 6 }}>
-                {contact.projectType === "residential" ? "\u{1F3E1} Residential" : "\u{1F3E2} Commercial"}
+{"\u{1F3E1} Residential"}
               </span>
               <span style={{ fontSize: 11, color: C.textMid, padding: "3px 8px", background: C.bgSoft, borderRadius: 6 }}>
                 {globalStories === 1 ? "1 Story" : globalStories === 2 ? "2 Stories" : "3+ Stories"}

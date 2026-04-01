@@ -25,7 +25,7 @@ if (HARDCODED) {
 const DEFAULT_LEADS = [
   { id: 1, name: "Sarah Johnson", email: "sarah@email.com", phone: "(555) 234-5678", services: ["pressure_washing", "gutter_cleaning"], package: "premium", total: 485, status: "pending", date: "2026-03-12", followUpStep: 2, notes: "Two-story home, large driveway", leadSource: "Online Organic", projectType: "residential", photos: [] },
   { id: 2, name: "Mike Chen", email: "mike@email.com", phone: "(555) 876-5432", services: ["window_cleaning", "deck_cleaning", "roof_cleaning"], package: "platinum", total: 1247, status: "won", date: "2026-03-10", followUpStep: 4, notes: "Repeat customer", leadSource: "Repeat / Referral", projectType: "residential", photos: [] },
-  { id: 3, name: "Jessica Williams", email: "jess@email.com", phone: "(555) 345-6789", services: ["concrete_cleaning"], package: "standard", total: 189, status: "lost", date: "2026-03-08", followUpStep: 3, notes: "Went with competitor", leadSource: "Online Paid", projectType: "commercial", photos: [] },
+  { id: 3, name: "Jessica Williams", email: "jess@email.com", phone: "(555) 345-6789", services: ["concrete_cleaning"], package: "standard", total: 189, status: "lost", date: "2026-03-08", followUpStep: 3, notes: "Went with competitor", leadSource: "Online Paid", projectType: "residential", photos: [] },
   { id: 4, name: "David Park", email: "david@email.com", phone: "(555) 456-7890", services: ["pressure_washing", "window_cleaning", "gutter_cleaning"], package: "premium", total: 692, status: "pending", date: "2026-03-13", followUpStep: 1, notes: "Spring bundle prospect", leadSource: "Social Media", projectType: "residential", photos: [] },
 ];
 
