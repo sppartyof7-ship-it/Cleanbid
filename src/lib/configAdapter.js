@@ -149,29 +149,45 @@ function adaptMarketing(mkt) {
  * MyBidQuick uses: basic / standard / premium
  * Engine uses:     standard / premium / platinum
  *
- * We map:  basic â standard,  standard â premium,  premium â platinum
+ * We map:  basic → standard,  standard → premium,  premium → platinum
  */
 function adaptPackages(mbqPackages, defaultPackages) {
   if (!mbqPackages) return defaultPackages;
 
   const result = deepClone(defaultPackages);
 
-  // Map MyBidQuick basic â engine standard
-  if (mbqPackages.basic) {
-    result.standard.multiplier = mbqPackages.basic.multiplier ?? result.standard.multiplier;
-    if (mbqPackages.basic.tagline) result.standard.tag = mbqPackages.basic.tagline;
-  }
+  // Detect format: if config has "platinum" key, it uses engine naming directly
+  // (standard/premium/platinum). Otherwise it's legacy (basic/standard/premium).
+  const usesEngineNaming = "platinum" in mbqPackages;
 
-  // Map MyBidQuick standard â engine premium
-  if (mbqPackages.standard) {
-    result.premium.multiplier = mbqPackages.standard.multiplier ?? result.premium.multiplier;
-    if (mbqPackages.standard.tagline) result.premium.tag = mbqPackages.standard.tagline;
-  }
-
-  // Map MyBidQuick premium â engine platinum
-  if (mbqPackages.premium) {
-    result.platinum.multiplier = mbqPackages.premium.multiplier ?? result.platinum.multiplier;
-    if (mbqPackages.premium.tagline) result.platinum.tag = mbqPackages.premium.tagline;
+  if (usesEngineNaming) {
+    // Direct mapping - config already uses standard/premium/platinum
+    if (mbqPackages.standard) {
+      result.standard.multiplier = mbqPackages.standard.multiplier ?? result.standard.multiplier;
+      if (mbqPackages.standard.tagline) result.standard.tag = mbqPackages.standard.tagline;
+    }
+    if (mbqPackages.premium) {
+      result.premium.multiplier = mbqPackages.premium.multiplier ?? result.premium.multiplier;
+      if (mbqPackages.premium.tagline) result.premium.tag = mbqPackages.premium.tagline;
+    }
+    if (mbqPackages.platinum) {
+      result.platinum.multiplier = mbqPackages.platinum.multiplier ?? result.platinum.multiplier;
+      if (mbqPackages.platinum.tagline) result.platinum.tag = mbqPackages.platinum.tagline;
+    }
+  } else {
+    // Legacy mapping: basic -> standard, standard -> premium, premium -> platinum
+    if (mbqPackages.basic) {
+      result.standard.multiplier = mbqPackages.basic.multiplier ?? result.standard.multiplier;
+      if (mbqPackages.basic.tagline) result.standard.tag = mbqPackages.basic.tagline;
+    }
+    if (mbqPackages.standard) {
+      result.premium.multiplier = mbqPackages.standard.multiplier ?? result.premium.multiplier;
+      if (mbqPackages.standard.tagline) result.premium.tag = mbqPackages.standard.tagline;
+    }
+    if (mbqPackages.premium) {
+      result.platinum.multiplier = mbqPackages.premium.multiplier ?? result.platinum.multiplier;
+      if (mbqPackages.premium.tagline) result.platinum.tag = mbqPackages.premium.tagline;
+    }
   }
 
   return result;
