@@ -44,7 +44,7 @@ export function buildDefaultConfig(tenant) {
 }
 
 const BASE_CONFIG = {
-  configVersion: 5,  // Bump this when default pricing changes — forces localStorage refresh
+  configVersion: 6,  // Bump this when default pricing changes — forces localStorage refresh
   businessName: "MyBidQuick",
   adminPassword: "admin123",
   globalPriceAdjustment: 0,
@@ -85,9 +85,9 @@ const BASE_CONFIG = {
       perLinFt: 0,
       enabled: true,
       tierFeatures: {
-        standard: "Exterior rinse & surface wash",
-        premium: "Soft wash with mildew & algae treatment",
-        platinum: "Full restoration wash + trim & eave detail",
+        standard: "Soft wash siding — surface clean & rinse",
+        premium: "Siding + window frames + eaves rinsed",
+        platinum: "Siding + frames + eaves + foundation + walkway spot-treatment",
       },
       extras: [
         { id: "garage", label: "Detached Garage", price: 85 },
@@ -109,9 +109,9 @@ const BASE_CONFIG = {
       hasPackagePricing: true,
       doorPrice: 8,
       tierFeatures: {
-        standard: "Exterior glass only",
-        premium: "Interior & exterior + optional screen cleaning",
-        platinum: "Full detail - interior, exterior, tracks, sills & screens included",
+        standard: "Exterior panes only",
+        premium: "Interior + exterior panes",
+        platinum: "Interior + exterior + tracks, sills, screens & frames cleaned",
       },
       windowTypes: [
         {
@@ -144,10 +144,11 @@ const BASE_CONFIG = {
       perWindow: 0,
       perLinFt: 0,
       enabled: true,
+      maxTier: "premium",
       tierFeatures: {
         standard: "Surface wash & debris removal",
-        premium: "Deep clean + wood brightener application",
-        platinum: "Full restoration + sealant application",
+        premium: "Deep clean + wood brightener treatment",
+        platinum: "Deep clean + wood brightener treatment",
       },
       extras: [
         { id: "railings", label: "Railing Detail Clean", price: 65 },
@@ -164,10 +165,11 @@ const BASE_CONFIG = {
       perWindow: 0,
       perLinFt: 0,
       enabled: true,
+      maxTier: "premium",
       tierFeatures: {
         standard: "Surface pressure wash",
-        premium: "Deep clean + oil & rust stain treatment",
-        platinum: "Full restoration + joint sand + sealant coat",
+        premium: "Deep clean + edge detail + spot degreasing",
+        platinum: "Deep clean + edge detail + spot degreasing",
       },
       extras: [
         { id: "oil_stain", label: "Oil Stain Removal", price: 50 },
@@ -185,9 +187,9 @@ const BASE_CONFIG = {
       perLinFt: 0,
       enabled: true,
       tierFeatures: {
-        standard: "Surface debris removal & rinse",
-        premium: "Soft wash with algae & moss treatment",
-        platinum: "Full roof restoration + gutter line detail",
+        standard: "Soft wash visible roof surfaces",
+        premium: "Full roof + ridge caps + vent areas",
+        platinum: "Full roof + ridges + vents + moss treatment + 6-month warranty",
       },
       extras: [
         { id: "moss_treatment", label: "Moss Prevention Treatment", price: 150 },
@@ -205,10 +207,11 @@ const BASE_CONFIG = {
       perWindow: 0,
       perLinFt: 0.85,
       enabled: true,
+      maxTier: "premium",
       tierFeatures: {
-        standard: "Debris removal & basic flush",
-        premium: "Full clean + downspout flush & flow test",
-        platinum: "Full clean + seal inspection + detailed report",
+        standard: "Gutter flush & debris removal",
+        premium: "Full flush + downspout check & clear",
+        platinum: "Full flush + downspout check & clear",
       },
       conditionQuestions: [
         { id: "plugged_downspouts", label: "Are any downspouts plugged?", priceAdj: 35 },
@@ -247,7 +250,7 @@ const BASE_CONFIG = {
       label: "Standard",
       multiplier: 1.0,
       color: C.textMid,
-      tag: "Get the job done",
+      tag: "Quality service at a great price",
       features: [
         "Standard cleaning products",
         "Post-job walkthrough & cleanup",
@@ -258,7 +261,7 @@ const BASE_CONFIG = {
       label: "Premium",
       multiplier: 1.25,
       color: C.primary,
-      tag: "Most Popular",
+      tag: "Our most popular choice",
       popular: true,
       features: [
         "Upgraded cleaning products",
@@ -271,7 +274,7 @@ const BASE_CONFIG = {
       label: "Platinum",
       multiplier: 1.55,
       color: C.accent,
-      tag: "The Full Treatment",
+      tag: "The ultimate clean",
       features: [
         "Premium restoration-grade products",
         "Full property inspection report",
