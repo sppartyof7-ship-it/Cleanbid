@@ -165,11 +165,13 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     })
   }, [details.pressure_washing?.sqft, details.window_cleaning?.sqft, selectedServices])
 
-  // Satellite map URL computation
+  // Satellite map URL computation — only show when address looks complete (has city/state)
   const satelliteUrl = useMemo(() => {
     if (!contact?.address || !config.googlePlacesApiKey) return null
+    // Require at least a comma (indicates city/state present) to avoid 503 errors from Static Maps
+    if (!contact.address.includes(',')) return null
     const encoded = encodeURIComponent(contact.address)
-    return `https://maps.googleapis.com/maps/api/staticmap?center=${encoded}&zoom=19&size=600x300&maptype=satellite&key=${config.googlePlacesApiKey}`
+    return `https://maps.googleapis.com/maps/api/staticmap?center=${encoded}&zoom=19&size=600x300&maptype=satellite&markers=color:red|${encoded}&key=${config.googlePlacesApiKey}`
   }, [contact?.address, config.googlePlacesApiKey])
 
   const upsellOffers = [];
@@ -553,7 +555,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
           {/* Satellite map  - show if address is provided */}
           {satelliteUrl && (
             <div style={{ marginBottom: 24 }}>
-              <img src={satelliteUrl} alt="Property satellite view" style={{ width: "100%", maxHeight: 300, borderRadius: 16, border: `1px solid ${C.border}`, objectFit: "cover" }} />
+              <img src={satelliteUrl} alt="Property satellite view" style={{ width: "100%", maxHeight: 300, borderRadius: 16, border: `1px solid ${C.border}`, objectFit: "cover" }} onError={(e) => { e.target.parentElement.style.display = "none"; }} />
             </div>
           )}
 
