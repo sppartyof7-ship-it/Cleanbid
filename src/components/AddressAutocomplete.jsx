@@ -26,7 +26,7 @@ function loadGoogleMaps(apiKey) {
   }
   loadPromise = new Promise((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?libraries=places&key=${apiKey}&loading=async`;
+    script.src = `https://maps.googleapis.com/maps/api/js?libraries=places&key=${apiKey}`;
     script.async = true;
     script.defer = true;
     script.onload = () => resolve();
@@ -108,6 +108,19 @@ export default function AddressAutocomplete({ value, onChange, style, placeholde
     (async () => {
       try {
         await loadGoogleMaps(key);
+        if (dead || !inputRef.current || acRef.current) return;
+
+        // Wait briefly for places library to be fully ready
+        let retries = 0;
+        while (!window.google?.maps?.places?.Autocomplete && retries < 20) {
+          await new Promise(r => setTimeout(r, 100));
+          retries++;
+        }
+        if (!window.google?.maps?.places?.Autocomplete) {
+          console.warn("[AddressAutocomplete] Places library not available after waiting");
+          if (!dead) setFallback(true);
+          return;
+        }
         if (dead || !inputRef.current || acRef.current) return;
 
         // Use the classic Autocomplete widget
