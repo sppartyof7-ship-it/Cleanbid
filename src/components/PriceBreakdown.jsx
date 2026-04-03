@@ -35,20 +35,20 @@ export default function PriceBreakdown({
   pkgPrice,
   contact,
 }) {
-  // Google Maps satellite image
-  const satelliteUrl = useMemo(() => {
+  // Google Street View image — shows property from the curb
+  const streetViewUrl = useMemo(() => {
     if (!contact?.address || !config.googlePlacesApiKey) return null;
     const encoded = encodeURIComponent(contact.address);
-    return `https://maps.googleapis.com/maps/api/staticmap?center=${encoded}&zoom=19&size=600x300&maptype=satellite&key=${config.googlePlacesApiKey}`;
+    return `https://maps.googleapis.com/maps/api/streetview?size=600x300&location=${encoded}&key=${config.googlePlacesApiKey}`;
   }, [contact?.address, config.googlePlacesApiKey]);
 
   return (
     <div>
-      {/* Satellite property image */}
-      {satelliteUrl && (
+      {/* Street view of property */}
+      {streetViewUrl && (
         <div style={{ marginBottom: 24, borderRadius: 16, overflow: "hidden", border: `1px solid ${C.border}`, boxShadow: C.shadow }}>
           <img
-            src={satelliteUrl}
+            src={streetViewUrl}
             alt="Your property"
             style={{ width: "100%", height: 180, objectFit: "cover", display: "block" }}
             onError={(e) => { e.target.parentElement.style.display = "none"; }}

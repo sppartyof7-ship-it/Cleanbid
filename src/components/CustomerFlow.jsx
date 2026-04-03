@@ -179,13 +179,13 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     })
   }, [details.pressure_washing?.sqft, details.window_cleaning?.sqft, selectedServices])
 
-  // Satellite map URL computation — only show when address looks complete (has city/state)
-  const satelliteUrl = useMemo(() => {
+  // Street View URL — shows the property from the curb (more personal than satellite)
+  const streetViewUrl = useMemo(() => {
     if (!contact?.address || !config.googlePlacesApiKey) return null
-    // Require at least a comma (indicates city/state present) to avoid 503 errors from Static Maps
+    // Require at least a comma (indicates city/state present) to avoid bad API calls
     if (!contact.address.includes(',')) return null
     const encoded = encodeURIComponent(contact.address)
-    return `https://maps.googleapis.com/maps/api/staticmap?center=${encoded}&zoom=19&size=600x300&maptype=satellite&markers=color:red|${encoded}&key=${config.googlePlacesApiKey}`
+    return `https://maps.googleapis.com/maps/api/streetview?size=600x300&location=${encoded}&key=${config.googlePlacesApiKey}`
   }, [contact?.address, config.googlePlacesApiKey])
 
   const upsellOffers = [];
@@ -605,10 +605,10 @@ export default function CustomerFlow({ config, onSubmitLead }) {
           <h1 style={s.h1}>Tell us about your project</h1>
           <p style={{ color: C.textLight, marginBottom: 24, fontSize: 15 }}>Select your services and fill in the details. We'll build your custom quote!</p>
 
-          {/* Satellite map  - show if address is provided */}
-          {satelliteUrl && (
+          {/* Street view of property — show if address is provided */}
+          {streetViewUrl && (
             <div style={{ marginBottom: 24 }}>
-              <img src={satelliteUrl} alt="Property satellite view" style={{ width: "100%", maxHeight: 300, borderRadius: 16, border: `1px solid ${C.border}`, objectFit: "cover" }} onError={(e) => { e.target.parentElement.style.display = "none"; }} />
+              <img src={streetViewUrl} alt="Your property" style={{ width: "100%", maxHeight: 300, borderRadius: 16, border: `1px solid ${C.border}`, objectFit: "cover" }} onError={(e) => { e.target.parentElement.style.display = "none"; }} />
             </div>
           )}
 
@@ -918,10 +918,10 @@ export default function CustomerFlow({ config, onSubmitLead }) {
           <h1 style={s.h1}>Your Instant Quote</h1>
           <p style={{ color: C.textLight, marginBottom: 24, fontSize: 15 }}>Here's your personalized price based on your property details.</p>
 
-          {/* Satellite map on review page */}
-          {satelliteUrl && (
+          {/* Street view on review page */}
+          {streetViewUrl && (
             <div style={{ marginBottom: 24, borderRadius: 16, overflow: "hidden", border: `1px solid ${C.border}`, boxShadow: C.shadow }}>
-              <img src={satelliteUrl} alt="Your property" style={{ width: "100%", height: 200, objectFit: "cover", display: "block" }} onError={(e) => { e.target.parentElement.style.display = "none"; }} />
+              <img src={streetViewUrl} alt="Your property" style={{ width: "100%", height: 200, objectFit: "cover", display: "block" }} onError={(e) => { e.target.parentElement.style.display = "none"; }} />
               <div style={{ padding: "10px 16px", background: C.white, display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 14 }}>{"\u{1F4CD}"}</span>
                 <span style={{ fontSize: 13, color: C.textMid, fontWeight: 500 }}>{contact.address}</span>
