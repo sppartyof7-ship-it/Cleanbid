@@ -88,7 +88,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
   const [selectedServices, setSelectedServices] = useState(saved?.selectedServices ?? []);
   const [details, setDetails] = useState(saved?.details ?? {});
   const [selectedExtras, setSelectedExtras] = useState(saved?.selectedExtras ?? {});
-  const [selectedPackage, setSelectedPackage] = useState(saved?.selectedPackage ?? "premium");
+  const [servicePackages, setServicePackages] = useState(saved?.servicePackages ?? {});
   const [contact, setContact] = useState(saved?.contact ?? {
     name: "", email: "", phone: "", address: "", notes: "", leadSource: "", projectType: "residential",
   });
@@ -98,10 +98,24 @@ export default function CustomerFlow({ config, onSubmitLead }) {
   const [validationErrors, setValidationErrors] = useState({});
   const [dismissedUpsells, setDismissedUpsells] = useState([]);
 
+  // Helper functions for per-service package selection
+  const getServicePackage = (svcId) => servicePackages[svcId] || "premium";
+  const setServicePackage = (svcId, pkg) => setServicePackages(prev => ({ ...prev, [svcId]: pkg }));
+
+  // Derived selectedPackage for backward compat display (most common package across selected services)
+  const selectedPackage = (() => {
+    if (selectedServices.length === 0) return "premium";
+    const pkgs = selectedServices.map(id => getServicePackage(id));
+    const counts = {};
+    pkgs.forEach(p => counts[p] = (counts[p] || 0) + 1);
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    return sorted[0]?.[0] || "premium";
+  })();
+
   // Auto-save progress to sessionStorage
   useEffect(() => {
-    saveCustomerProgress({ step, selectedServices, details, selectedExtras, selectedPackage, contact, globalStories })
-  }, [step, selectedServices, details, selectedExtras, selectedPackage, contact, globalStories])
+    saveCustomerProgress({ step, selectedServices, details, selectedExtras, servicePackages, contact, globalStories })
+  }, [step, selectedServices, details, selectedExtras, servicePackages, contact, globalStories])
 
   const enabledServices = config.services.filter((sv) => sv.enabled);
 
@@ -245,8 +259,28 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     return price;
   };
 
-  // Package price  - uses per-service pricing for services that have it (window cleaning)
-  // Applies upsell discount to services accepted via upsell
+  // Compute total price using per-service packages
+  const totalPrice = () => {
+    let total = 0;
+    selectedServices.forEach(svcId => {
+      const svc = config.services.find(s => s.id === svcId);
+      if (!svc) return;
+      const pkg = getServicePackage(svcId);
+      let price = calculateServicePrice(svc, details[svcId], selectedExtras[svcId], config.globalPriceAdjustment, globalStories, svc.hasPackagePricing ? pkg : undefined);
+      const pkgMult = svc.hasPackagePricing ? 1 : (config.packages[pkg]?.multiplier || 1);
+      price = Math.round(price * pkgMult);
+      if (upsellAccepted.includes(svcId) && upsellDiscount > 0) {
+        price = Math.round(price * (1 - upsellDiscount / 100));
+      }
+      total += price;
+    });
+    if (bundleDiscount > 0) {
+      total = Math.round(total * (1 - bundleDiscount / 100));
+    }
+    return total;
+  };
+
+  // Package price for backward compat / "what-if" pricing (all services at one package level)
   const pkgPrice = (pkg) => {
     let total = calculateTotalPackagePrice(
       selectedServices, config.services, details, selectedExtras,
@@ -330,11 +364,13 @@ export default function CustomerFlow({ config, onSubmitLead }) {
       address: contact.address || "",
       services: [...selectedServices],
       servicePrices: selectedServices.reduce((acc, svcId) => {
-        acc[svcId] = svcPrice(svcId);
+        const svcPkg = getServicePackage(svcId);
+        acc[svcId] = svcPrice(svcId, svcPkg);
         return acc;
       }, {}),
       package: selectedPackage,
-      total: pkgPrice(selectedPackage),
+      servicePackages: { ...servicePackages },
+      total: totalPrice(),
       allPackagePrices: {
         standard: pkgPrice("standard"),
         premium: pkgPrice("premium"),
@@ -358,7 +394,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     setSelectedServices([]);
     setDetails({});
     setSelectedExtras({});
-    setSelectedPackage("premium");
+    setServicePackages({});
     setContact({ name: "", email: "", phone: "", address: "", notes: "", leadSource: "", projectType: "residential" });
     setAppliedBundle(null);
     setCustomerPhotos([]);
@@ -721,11 +757,47 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                         </div>
                       )}
 
+                      {/* Per-service package picker */}
+                      <div style={{ marginTop: 12, marginBottom: 8 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: C.textMid, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
+                          Service Level for {svc.name}
+                        </div>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          {["standard", "premium", "platinum"].map(pkgKey => {
+                            // Skip platinum for services with maxTier: "premium"
+                            if (svc.maxTier === "premium" && pkgKey === "platinum") return null;
+                            const pkg = config.packages[pkgKey];
+                            if (!pkg) return null;
+                            const isActive = getServicePackage(svc.id) === pkgKey;
+                            return (
+                              <button key={pkgKey} onClick={(e) => { e.stopPropagation(); setServicePackage(svc.id, pkgKey); }}
+                                style={{
+                                  flex: 1, padding: "8px 4px", borderRadius: 10, cursor: "pointer",
+                                  border: `2px solid ${isActive ? (pkg.color || C.primary) : C.border}`,
+                                  background: isActive ? (pkg.color || C.primary) : C.white,
+                                  color: isActive ? "#fff" : C.textMid,
+                                  fontSize: 12, fontWeight: 700, transition: "all 0.2s",
+                                  textAlign: "center",
+                                }}>
+                                {pkg.label}
+                                {pkg.popular && !isActive && <span style={{ display: "block", fontSize: 9, fontWeight: 600, color: C.textLight }}>Popular</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {svc.tierFeatures?.[getServicePackage(svc.id)] && (
+                          <div style={{ marginTop: 6, fontSize: 12, color: C.textMid, fontStyle: "italic" }}>
+                            {svc.tierFeatures[getServicePackage(svc.id)]}
+                          </div>
+                        )}
+                      </div>
+
                       {svc.extras && svc.extras.length > 0 && (() => {
                         const tierOrder = ["standard", "premium", "platinum"];
+                        const currentPkgForService = getServicePackage(svc.id);
                         const availableExtras = svc.extras.filter((ext) => {
                           if (!ext.minPackage) return true;
-                          return tierOrder.indexOf(selectedPackage) >= tierOrder.indexOf(ext.minPackage);
+                          return tierOrder.indexOf(currentPkgForService) >= tierOrder.indexOf(ext.minPackage);
                         });
                         if (availableExtras.length === 0) return null;
                         return (
@@ -747,72 +819,6 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             })}
           </div>
 
-          {/* Package Selector — Standard / Premium / Platinum */}
-          {selectedServices.length > 0 && (
-            <div style={{ marginTop: 24 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: C.textLight, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 12 }}>
-                {"\u2B50"} Choose Your Service Level
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-                {["standard", "premium", "platinum"].map((pkgKey) => {
-                  const pkg = config.packages[pkgKey];
-                  if (!pkg) return null;
-                  const isActive = selectedPackage === pkgKey;
-                  const price = pkgPrice(pkgKey);
-                  // Gather tier descriptions for each selected service at this package level
-                  const svcTierDescs = selectedServices.map((svcId) => {
-                    const svc = config.services.find((s) => s.id === svcId);
-                    if (!svc || !svc.tierFeatures || !svc.tierFeatures[pkgKey]) return null;
-                    return { name: svc.name, icon: svc.icon, desc: svc.tierFeatures[pkgKey] };
-                  }).filter(Boolean);
-                  return (
-                    <div key={pkgKey} onClick={() => setSelectedPackage(pkgKey)}
-                      style={{
-                        padding: "16px 12px", borderRadius: 16, cursor: "pointer",
-                        border: `2px solid ${isActive ? (pkg.color || C.primary) : C.border}`,
-                        background: isActive ? `${pkg.color || C.primary}08` : C.white,
-                        textAlign: "center", position: "relative", transition: "all 0.2s",
-                      }}>
-                      {pkg.popular && (
-                        <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", padding: "2px 10px", borderRadius: 10, background: pkg.color || C.primary, color: "#fff", fontSize: 10, fontWeight: 700, whiteSpace: "nowrap" }}>
-                          MOST POPULAR
-                        </div>
-                      )}
-                      <div style={{ fontSize: 15, fontWeight: 800, color: isActive ? (pkg.color || C.primary) : C.text, marginTop: pkg.popular ? 4 : 0 }}>
-                        {pkg.label}
-                      </div>
-                      <div style={{ fontSize: 11, color: C.textLight, marginTop: 2 }}>{pkg.tag}</div>
-                      <div style={{ marginTop: 8, textAlign: "left" }}>
-                        {pkg.features.map((f, i) => (
-                          <div key={i} style={{ fontSize: 11, color: C.textMid, lineHeight: 1.6, display: "flex", alignItems: "flex-start", gap: 4 }}>
-                            <span style={{ color: isActive ? "#16a34a" : C.textLight, flexShrink: 0 }}>{"\u2713"}</span>
-                            <span>{f}</span>
-                          </div>
-                        ))}
-                      </div>
-                      {/* Per-service tier descriptions */}
-                      {svcTierDescs.length > 0 && (
-                        <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${C.borderLight}`, textAlign: "left" }}>
-                          <div style={{ fontSize: 10, fontWeight: 700, color: C.textMid, textTransform: "uppercase", marginBottom: 4 }}>What you get:</div>
-                          {svcTierDescs.map((item, i) => (
-                            <div key={i} style={{ fontSize: 11, color: isActive ? C.text : C.textMid, lineHeight: 1.5, display: "flex", alignItems: "flex-start", gap: 4, marginBottom: 3 }}>
-                              <span style={{ flexShrink: 0 }}>{item.icon}</span>
-                              <span><strong>{item.name}:</strong> {item.desc}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {isActive && (
-                        <div style={{ marginTop: 8, padding: "4px 0", borderTop: `1px solid ${C.borderLight}` }}>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: pkg.color || C.primary }}>{"\u2713"} Selected</span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {bundleDiscount > 0 && (
             <div style={{ marginTop: 20, padding: "20px 24px", background: "linear-gradient(135deg, #ecfdf5, #f0fdf4)", border: "2px solid #86efac", borderRadius: 20, display: "flex", alignItems: "center", gap: 16 }}>
@@ -922,28 +928,6 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             </div>
           )}
 
-          {/* Compact Package Toggle on Quote Page */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 20, justifyContent: "center" }}>
-            {["standard", "premium", "platinum"].map((pkgKey) => {
-              const pkg = config.packages[pkgKey];
-              if (!pkg) return null;
-              const isActive = selectedPackage === pkgKey;
-              return (
-                <button key={pkgKey} onClick={() => setSelectedPackage(pkgKey)}
-                  style={{
-                    padding: "10px 20px", borderRadius: 30, cursor: "pointer",
-                    border: `2px solid ${isActive ? (pkg.color || C.primary) : C.border}`,
-                    background: isActive ? (pkg.color || C.primary) : C.white,
-                    color: isActive ? "#fff" : C.textMid,
-                    fontSize: 14, fontWeight: 700, transition: "all 0.2s",
-                    position: "relative",
-                  }}>
-                  {pkg.label} — {fmt(pkgPrice(pkgKey))}
-                  {pkg.popular && <span style={{ marginLeft: 6, fontSize: 10, opacity: 0.85 }}>{"\u2B50"}</span>}
-                </button>
-              );
-            })}
-          </div>
 
           {/* THE BIG PRICE — hero moment of the entire flow */}
           <div style={{
@@ -954,19 +938,10 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             borderRadius: 20,
             textAlign: "center",
           }}>
-          <div style={{
-            marginBottom: 24,
-            padding: "32px 24px",
-            background: `linear-gradient(135deg, ${C.primary}08, ${C.primary}15)`,
-            border: `2px solid ${C.primary}30`,
-            borderRadius: 20,
-            textAlign: "center",
-          }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: C.textMid, marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>Your Quote</div>
-            <div style={{ fontSize: 48, fontWeight: 900, color: C.primary, lineHeight: 1.1 }}>{fmt(pkgPrice(selectedPackage))}</div>
+            <div style={{ fontSize: 48, fontWeight: 900, color: C.primary, lineHeight: 1.1 }}>{fmt(totalPrice())}</div>
             <div style={{ fontSize: 14, color: C.textMid, marginTop: 8 }}>
               {selectedServices.length} service{selectedServices.length > 1 ? "s" : ""} included
-              {selectedPackage !== "standard" && ` \u2022 ${config.packages[selectedPackage]?.label} package`}
             </div>
             {bundleDiscount > 0 && (
               <div style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 16px", borderRadius: 20, background: "#f0fdf4", border: "1px solid #86efac" }}>
@@ -974,11 +949,6 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                 <span style={{ fontSize: 14, fontWeight: 700, color: "#16a34a" }}>{bundleDiscount}% bundle discount applied!</span>
               </div>
             )}
-          </div>
-            <div style={{ fontSize: 13, color: C.textLight, marginTop: 12 }}>
-              {selectedServices.length} service{selectedServices.length > 1 ? "s" : ""} included
-              {selectedPackage !== "standard" && ` \u2022 ${config.packages[selectedPackage]?.label} package`}
-            </div>
           </div>
 
           {/* Services included — show price per service, but NOT how it was calculated */}
@@ -989,10 +959,12 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             {selectedServices.map((svcId) => {
               const svc = config.services.find((s) => s.id === svcId);
               if (!svc) return null;
-              const baseServicePrice = svcPrice(svcId, svc.hasPackagePricing ? selectedPackage : undefined);
-              const pkgMult = svc.hasPackagePricing ? 1 : (config.packages[selectedPackage]?.multiplier || 1);
+              const svcPkg = getServicePackage(svcId);
+              const pkg = config.packages[svcPkg];
+              const baseServicePrice = svcPrice(svcId, svc.hasPackagePricing ? svcPkg : undefined);
+              const pkgMult = svc.hasPackagePricing ? 1 : (config.packages[svcPkg]?.multiplier || 1);
               const price = Math.round(baseServicePrice * pkgMult);
-              const tierLabel = svc.tierFeatures?.[selectedPackage];
+              const tierLabel = svc.tierFeatures?.[svcPkg];
               return (
                 <div key={svcId} style={{ padding: "12px 24px", borderTop: `1px solid ${C.borderLight}` }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -1005,7 +977,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{fmt(price)}</span>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: C.primary, background: `${C.primary}10`, padding: "2px 8px", borderRadius: 10 }}>{config.packages[selectedPackage]?.label}</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: pkg.color || C.primary, background: `${pkg.color || C.primary}10`, padding: "2px 8px", borderRadius: 10 }}>{pkg?.label}</span>
                     </div>
                   </div>
                 </div>
