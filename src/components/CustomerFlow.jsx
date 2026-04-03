@@ -661,27 +661,6 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                           </div>
                         </div>
                       )}
-                      {/* Service level description for this service based on selected package */}
-                      {svc.tierFeatures && svc.tierFeatures[selectedPackage] && (
-                        <div style={{ marginTop: 14, padding: "12px 16px", borderRadius: 12, background: `${(config.packages[selectedPackage]?.color || C.primary)}08`, border: `1px solid ${(config.packages[selectedPackage]?.color || C.primary)}25` }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: config.packages[selectedPackage]?.color || C.primary, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
-                            {config.packages[selectedPackage]?.label} Level — What You Get:
-                          </div>
-                          <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>
-                            {svc.tierFeatures[selectedPackage]}
-                          </div>
-                          {selectedPackage === "standard" && svc.tierFeatures.premium && (
-                            <div style={{ marginTop: 6, fontSize: 11, color: C.textLight }}>
-                              ↑ Upgrade to Premium for: {svc.tierFeatures.premium}
-                            </div>
-                          )}
-                          {selectedPackage === "premium" && svc.tierFeatures.platinum && (
-                            <div style={{ marginTop: 6, fontSize: 11, color: C.textLight }}>
-                              ↑ Upgrade to Platinum for: {svc.tierFeatures.platinum}
-                            </div>
-                          )}
-                        </div>
-                      )}
 
                       {/* Window cleaning: sq ft input + window type selector */}
                       {svc.id === "window_cleaning" && svc.windowTypes && (
