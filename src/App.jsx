@@ -157,6 +157,44 @@ export default function App() {
     if (config.housecallProEnabled) {
       sendToHousecallPro(newLead, config.services);
     }
+
+    // Save lead to Supabase via edge function (deducts credit too)
+    // tenantId must be a real UUID (not a slug like "cloute")
+    const isUUID = config.tenantId && config.tenantId.includes("-") && config.tenantId.length > 30;
+    if (isUUID) {
+      const supabaseUrl = "https://eccuaztubjdxicylcwrh.supabase.co/functions/v1/submit-lead";
+      fetch(supabaseUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenant_id: config.tenantId,
+          name: newLead.name,
+          email: newLead.email,
+          phone: newLead.phone,
+          address: newLead.address || null,
+          projectType: newLead.projectType || "residential",
+          services: newLead.services,
+          selectedPackage: newLead.package,
+          total: newLead.total,
+          notes: newLead.notes || null,
+          leadSource: newLead.leadSource || null,
+          serviceDetails: newLead.details || {},
+          selectedExtras: newLead.selectedExtras || {},
+          packagePrices: newLead.allPackagePrices || {},
+          bundleApplied: newLead.appliedBundle || null,
+          photos: (newLead.photos || []).map(p => ({ name: p.name, size: p.size, timestamp: p.timestamp })),
+        }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            console.log("[MyBidQuick] Lead saved to database:", data.lead_id, "| Credits remaining:", data.credits_remaining);
+          } else {
+            console.warn("[MyBidQuick] Lead save failed:", data.error);
+          }
+        })
+        .catch(err => console.error("[MyBidQuick] Lead save error:", err));
+    }
   };
 
   // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
