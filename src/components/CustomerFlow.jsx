@@ -1134,6 +1134,32 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             </div>
           </div>
 
+          {/* Customer notes / questions */}
+          <div style={{ ...s.card, marginTop: 20, padding: 0, overflow: "hidden" }}>
+            <div style={{ padding: "16px 24px 12px", borderBottom: `1px solid ${C.borderLight}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 16 }}>{"\u{1F4DD}"}</span>
+                <h4 style={{ fontSize: 15, fontWeight: 700, color: C.text, margin: 0 }}>Questions or Notes</h4>
+              </div>
+              <p style={{ fontSize: 12, color: C.textLight, margin: "4px 0 0" }}>Anything we should know? Special requests, access details, scheduling preferences, etc.</p>
+            </div>
+            <div style={{ padding: "14px 24px" }}>
+              <textarea
+                placeholder="e.g. &quot;Back gate code is 1234&quot; or &quot;Can you do a Saturday?&quot;"
+                value={contact.notes || ""}
+                onChange={(e) => setContact((p) => ({ ...p, notes: e.target.value }))}
+                rows={3}
+                style={{
+                  ...s.input,
+                  resize: "vertical",
+                  minHeight: 72,
+                  fontFamily: "inherit",
+                  lineHeight: 1.5,
+                }}
+              />
+            </div>
+          </div>
+
           {/* Trust signals */}
           <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
             <div style={{ padding: "12px 16px", background: C.white, borderRadius: 12, border: `1px solid ${C.borderLight}`, display: "flex", alignItems: "center", gap: 10 }}>
