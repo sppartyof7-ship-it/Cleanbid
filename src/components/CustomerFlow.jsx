@@ -1010,6 +1010,50 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             </div>
           </div>
 
+          {/* National Average Price Comparison */}
+          <div style={{ ...s.card, marginTop: 20, padding: 0, overflow: "hidden" }}>
+            <div style={{ padding: "16px 24px 12px", borderBottom: `1px solid ${C.borderLight}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 16 }}>{"\u{1F4CA}"}</span>
+                <h4 style={{ fontSize: 15, fontWeight: 700, color: C.text, margin: 0 }}>How Your Quote Compares</h4>
+              </div>
+              <p style={{ fontSize: 12, color: C.textLight, margin: "4px 0 0" }}>Your price vs. national averages</p>
+            </div>
+            {selectedServices.map((svcId) => {
+              const svc = config.services.find((sv) => sv.id === svcId)
+              const avg = NATIONAL_AVERAGES[svcId]
+              if (!svc || !avg) return null
+              const price = svcPrice(svcId)
+              if (price <= 0) return null
+              const range = avg.high - avg.low
+              const position = Math.min(100, Math.max(0, ((price - avg.low) / range) * 100))
+              const isGoodValue = price <= avg.low + range * 0.5
+              return (
+                <div key={svcId} style={{ padding: "14px 24px", borderTop: `1px solid ${C.borderLight}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{svc.icon} {avg.label}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: C.primary }}>{fmt(price)}</span>
+                      {isGoodValue && (
+                        <span style={{ fontSize: 10, fontWeight: 700, color: "#16a34a", background: "#f0fdf4", padding: "2px 8px", borderRadius: 10, border: "1px solid #bbf7d0" }}>Great value</span>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ position: "relative" }}>
+                    <div style={{ height: 8, borderRadius: 4, background: "linear-gradient(90deg, #bbf7d0, #fde68a, #fecaca)", overflow: "visible", position: "relative" }}>
+                      <div style={{ position: "absolute", left: `${Math.min(96, Math.max(2, position))}%`, top: "50%", transform: "translate(-50%, -50%)", width: 18, height: 18, borderRadius: "50%", background: C.white, border: `3px solid ${C.primary}`, boxShadow: "0 1px 6px rgba(0,0,0,0.15)", zIndex: 2 }} />
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+                      <span style={{ fontSize: 10, color: C.textLight }}>{fmt(avg.low)}</span>
+                      <span style={{ fontSize: 10, color: C.textLight }}>National avg range</span>
+                      <span style={{ fontSize: 10, color: C.textLight }}>{fmt(avg.high)}</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
           {/* What Happens Next */}
           <div style={{ ...s.card, marginTop: 20, padding: 0, overflow: "hidden" }}>
             <div style={{ padding: "16px 24px 12px", borderBottom: `1px solid ${C.borderLight}` }}>
