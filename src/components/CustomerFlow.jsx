@@ -765,8 +765,13 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                           })}
                         </div>
                         {svc.tierFeatures?.[getServicePackage(svc.id)] && (
-                          <div style={{ marginTop: 6, fontSize: 12, color: C.textMid, fontStyle: "italic" }}>
-                            {svc.tierFeatures[getServicePackage(svc.id)]}
+                          <div style={{ marginTop: 8, padding: "10px 14px", borderRadius: 10, background: `${(config.packages[getServicePackage(svc.id)]?.color || C.primary)}10`, border: `1px solid ${(config.packages[getServicePackage(svc.id)]?.color || C.primary)}30` }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, color: config.packages[getServicePackage(svc.id)]?.color || C.primary, marginBottom: 3 }}>
+                              {config.packages[getServicePackage(svc.id)]?.label} — What's Included:
+                            </div>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>
+                              {svc.tierFeatures[getServicePackage(svc.id)]}
+                            </div>
                           </div>
                         )}
                       </div>
