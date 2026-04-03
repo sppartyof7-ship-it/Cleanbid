@@ -11,17 +11,18 @@ import AddressAutocomplete from "./AddressAutocomplete";
 import TrustGallery from "./TrustGallery";
 
 /**
- * National average price ranges for exterior cleaning services.
- * Source: HomeAdvisor, Angi, Thumbtack aggregated data.
+ * National average price ranges for exterior cleaning services (2026).
+ * Sources: Angi, HomeGuide, HomeAdvisor, Thumbtack — updated April 2026.
+ * Ranges represent typical residential jobs, not outliers.
  */
 const NATIONAL_AVERAGES = {
-  pressure_washing: { low: 150, high: 1200, label: "House Washing" },
-  window_cleaning: { low: 100, high: 800, label: "Window Cleaning" },
-  deck_cleaning: { low: 125, high: 700, label: "Deck Cleaning" },
-  concrete_cleaning: { low: 100, high: 600, label: "Concrete Cleaning" },
-  roof_cleaning: { low: 250, high: 1200, label: "Roof Cleaning" },
-  gutter_cleaning: { low: 75, high: 500, label: "Gutter Cleaning" },
-  gutter_guard_install: { low: 800, high: 3000, label: "Gutter Guards" },
+  pressure_washing: { low: 250, high: 600, label: "House Washing" },
+  window_cleaning: { low: 150, high: 450, label: "Window Cleaning" },
+  deck_cleaning: { low: 100, high: 350, label: "Deck Cleaning" },
+  concrete_cleaning: { low: 100, high: 350, label: "Concrete Cleaning" },
+  roof_cleaning: { low: 250, high: 600, label: "Roof Cleaning" },
+  gutter_cleaning: { low: 119, high: 234, label: "Gutter Cleaning" },
+  gutter_guard_install: { low: 1050, high: 2250, label: "Gutter Guards" },
 };
 
 // Session storage helpers for persistence
