@@ -78,6 +78,7 @@ const CLOUTE = {
   // Owner intro video — paste a YouTube or Vimeo URL here
   // Tim: record a 30-60 sec video and paste the link
   ownerVideoUrl: "",
+  showOwnerVideo: false,
 };
 
 export default CLOUTE;

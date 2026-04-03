@@ -252,12 +252,36 @@ export default function AdminPanel({ config, setConfig, onExit, tenantSlug }) {
             </div>
           </div>
           <div style={s.card}>
-            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Owner Intro Video</h3>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Owner Intro Video</h3>
+              <div
+                onClick={() => updateConfig("showOwnerVideo", !config.showOwnerVideo)}
+                style={{
+                  width: 44, height: 24, borderRadius: 12, cursor: "pointer",
+                  background: config.showOwnerVideo ? C.primary : "#d1d5db",
+                  transition: "background 0.2s",
+                  position: "relative",
+                }}
+              >
+                <div style={{
+                  width: 20, height: 20, borderRadius: 10, background: "#fff",
+                  position: "absolute", top: 2,
+                  left: config.showOwnerVideo ? 22 : 2,
+                  transition: "left 0.2s",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                }} />
+              </div>
+            </div>
             <p style={{ fontSize: 13, color: C.textLight, marginBottom: 16 }}>Record a 30-60 second video introducing yourself and your company. Paste a YouTube, Vimeo, or direct video URL below. It will appear on the quote results page to build trust with customers.</p>
             <div><label style={s.label}>Video URL</label><input type="url" placeholder="https://www.youtube.com/watch?v=..." value={config.ownerVideoUrl || ""} onChange={(e) => updateConfig("ownerVideoUrl", e.target.value)} style={s.input} /></div>
-            {config.ownerVideoUrl && (
+            {config.ownerVideoUrl && config.showOwnerVideo && (
               <div style={{ marginTop: 12, padding: "8px 12px", background: "#f0fdf4", borderRadius: 8, border: "1px solid #bbf7d0", fontSize: 13, color: "#16a34a" }}>
-                {"\u2705"} Video will appear on your quote results page
+                {"\u2705"} Video is live on your quote results page
+              </div>
+            )}
+            {config.ownerVideoUrl && !config.showOwnerVideo && (
+              <div style={{ marginTop: 12, padding: "8px 12px", background: "#fefce8", borderRadius: 8, border: "1px solid #fde68a", fontSize: 13, color: "#a16207" }}>
+                Video URL saved — flip the toggle above to show it to customers
               </div>
             )}
           </div>

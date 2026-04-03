@@ -252,7 +252,15 @@ export default function CustomerFlow({ config, onSubmitLead }) {
 
   const svcPrice = (svcId, packageKey) => {
     const svc = config.services.find((sv) => sv.id === svcId);
-    let price = calculateServicePrice(svc, details[svcId], selectedExtras[svcId], config.globalPriceAdjustment, globalStories, packageKey);
+    // Defensive: ensure window cleaning gets sqft even if useEffect sync hasn't fired yet
+    let svcDetails = details[svcId] || {};
+    if (svc?.id === "window_cleaning" && svc.windowTypes && !svcDetails.sqft) {
+      const fallbackSqft = details.pressure_washing?.sqft || details.roof_cleaning?.sqft || 0;
+      if (fallbackSqft > 0) {
+        svcDetails = { ...svcDetails, sqft: fallbackSqft };
+      }
+    }
+    let price = calculateServicePrice(svc, svcDetails, selectedExtras[svcId], config.globalPriceAdjustment, globalStories, packageKey);
     // Apply upsell discount if this service was added via upsell
     if (upsellAccepted.includes(svcId) && upsellDiscount > 0) {
       price = Math.round(price * (1 - upsellDiscount / 100));
@@ -267,7 +275,13 @@ export default function CustomerFlow({ config, onSubmitLead }) {
       const svc = config.services.find(s => s.id === svcId);
       if (!svc) return;
       const pkg = getServicePackage(svcId);
-      let price = calculateServicePrice(svc, details[svcId], selectedExtras[svcId], config.globalPriceAdjustment, globalStories, svc.hasPackagePricing ? pkg : undefined);
+      // Defensive: ensure window cleaning gets sqft even if useEffect sync hasn't fired yet
+      let svcDetails = details[svcId] || {};
+      if (svc.id === "window_cleaning" && svc.windowTypes && !svcDetails.sqft) {
+        const fallbackSqft = details.pressure_washing?.sqft || details.roof_cleaning?.sqft || 0;
+        if (fallbackSqft > 0) svcDetails = { ...svcDetails, sqft: fallbackSqft };
+      }
+      let price = calculateServicePrice(svc, svcDetails, selectedExtras[svcId], config.globalPriceAdjustment, globalStories, svc.hasPackagePricing ? pkg : undefined);
       const pkgMult = svc.hasPackagePricing ? 1 : (config.packages[pkg]?.multiplier || 1);
       price = Math.round(price * pkgMult);
       if (upsellAccepted.includes(svcId) && upsellDiscount > 0) {
@@ -954,7 +968,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
           </div>
 
           {/* Owner intro video — builds trust between price and breakdown */}
-          {config.ownerVideoUrl && (() => {
+          {config.showOwnerVideo && config.ownerVideoUrl && (() => {
             // Parse YouTube/Vimeo URLs into embed URLs
             const url = config.ownerVideoUrl
             let embedUrl = null
@@ -1062,7 +1076,11 @@ export default function CustomerFlow({ config, onSubmitLead }) {
               const svc = config.services.find((sv) => sv.id === svcId)
               const avg = NATIONAL_AVERAGES[svcId]
               if (!svc || !avg) return null
-              const price = svcPrice(svcId)
+              // Use the same package-adjusted price the customer actually sees
+              const svcPkg = getServicePackage(svcId)
+              const baseP = svcPrice(svcId, svc.hasPackagePricing ? svcPkg : undefined)
+              const pkgMult = svc.hasPackagePricing ? 1 : (config.packages[svcPkg]?.multiplier || 1)
+              const price = Math.round(baseP * pkgMult)
               if (price <= 0) return null
               const range = avg.high - avg.low
               const position = Math.min(100, Math.max(0, ((price - avg.low) / range) * 100))

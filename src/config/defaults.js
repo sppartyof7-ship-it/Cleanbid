@@ -32,6 +32,8 @@ export function buildDefaultConfig(tenant) {
     if (tenant.supabaseId) cfg.supabaseId = tenant.supabaseId;
     cfg.housecallProEnabled = tenant.housecallProEnabled ?? true;
     if (tenant.gallery) cfg.gallery = tenant.gallery;
+    if (tenant.ownerVideoUrl !== undefined) cfg.ownerVideoUrl = tenant.ownerVideoUrl;
+    if (tenant.showOwnerVideo !== undefined) cfg.showOwnerVideo = tenant.showOwnerVideo;
 
     if (tenant.disabledServices?.length) {
       cfg.services = cfg.services.map((svc) => ({
@@ -317,6 +319,7 @@ const BASE_CONFIG = {
   // Owner intro video — shown on quote results page to build trust
   // Supports YouTube, Vimeo, or direct MP4 URLs
   ownerVideoUrl: "",
+  showOwnerVideo: false,
   followUp: {
     enabled: true,
     sequences: [
