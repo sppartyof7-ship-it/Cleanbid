@@ -898,7 +898,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                     fontSize: 14, fontWeight: 700, transition: "all 0.2s",
                     position: "relative",
                   }}>
-                  {pkg.label}
+                  {pkg.label} — {fmt(pkgPrice(pkgKey))}
                   {pkg.popular && <span style={{ marginLeft: 6, fontSize: 10, opacity: 0.85 }}>{"\u2B50"}</span>}
                 </button>
               );
@@ -922,8 +922,9 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             borderRadius: 20,
             textAlign: "center",
           }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: C.text, marginBottom: 8 }}>Your Custom Quote</div>
-            <div style={{ fontSize: 14, color: C.textMid }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: C.textMid, marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>Your Quote</div>
+            <div style={{ fontSize: 48, fontWeight: 900, color: C.primary, lineHeight: 1.1 }}>{fmt(pkgPrice(selectedPackage))}</div>
+            <div style={{ fontSize: 14, color: C.textMid, marginTop: 8 }}>
               {selectedServices.length} service{selectedServices.length > 1 ? "s" : ""} included
               {selectedPackage !== "standard" && ` \u2022 ${config.packages[selectedPackage]?.label} package`}
             </div>
@@ -962,7 +963,10 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                         {tierLabel && <div style={{ fontSize: 12, color: C.textLight, marginTop: 1 }}>{tierLabel}</div>}
                       </div>
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: C.primary, background: `${C.primary}10`, padding: "3px 10px", borderRadius: 10 }}>{config.packages[selectedPackage]?.label}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{fmt(price)}</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: C.primary, background: `${C.primary}10`, padding: "2px 8px", borderRadius: 10 }}>{config.packages[selectedPackage]?.label}</span>
+                    </div>
                   </div>
                 </div>
               );
