@@ -159,15 +159,13 @@ export default function App() {
     }
 
     // Save lead to Supabase via edge function (deducts credit too)
-    // tenantId must be a real UUID (not a slug like "cloute")
-    const isUUID = config.tenantId && config.tenantId.includes("-") && config.tenantId.length > 30;
-    if (isUUID) {
+    if (config.supabaseId) {
       const supabaseUrl = "https://eccuaztubjdxicylcwrh.supabase.co/functions/v1/submit-lead";
       fetch(supabaseUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tenant_id: config.tenantId,
+          tenant_id: config.supabaseId,
           name: newLead.name,
           email: newLead.email,
           phone: newLead.phone,
@@ -409,6 +407,7 @@ function mergeConfigWithDefaults(saved, defaults) {
   // Always use tenant lead sources & identity
   merged.leadSources = defaults.leadSources;
   merged.tenantId = defaults.tenantId;
+  merged.supabaseId = defaults.supabaseId;
   merged.businessName = defaults.businessName;
   merged.logoLetter = defaults.logoLetter;
   merged.tagline = defaults.tagline;

@@ -29,6 +29,7 @@ export function buildDefaultConfig(tenant) {
     if (tenant.logoLetter) cfg.logoLetter = tenant.logoLetter;
     if (tenant.logoImage) cfg.logoImage = tenant.logoImage;
     if (tenant.id) cfg.tenantId = tenant.id;
+    if (tenant.supabaseId) cfg.supabaseId = tenant.supabaseId;
     cfg.housecallProEnabled = tenant.housecallProEnabled ?? true;
     if (tenant.gallery) cfg.gallery = tenant.gallery;
 

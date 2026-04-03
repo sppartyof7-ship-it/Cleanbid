@@ -82,8 +82,8 @@ function rowToTenantObject(row) {
   const cfg = row.config || {};
 
   return {
-    id: row.id,
-    slug: row.slug,
+    id: row.slug || row.id,
+    supabaseId: row.id,
     businessName: row.business_name || cfg.businessName || "My Cleaning Co",
     tagline: cfg.tagline || "Professional Cleaning Services",
     phone: row.phone || "",
