@@ -314,6 +314,9 @@ const BASE_CONFIG = {
     reviewCount: 238,
     reviewAverage: 4.9,
   },
+  // Owner intro video — shown on quote results page to build trust
+  // Supports YouTube, Vimeo, or direct MP4 URLs
+  ownerVideoUrl: "",
   followUp: {
     enabled: true,
     sequences: [

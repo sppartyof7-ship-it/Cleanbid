@@ -953,6 +953,45 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             )}
           </div>
 
+          {/* Owner intro video — builds trust between price and breakdown */}
+          {config.ownerVideoUrl && (() => {
+            // Parse YouTube/Vimeo URLs into embed URLs
+            const url = config.ownerVideoUrl
+            let embedUrl = null
+            const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/)
+            const vimeoMatch = url.match(/vimeo\.com\/(\d+)/)
+            if (ytMatch) embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}?rel=0&modestbranding=1`
+            else if (vimeoMatch) embedUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}`
+            else if (url.endsWith('.mp4') || url.includes('.mp4')) embedUrl = url
+
+            if (!embedUrl) return null
+            const isDirectVideo = embedUrl.endsWith('.mp4') || embedUrl.includes('.mp4')
+
+            return (
+              <div style={{ ...s.card, marginBottom: 20, padding: 0, overflow: "hidden" }}>
+                <div style={{ padding: "14px 24px 10px", display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 16 }}>{"\u{1F3AC}"}</span>
+                  <h4 style={{ fontSize: 15, fontWeight: 700, color: C.text, margin: 0 }}>A Message From {config.businessName || "Our Team"}</h4>
+                </div>
+                <div style={{ position: "relative", paddingBottom: isDirectVideo ? "auto" : "56.25%", height: isDirectVideo ? "auto" : 0 }}>
+                  {isDirectVideo ? (
+                    <video controls style={{ width: "100%", display: "block" }} preload="metadata">
+                      <source src={embedUrl} type="video/mp4" />
+                    </video>
+                  ) : (
+                    <iframe
+                      src={embedUrl}
+                      style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title="Owner introduction"
+                    />
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+
           {/* Services included — show price per service, but NOT how it was calculated */}
           <div style={{ ...s.card, padding: 0, overflow: "hidden" }}>
             <div style={{ padding: "16px 24px 12px" }}>

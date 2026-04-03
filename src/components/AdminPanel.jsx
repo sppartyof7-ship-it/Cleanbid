@@ -252,6 +252,16 @@ export default function AdminPanel({ config, setConfig, onExit, tenantSlug }) {
             </div>
           </div>
           <div style={s.card}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Owner Intro Video</h3>
+            <p style={{ fontSize: 13, color: C.textLight, marginBottom: 16 }}>Record a 30-60 second video introducing yourself and your company. Paste a YouTube, Vimeo, or direct video URL below. It will appear on the quote results page to build trust with customers.</p>
+            <div><label style={s.label}>Video URL</label><input type="url" placeholder="https://www.youtube.com/watch?v=..." value={config.ownerVideoUrl || ""} onChange={(e) => updateConfig("ownerVideoUrl", e.target.value)} style={s.input} /></div>
+            {config.ownerVideoUrl && (
+              <div style={{ marginTop: 12, padding: "8px 12px", background: "#f0fdf4", borderRadius: 8, border: "1px solid #bbf7d0", fontSize: 13, color: "#16a34a" }}>
+                {"\u2705"} Video will appear on your quote results page
+              </div>
+            )}
+          </div>
+          <div style={s.card}>
             <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Export Config</h3>
             <button onClick={() => navigator.clipboard?.writeText(JSON.stringify(config, null, 2))} style={s.btnPrimary}>Copy Config to Clipboard</button>
           </div>

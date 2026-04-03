@@ -102,6 +102,9 @@ function rowToTenantObject(row) {
     logoLetter: (row.business_name || "C").charAt(0).toUpperCase(),
     logoImage: row.logo_url || cfg.logoImage || null,
 
+    // Owner intro video (YouTube, Vimeo, or direct MP4)
+    ownerVideoUrl: cfg.ownerVideoUrl || "",
+
     // Lead sources
     leadSources: cfg.leadSources || ["Google Search", "Facebook / Instagram", "Friend / Referral", "Nextdoor", "Yard Sign", "Saw Our Truck / Trailer", "Repeat Customer", "Thumbtack / Angi / HomeAdvisor", "Other"],
 
