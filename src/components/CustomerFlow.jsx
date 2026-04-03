@@ -625,6 +625,28 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                           </div>
                         </div>
                       )}
+                      {/* Service level description for this service based on selected package */}
+                      {svc.tierFeatures && svc.tierFeatures[selectedPackage] && (
+                        <div style={{ marginTop: 14, padding: "12px 16px", borderRadius: 12, background: `${(config.packages[selectedPackage]?.color || C.primary)}08`, border: `1px solid ${(config.packages[selectedPackage]?.color || C.primary)}25` }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: config.packages[selectedPackage]?.color || C.primary, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
+                            {config.packages[selectedPackage]?.label} Level — What You Get:
+                          </div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>
+                            {svc.tierFeatures[selectedPackage]}
+                          </div>
+                          {selectedPackage === "standard" && svc.tierFeatures.premium && (
+                            <div style={{ marginTop: 6, fontSize: 11, color: C.textLight }}>
+                              ↑ Upgrade to Premium for: {svc.tierFeatures.premium}
+                            </div>
+                          )}
+                          {selectedPackage === "premium" && svc.tierFeatures.platinum && (
+                            <div style={{ marginTop: 6, fontSize: 11, color: C.textLight }}>
+                              ↑ Upgrade to Platinum for: {svc.tierFeatures.platinum}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Window cleaning: sq ft input + window type selector */}
                       {svc.id === "window_cleaning" && svc.windowTypes && (
                         <div style={{ paddingTop: 16 }}>
@@ -737,6 +759,12 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                   if (!pkg) return null;
                   const isActive = selectedPackage === pkgKey;
                   const price = pkgPrice(pkgKey);
+                  // Gather tier descriptions for each selected service at this package level
+                  const svcTierDescs = selectedServices.map((svcId) => {
+                    const svc = config.services.find((s) => s.id === svcId);
+                    if (!svc || !svc.tierFeatures || !svc.tierFeatures[pkgKey]) return null;
+                    return { name: svc.name, icon: svc.icon, desc: svc.tierFeatures[pkgKey] };
+                  }).filter(Boolean);
                   return (
                     <div key={pkgKey} onClick={() => setSelectedPackage(pkgKey)}
                       style={{
@@ -762,6 +790,18 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                           </div>
                         ))}
                       </div>
+                      {/* Per-service tier descriptions */}
+                      {svcTierDescs.length > 0 && (
+                        <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${C.borderLight}`, textAlign: "left" }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: C.textMid, textTransform: "uppercase", marginBottom: 4 }}>What you get:</div>
+                          {svcTierDescs.map((item, i) => (
+                            <div key={i} style={{ fontSize: 11, color: isActive ? C.text : C.textMid, lineHeight: 1.5, display: "flex", alignItems: "flex-start", gap: 4, marginBottom: 3 }}>
+                              <span style={{ flexShrink: 0 }}>{item.icon}</span>
+                              <span><strong>{item.name}:</strong> {item.desc}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       {isActive && (
                         <div style={{ marginTop: 8, padding: "4px 0", borderTop: `1px solid ${C.borderLight}` }}>
                           <span style={{ fontSize: 11, fontWeight: 700, color: pkg.color || C.primary }}>{"\u2713"} Selected</span>

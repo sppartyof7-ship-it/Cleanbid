@@ -110,9 +110,9 @@ const BASE_CONFIG = {
       hasPackagePricing: true,
       doorPrice: 8,
       tierFeatures: {
-        standard: "Exterior panes only",
-        premium: "Interior + exterior panes",
-        platinum: "Interior + exterior + tracks, sills, screens & frames cleaned",
+        standard: "Exterior windows only — outsides cleaned & streak-free",
+        premium: "Interior & exterior — both sides of every window cleaned",
+        platinum: "Detailed interior & exterior — windows + tracks, sills, screens & frames",
       },
       windowTypes: [
         {
