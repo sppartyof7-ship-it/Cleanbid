@@ -350,8 +350,8 @@ export default function CustomerFlow({ config, onSubmitLead }) {
   const updateDetail = (svcId, key, val) =>
     setDetails((p) => ({ ...p, [svcId]: { ...(p[svcId] || {}), [key]: val } }));
 
-  const next = () => setStep((x) => Math.min(x + 1, 4));
-  const back = () => { setStep((x) => Math.max(x - 1, 0)); setValidationErrors({}); };
+  const next = () => { setStep((x) => Math.min(x + 1, 4)); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const back = () => { setStep((x) => Math.max(x - 1, 0)); setValidationErrors({}); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
   const canProceed = () => {
     if (step === 0) return contact.name && contact.email && contact.phone;
