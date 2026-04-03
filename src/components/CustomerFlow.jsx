@@ -340,7 +340,24 @@ export default function CustomerFlow({ config, onSubmitLead }) {
 
   const canProceed = () => {
     if (step === 0) return contact.name && contact.email && contact.phone;
-    if (step === 1) return selectedServices.length > 0;
+    if (step === 1) {
+      if (selectedServices.length === 0) return false;
+      // Every selected service must have its required measurement filled in
+      for (const svcId of selectedServices) {
+        const svc = config.services.find((s) => s.id === svcId);
+        if (!svc) continue;
+        const d = details[svcId] || {};
+        // Services priced per square foot need sqft
+        if (svc.perSqFt > 0 && !d.sqft) return false;
+        // Services priced per linear foot need linearFt
+        if ((svc.perLinFt > 0 || (svc.tiers && svc.tiers.length > 0)) && !d.linearFt) return false;
+        // Services priced per window need windows (unless using windowTypes picker)
+        if (svc.perWindow > 0 && !svc.windowTypes && !d.windows) return false;
+        // Window cleaning with windowTypes needs sqft for estimation
+        if (svc.id === "window_cleaning" && svc.windowTypes && !d.sqft) return false;
+      }
+      return true;
+    }
     return true;
   };
 
