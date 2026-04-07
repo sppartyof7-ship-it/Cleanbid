@@ -1,6 +1,17 @@
 import { SERVICES_WITH_STORIES } from "../config/defaults";
 
 /**
+ * Minimum charge floors by service — prevents $0 or unrealistic quotes.
+ * These are safety nets, not pricing policy. If a real quote calculates
+ * above these, the calculated price wins.
+ */
+const MINIMUM_CHARGES = {
+  window_cleaning: 75,
+  gutter_guard_install: 200,
+  gutter_cleaning: 75,
+};
+
+/**
  * Calculate tiered per-sqft cost.
  * Larger homes get a declining rate so quotes stay competitive.
  * Tiers: 0-2000 sqft at full rate, 2001-3000 at 67%, 3001+ at 47%.
@@ -46,6 +57,9 @@ export function calculateServicePrice(svc, details, selectedExtras, globalPriceA
       if (globalStories === 2) total *= 1.25;
       else if (globalStories >= 3) total *= 1.5;
     }
+    // Enforce minimum charge floor
+    const min = MINIMUM_CHARGES[svc.id];
+    if (min && total > 0 && total < min) total = min;
     return total;
   }
 
@@ -98,6 +112,9 @@ export function calculateServicePrice(svc, details, selectedExtras, globalPriceA
       if (globalStories === 2) total *= 1.25;
       else if (globalStories >= 3) total *= 1.5;
     }
+    // Enforce minimum charge floor for window cleaning
+    const winMin = MINIMUM_CHARGES[svc.id];
+    if (winMin && total > 0 && total < winMin) total = winMin;
     return total;
   }
 
@@ -111,7 +128,14 @@ export function calculateServicePrice(svc, details, selectedExtras, globalPriceA
   const extras = selectedExtras || [];
   extras.forEach((extId) => {
     const ext = svc.extras.find((e) => e.id === extId);
-    if (ext) total += applyGlobal(ext.price);
+    if (!ext) return;
+    if (ext.pricePerUnit) {
+      // Quantity-based extra (e.g. stairs per flight)
+      const qty = d[ext.unit + "s"] || d[ext.unit + "Count"] || d[ext.id + "_qty"] || 1;
+      total += qty * applyGlobal(ext.pricePerUnit);
+    } else {
+      total += applyGlobal(ext.price);
+    }
   });
 
   // Add condition question surcharges (e.g. gutter cleaning conditions)
@@ -128,6 +152,10 @@ export function calculateServicePrice(svc, details, selectedExtras, globalPriceA
     if (globalStories === 2) total *= 1.25;
     else if (globalStories >= 3) total *= 1.5;
   }
+
+  // Enforce minimum charge floor
+  const svcMin = MINIMUM_CHARGES[svc.id];
+  if (svcMin && total > 0 && total < svcMin) total = svcMin;
 
   return total;
 }

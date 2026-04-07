@@ -177,7 +177,7 @@ export default function PriceBreakdown({
       <div style={{ marginTop: 16, padding: "12px 16px", background: C.white, borderRadius: 12, border: `1px solid ${C.borderLight}`, display: "flex", alignItems: "flex-start", gap: 10 }}>
         <span style={{ fontSize: 14, flexShrink: 0 }}>{"\u{1F512}"}</span>
         <div style={{ fontSize: 12, color: C.textLight, lineHeight: 1.5 }}>
-          <strong style={{ color: C.textMid }}>No surprises.</strong> Final pricing confirmed at your free on-site walkthrough. We never charge more than quoted without your approval.
+          <strong style={{ color: C.textMid }}>No surprises.</strong> This is your price. If the actual job scope differs from what you described, we'll discuss any changes with you first.
         </div>
       </div>
     </div>

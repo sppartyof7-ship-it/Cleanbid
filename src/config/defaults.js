@@ -89,8 +89,8 @@ const BASE_CONFIG = {
       enabled: true,
       tierFeatures: {
         standard: "Soft wash siding — surface clean & rinse",
-        premium: "Siding + window frames + eaves rinsed",
-        platinum: "Siding + frames + eaves + foundation + walkway spot-treatment",
+        premium: "Soft wash siding + window frames + exterior eaves rinsed",
+        platinum: "Soft wash siding + frames + exterior eaves + foundation perimeter rinse + walkway spot-treatment",
       },
       extras: [
         { id: "garage", label: "Detached Garage", price: 85 },
@@ -113,8 +113,8 @@ const BASE_CONFIG = {
       doorPrice: 8,
       tierFeatures: {
         standard: "Exterior windows only — outsides cleaned & streak-free",
-        premium: "Interior & exterior — both sides of every window cleaned",
-        platinum: "Detailed interior & exterior — windows + tracks, sills, screens & frames",
+        premium: "Interior & exterior — both sides of every window cleaned (tracks not included). Includes 7-day rain guarantee",
+        platinum: "Detailed interior & exterior — windows + tracks, sills, screens & frames. Includes 7-day rain guarantee",
       },
       windowTypes: [
         {
@@ -123,13 +123,18 @@ const BASE_CONFIG = {
           priceByPackage: { standard: 5.5, premium: 12, platinum: 18 },
         },
         {
+          id: "single_hung", label: "Single Hung", multiplier: 1.3,
+          description: "One sash slides up & down, top pane is fixed", windowImage: "single_hung",
+          priceByPackage: { standard: 7, premium: 14, platinum: 21 },
+        },
+        {
           id: "double_hung", label: "Double Hung", multiplier: 1.6,
           description: "Two sashes that slide up & down, tilt-in for cleaning", windowImage: "double_hung",
           priceByPackage: { standard: 8, premium: 16, platinum: 24 },
         },
         {
           id: "combination", label: "Combination / Storm", multiplier: 2.0,
-          description: "Inner window + outer storm pane - extra glass to clean", windowImage: "combination",
+          description: "Inner window + outer storm pane — extra glass to clean", windowImage: "combination",
           priceByPackage: { standard: 14, premium: 28, platinum: 38 },
         },
       ],
@@ -150,12 +155,12 @@ const BASE_CONFIG = {
       maxTier: "premium",
       tierFeatures: {
         standard: "Surface wash & debris removal",
-        premium: "Deep clean + wood brightener treatment",
-        platinum: "Deep clean + wood brightener treatment",
+        premium: "Deep clean + brightening treatment to restore natural wood color",
+        platinum: "Deep clean + brightening treatment to restore natural wood color",
       },
       extras: [
         { id: "railings", label: "Railing Detail Clean", price: 65 },
-        { id: "stairs", label: "Stairs (per flight)", price: 45 },
+        { id: "stairs", label: "Stairs", pricePerUnit: 45, unit: "flight", description: "Per flight of stairs" },
       ],
     },
     {
@@ -175,7 +180,7 @@ const BASE_CONFIG = {
         platinum: "Deep clean + edge detail + spot degreasing",
       },
       extras: [
-        { id: "oil_stain", label: "Oil Stain Removal", price: 50 },
+        { id: "oil_stain", label: "Oil Stain Treatment", price: 50, disclaimer: "Heavy stains may require an in-person assessment. Full removal is not guaranteed — results vary by stain age and surface type." },
         { id: "edging", label: "Edging & Detail Work", price: 40 },
       ],
     },
@@ -204,7 +209,7 @@ const BASE_CONFIG = {
       id: "gutter_cleaning",
       name: "Gutter Cleaning",
       icon: "\u{1F327}\u{FE0F}",
-      description: "Hand clean gutters & check downspouts",
+      description: "Exterior gutter cleanout & downspout check",
       basePrice: 50,
       perSqFt: 0,
       perWindow: 0,
@@ -212,9 +217,9 @@ const BASE_CONFIG = {
       enabled: true,
       maxTier: "premium",
       tierFeatures: {
-        standard: "Hand clean gutters, check downspouts — flush only if plugged",
-        premium: "Full interior gutter cleaning & power flush downspouts",
-        platinum: "Full interior gutter cleaning & power flush downspouts",
+        standard: "Hand clean exterior gutters, check downspouts — flush only if plugged",
+        premium: "Full exterior gutter cleanout & power flush all downspouts",
+        platinum: "Full exterior gutter cleanout & power flush all downspouts",
       },
       conditionQuestions: [
         { id: "plugged_downspouts", label: "Are any downspouts plugged?", priceAdj: 35 },

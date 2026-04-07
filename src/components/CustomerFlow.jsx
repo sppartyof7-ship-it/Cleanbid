@@ -60,6 +60,14 @@ function WindowTypeSVG({ type, active }) {
           <path d="M 60 20 L 60 44" stroke={color} strokeWidth="0.8" strokeDasharray="3,2" opacity="0.5" />
         </>
       )}
+      {type === "single_hung" && (
+        <>
+          <line x1="4" y1="32" x2="76" y2="32" stroke={color} strokeWidth="2" />
+          <line x1="40" y1="4" x2="40" y2="60" stroke={color} strokeWidth="1" />
+          <path d="M 30 36 L 30 44 M 50 36 L 50 44" stroke={color} strokeWidth="0.8" opacity="0.5" />
+          <text x="40" y="22" textAnchor="middle" fontSize="7" fill={color} fontWeight="600" opacity="0.5">FIXED</text>
+        </>
+      )}
       {type === "double_hung" && (
         <>
           <line x1="4" y1="32" x2="76" y2="32" stroke={color} strokeWidth="2" />
@@ -119,6 +127,9 @@ export default function CustomerFlow({ config, onSubmitLead }) {
   }, [step, selectedServices, details, selectedExtras, servicePackages, contact, globalStories])
 
   const enabledServices = config.services.filter((sv) => sv.enabled);
+
+  // Storm/combo window detection — requires manual quote instead of instant pricing
+  const hasStormWindows = selectedServices.includes("window_cleaning") && (details.window_cleaning?.windowType === "combination");
 
   // --- Smart Cascade Upsell Logic ---
   // Uses tenant's upsell config (enabled, discountPercent) from Supabase/onboarding
@@ -509,7 +520,6 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             {[
               { icon: "\u2705", text: "Fully Insured & Bonded" },
               { icon: "\u{1F3C6}", text: "100% Satisfaction Guarantee" },
-              { icon: "\u{1F4C5}", text: "Same-Week Scheduling" },
             ].map((badge) => (
               <div key={badge.text} style={{
                 display: "flex", alignItems: "center", gap: 8,
@@ -531,8 +541,8 @@ export default function CustomerFlow({ config, onSubmitLead }) {
           <div style={{ marginTop: 24 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 12 }}>Common Questions</h3>
             {[
-              { q: "How soon can I get scheduled?", a: "Most jobs are scheduled within 3\u20135 business days of your quote request." },
-              { q: "What payment methods do you accept?", a: "We accept cards, cash, check, and ACH." },
+              { q: "How soon can I get scheduled?", a: "Scheduling depends on availability. We\u2019ll reach out after you submit your quote to find a time that works." },
+              { q: "What payment methods do you accept?", a: "We accept cards, check, and ACH." },
               { q: "Do I need to be home during the service?", a: "For exterior-only work, nope! You\u2019re free to go about your day. If we need to remove screens or you\u2019re having interior windows done, we\u2019ll need access inside \u2014 some customers give us their garage code." },
               { q: "Is there a satisfaction guarantee?", a: "Absolutely. If you\u2019re not happy with any part of the job, we\u2019ll come back and make it right at no extra charge." },
             ].map((faq) => (
@@ -662,7 +672,11 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                         <div style={{ fontSize: 13, color: C.textLight }}>{svc.description}</div>
                       </div>
                     </div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: sel ? C.primary : C.textMuted, padding: "4px 12px", borderRadius: 8, background: sel ? `${C.primary}10` : C.bgCardAlt }}>{sel ? "Selected" : "Tap to add"}</div>
+                    {sel ? (
+                      <button onClick={(e) => { e.stopPropagation(); toggleService(svc.id); }} style={{ fontSize: 12, fontWeight: 600, color: C.danger, padding: "4px 12px", borderRadius: 8, background: `${C.danger}10`, border: `1px solid ${C.danger}30`, cursor: "pointer" }}>{"\u2715"} Remove</button>
+                    ) : (
+                      <div style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, padding: "4px 12px", borderRadius: 8, background: C.bgCardAlt }}>Tap to add</div>
+                    )}
                   </div>
 
                   {sel && (
@@ -719,7 +733,12 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                                   {isActive && <div style={{ fontSize: 11, fontWeight: 700, color: C.primary, marginTop: 6 }}>{"\u2713"} Selected</div>}
                                   {wt.id === "combination" && isActive && (
                                     <div style={{ marginTop: 8, padding: "8px 10px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, fontSize: 11, color: "#92400e", lineHeight: 1.4 }}>
-                                      Storm windows often require an onsite estimate for accurate pricing. <a href="tel:+19205634101" style={{ color: "#b45309", fontWeight: 700 }}>Call (920) 563-4101</a> for a free quote.
+                                      Storm windows often require an onsite estimate for accurate pricing.{" "}
+                                      {config.phone ? (
+                                        <a href={`tel:${config.phone.replace(/\D/g, "")}`} style={{ color: "#b45309", fontWeight: 700 }}>Call {config.phone}</a>
+                                      ) : (
+                                        <span style={{ fontWeight: 700 }}>Contact us</span>
+                                      )}{" "}for a free quote.
                                     </div>
                                   )}
                                 </div>
@@ -825,6 +844,27 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                                 return <button key={ext.id} onClick={() => toggleExtra(svc.id, ext.id)} style={{ padding: "7px 14px", borderRadius: 20, border: `1px solid ${a ? C.primary : C.border}`, background: a ? `${C.primary}12` : C.white, color: a ? C.primary : C.textMid, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>{a ? "\u2713 " : "+ "}{ext.label}</button>;
                               })}
                             </div>
+                            {/* Quantity inputs for per-unit extras (e.g. stairs per flight) */}
+                            {availableExtras.filter((ext) => ext.pricePerUnit && (selectedExtras[svc.id] || []).includes(ext.id)).map((ext) => (
+                              <div key={ext.id + "_qty"} style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10 }}>
+                                <label style={{ fontSize: 13, fontWeight: 600, color: C.textMid }}>How many {ext.unit}s?</label>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  placeholder="1"
+                                  value={details[svc.id]?.[ext.id + "_qty"] || ""}
+                                  onChange={(e) => updateDetail(svc.id, ext.id + "_qty", Math.max(1, Number(e.target.value) || 1))}
+                                  style={{ ...s.input, maxWidth: 80, textAlign: "center" }}
+                                />
+                                {ext.description && <span style={{ fontSize: 11, color: C.textLight }}>{ext.description}</span>}
+                              </div>
+                            ))}
+                            {/* Show disclaimers for selected extras that have one */}
+                            {availableExtras.filter((ext) => ext.disclaimer && (selectedExtras[svc.id] || []).includes(ext.id)).map((ext) => (
+                              <div key={ext.id + "_disc"} style={{ marginTop: 8, padding: "8px 12px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, fontSize: 11, color: "#92400e", lineHeight: 1.4 }}>
+                                {"\u26A0\uFE0F"} {ext.disclaimer}
+                              </div>
+                            ))}
                           </div>
                         );
                       })()}
@@ -954,8 +994,8 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             borderRadius: 20,
             textAlign: "center",
           }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: C.textMid, marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>Your Quote</div>
-            <div style={{ fontSize: 48, fontWeight: 900, color: C.primary, lineHeight: 1.1 }}>{fmt(totalPrice())}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: C.textMid, marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>{hasStormWindows ? "Estimated Quote" : "Your Quote"}</div>
+            <div style={{ fontSize: 48, fontWeight: 900, color: hasStormWindows ? C.warning : C.primary, lineHeight: 1.1 }}>{fmt(totalPrice())}</div>
             <div style={{ fontSize: 14, color: C.textMid, marginTop: 8 }}>
               {selectedServices.length} service{selectedServices.length > 1 ? "s" : ""} included
             </div>
@@ -963,6 +1003,12 @@ export default function CustomerFlow({ config, onSubmitLead }) {
               <div style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 16px", borderRadius: 20, background: "#f0fdf4", border: "1px solid #86efac" }}>
                 <span style={{ fontSize: 14 }}>{"\u{1F389}"}</span>
                 <span style={{ fontSize: 14, fontWeight: 700, color: "#16a34a" }}>{bundleDiscount}% bundle discount applied!</span>
+              </div>
+            )}
+            {hasStormWindows && (
+              <div style={{ marginTop: 12, padding: "10px 16px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, textAlign: "left" }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#92400e" }}>{"\u26A0\uFE0F"} Storm/combination windows require a custom quote</div>
+                <div style={{ fontSize: 12, color: "#a16207", marginTop: 4 }}>The window cleaning estimate above is approximate. We'll confirm exact pricing after reviewing your windows.{config.phone ? ` Call ${config.phone} for immediate pricing.` : ""}</div>
               </div>
             )}
           </div>
@@ -1118,13 +1164,13 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                 <span style={{ fontSize: 16 }}>{"\u{1F4CB}"}</span>
                 <h4 style={{ fontSize: 15, fontWeight: 700, color: C.text, margin: 0 }}>What Happens Next</h4>
               </div>
-              <p style={{ fontSize: 12, color: C.textLight, margin: "4px 0 0" }}>Here's how we turn this quote into a sparkling clean home</p>
+              <p style={{ fontSize: 12, color: C.textLight, margin: "4px 0 0" }}>Here's what to expect after you submit</p>
             </div>
             <div style={{ padding: "14px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
               {[
-                { icon: "\u{1F4DE}", text: "We'll reach out to confirm your details and schedule a convenient time" },
-                { icon: "\u{1F50D}", text: "Quick on-site walkthrough to finalize the scope and provide your exact price" },
-                { icon: "\u2728", text: "Our crew arrives, does the work, and walks you through the results" },
+                { icon: "\u{1F4DE}", text: "We'll reach out to confirm your details and find a time that works for you" },
+                { icon: "\u{1F4CB}", text: "We'll review the scope together — if anything needs adjusting, we'll let you know before any work begins" },
+                { icon: "\u2728", text: "Our crew arrives, does the work, and makes sure you're happy with the results" },
               ].map((step, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                   <span style={{ fontSize: 16, flexShrink: 0 }}>{step.icon}</span>
@@ -1171,7 +1217,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             <div style={{ padding: "12px 16px", background: C.white, borderRadius: 12, border: `1px solid ${C.borderLight}`, display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 18 }}>{"\u{1F512}"}</span>
               <div style={{ fontSize: 13, color: C.textMid, lineHeight: 1.4 }}>
-                <strong>No hidden fees.</strong> Final pricing confirmed at your free on-site walkthrough.
+                <strong>No hidden fees.</strong> This is your price. If the actual job scope differs, we'll discuss any changes with you first.
               </div>
             </div>
             <div style={{ padding: "12px 16px", background: C.white, borderRadius: 12, border: `1px solid ${C.borderLight}`, display: "flex", alignItems: "center", gap: 10 }}>
@@ -1203,9 +1249,9 @@ export default function CustomerFlow({ config, onSubmitLead }) {
               onMouseEnter={(e) => e.target.style.transform = "scale(1.03)"}
               onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
             >
-              Lock In My Price
+              {hasStormWindows ? "Request Custom Quote" : "Lock In My Price"}
             </button>
-            <span style={{ fontSize: 12, color: C.textLight }}>No payment required. We'll reach out to schedule your service.</span>
+            <span style={{ fontSize: 12, color: C.textLight }}>{hasStormWindows ? "No payment required. We'll follow up with confirmed pricing for your storm windows." : "No payment required. We'll reach out to schedule your service."}</span>
           </div>
         </div>
       )}
