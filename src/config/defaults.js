@@ -31,6 +31,7 @@ export function buildDefaultConfig(tenant) {
     if (tenant.id) cfg.tenantId = tenant.id;
     if (tenant.supabaseId) cfg.supabaseId = tenant.supabaseId;
     cfg.housecallProEnabled = tenant.housecallProEnabled ?? true;
+    if (tenant.storiesMultipliers) cfg.storiesMultipliers = { ...cfg.storiesMultipliers, ...tenant.storiesMultipliers };
     if (tenant.gallery) cfg.gallery = tenant.gallery;
     if (tenant.ownerVideoUrl !== undefined) cfg.ownerVideoUrl = tenant.ownerVideoUrl;
     if (tenant.showOwnerVideo !== undefined) cfg.showOwnerVideo = tenant.showOwnerVideo;
@@ -297,6 +298,7 @@ const BASE_CONFIG = {
     offerServices: ["window_cleaning", "gutter_cleaning"],
     discountPercent: 15,
   },
+  storiesMultipliers: { 2: 1.12, 3: 1.21 },
   bundleDiscounts: { 2: 10, 3: 15, 4: 20, 5: 25 },
   seasonalBundles: [
     {

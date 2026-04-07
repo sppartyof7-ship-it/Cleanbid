@@ -251,7 +251,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
 
   // --- Pricing (uses shared pricing engine  - no duplication!) ---
   const basePrice = useMemo(
-    () => calculateTotalBase(selectedServices, config.services, details, selectedExtras, config.globalPriceAdjustment, globalStories),
+    () => calculateTotalBase(selectedServices, config.services, details, selectedExtras, config.globalPriceAdjustment, globalStories, config.storiesMultipliers),
     [selectedServices, details, selectedExtras, config, globalStories]
   );
 
@@ -271,7 +271,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         svcDetails = { ...svcDetails, sqft: fallbackSqft };
       }
     }
-    let price = calculateServicePrice(svc, svcDetails, selectedExtras[svcId], config.globalPriceAdjustment, globalStories, packageKey);
+    let price = calculateServicePrice(svc, svcDetails, selectedExtras[svcId], config.globalPriceAdjustment, globalStories, packageKey, config.storiesMultipliers);
     // Apply upsell discount if this service was added via upsell
     if (upsellAccepted.includes(svcId) && upsellDiscount > 0) {
       price = Math.round(price * (1 - upsellDiscount / 100));
@@ -292,7 +292,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         const fallbackSqft = details.pressure_washing?.sqft || details.roof_cleaning?.sqft || 0;
         if (fallbackSqft > 0) svcDetails = { ...svcDetails, sqft: fallbackSqft };
       }
-      let price = calculateServicePrice(svc, svcDetails, selectedExtras[svcId], config.globalPriceAdjustment, globalStories, svc.hasPackagePricing ? pkg : undefined);
+      let price = calculateServicePrice(svc, svcDetails, selectedExtras[svcId], config.globalPriceAdjustment, globalStories, svc.hasPackagePricing ? pkg : undefined, config.storiesMultipliers);
       const pkgMult = svc.hasPackagePricing ? 1 : (config.packages[pkg]?.multiplier || 1);
       price = Math.round(price * pkgMult);
       if (upsellAccepted.includes(svcId) && upsellDiscount > 0) {
@@ -311,14 +311,14 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     let total = calculateTotalPackagePrice(
       selectedServices, config.services, details, selectedExtras,
       config.globalPriceAdjustment, globalStories, bundleDiscount,
-      pkg, config.packages[pkg].multiplier
+      pkg, config.packages[pkg].multiplier, config.storiesMultipliers
     );
     // Calculate upsell savings and subtract from total
     if (upsellAccepted.length > 0 && upsellDiscount > 0) {
       const upsellSavings = upsellAccepted.reduce((sum, svcId) => {
         const svc = config.services.find((sv) => sv.id === svcId);
         if (!svc) return sum;
-        const fullPrice = calculateServicePrice(svc, details[svcId], selectedExtras[svcId], config.globalPriceAdjustment, globalStories, pkg);
+        const fullPrice = calculateServicePrice(svc, details[svcId], selectedExtras[svcId], config.globalPriceAdjustment, globalStories, pkg, config.storiesMultipliers);
         const pkgMultiplier = svc.hasPackagePricing ? 1 : (config.packages[pkg]?.multiplier || 1);
         return sum + Math.round(fullPrice * pkgMultiplier * (upsellDiscount / 100));
       }, 0);
