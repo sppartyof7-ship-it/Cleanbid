@@ -5,18 +5,19 @@ import { SERVICES_WITH_STORIES } from "../config/defaults";
 import { fmt } from "../utils/helpers";
 
 /**
- * National average price ranges for exterior cleaning services (2026).
- * Sources: Angi, HomeGuide, HomeAdvisor, Thumbtack — updated April 2026.
- * Ranges represent typical residential jobs, not outliers.
+ * Typical premium service price ranges for exterior cleaning (2026).
+ * Adjusted +25% from base national averages (Angi, HomeGuide, HomeAdvisor,
+ * Thumbtack) to reflect full-service, insured, professional-grade work —
+ * not bare-bones or DIY-adjacent pricing that dominates online aggregators.
  */
 const NATIONAL_AVERAGES = {
-  pressure_washing: { low: 250, high: 600, label: "House Washing" },
-  window_cleaning: { low: 150, high: 450, label: "Window Cleaning" },
-  deck_cleaning: { low: 100, high: 350, label: "Deck Cleaning" },
-  concrete_cleaning: { low: 100, high: 350, label: "Concrete Cleaning" },
-  roof_cleaning: { low: 250, high: 600, label: "Roof Cleaning" },
-  gutter_cleaning: { low: 119, high: 234, label: "Gutter Cleaning" },
-  gutter_guard_install: { low: 1050, high: 2250, label: "Gutter Guards" },
+  pressure_washing: { low: 313, high: 750, label: "House Washing" },
+  window_cleaning: { low: 188, high: 563, label: "Window Cleaning" },
+  deck_cleaning: { low: 125, high: 438, label: "Deck Cleaning" },
+  concrete_cleaning: { low: 125, high: 438, label: "Concrete Cleaning" },
+  roof_cleaning: { low: 313, high: 750, label: "Roof Cleaning" },
+  gutter_cleaning: { low: 149, high: 293, label: "Gutter Cleaning" },
+  gutter_guard_install: { low: 1313, high: 2813, label: "Gutter Guards" },
 };
 
 /**
@@ -118,7 +119,8 @@ export default function PriceBreakdown({
             <span style={{ fontSize: 16 }}>{"\u{1F4CA}"}</span>
             <h4 style={{ fontSize: 15, fontWeight: 700, color: C.text, margin: 0 }}>How Your Quote Compares</h4>
           </div>
-          <p style={{ fontSize: 12, color: C.textLight, margin: "4px 0 0" }}>Your price vs. national averages</p>
+          <p style={{ fontSize: 12, color: C.textLight, margin: "4px 0 0" }}>Your price vs. typical premium service range</p>
+          <p style={{ fontSize: 10, color: C.textLight, margin: "4px 0 0", lineHeight: 1.4, fontStyle: "italic" }}>Lower online averages often exclude full service, guarantees, and professional-grade cleaning.</p>
         </div>
 
         {selectedServices.map((svcId) => {
@@ -164,7 +166,7 @@ export default function PriceBreakdown({
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
                   <span style={{ fontSize: 10, color: C.textLight }}>{fmt(avg.low)}</span>
-                  <span style={{ fontSize: 10, color: C.textLight }}>National avg range</span>
+                  <span style={{ fontSize: 10, color: C.textLight }}>Typical premium range</span>
                   <span style={{ fontSize: 10, color: C.textLight }}>{fmt(avg.high)}</span>
                 </div>
               </div>

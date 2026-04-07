@@ -11,18 +11,19 @@ import AddressAutocomplete from "./AddressAutocomplete";
 import TrustGallery from "./TrustGallery";
 
 /**
- * National average price ranges for exterior cleaning services (2026).
- * Sources: Angi, HomeGuide, HomeAdvisor, Thumbtack — updated April 2026.
- * Ranges represent typical residential jobs, not outliers.
+ * Typical premium service price ranges for exterior cleaning (2026).
+ * Adjusted +25% from base national averages (Angi, HomeGuide, HomeAdvisor,
+ * Thumbtack) to reflect full-service, insured, professional-grade work —
+ * not bare-bones or DIY-adjacent pricing that dominates online aggregators.
  */
 const NATIONAL_AVERAGES = {
-  pressure_washing: { low: 250, high: 600, label: "House Washing" },
-  window_cleaning: { low: 150, high: 450, label: "Window Cleaning" },
-  deck_cleaning: { low: 100, high: 350, label: "Deck Cleaning" },
-  concrete_cleaning: { low: 100, high: 350, label: "Concrete Cleaning" },
-  roof_cleaning: { low: 250, high: 600, label: "Roof Cleaning" },
-  gutter_cleaning: { low: 119, high: 234, label: "Gutter Cleaning" },
-  gutter_guard_install: { low: 1050, high: 2250, label: "Gutter Guards" },
+  pressure_washing: { low: 313, high: 750, label: "House Washing" },
+  window_cleaning: { low: 188, high: 563, label: "Window Cleaning" },
+  deck_cleaning: { low: 125, high: 438, label: "Deck Cleaning" },
+  concrete_cleaning: { low: 125, high: 438, label: "Concrete Cleaning" },
+  roof_cleaning: { low: 313, high: 750, label: "Roof Cleaning" },
+  gutter_cleaning: { low: 149, high: 293, label: "Gutter Cleaning" },
+  gutter_guard_install: { low: 1313, high: 2813, label: "Gutter Guards" },
 };
 
 // Session storage helpers for persistence
@@ -251,7 +252,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
 
   // --- Pricing (uses shared pricing engine  - no duplication!) ---
   const basePrice = useMemo(
-    () => calculateTotalBase(selectedServices, config.services, details, selectedExtras, config.globalPriceAdjustment, globalStories, config.storiesMultipliers),
+    () => calculateTotalBase(selectedServices, config.services, details, selectedExtras, config.globalPriceAdjustment, globalStories, config.storiesMultipliers, config.minimumCharges),
     [selectedServices, details, selectedExtras, config, globalStories]
   );
 
@@ -271,7 +272,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         svcDetails = { ...svcDetails, sqft: fallbackSqft };
       }
     }
-    let price = calculateServicePrice(svc, svcDetails, selectedExtras[svcId], config.globalPriceAdjustment, globalStories, packageKey, config.storiesMultipliers);
+    let price = calculateServicePrice(svc, svcDetails, selectedExtras[svcId], config.globalPriceAdjustment, globalStories, packageKey, config.storiesMultipliers, config.minimumCharges);
     // Apply upsell discount if this service was added via upsell
     if (upsellAccepted.includes(svcId) && upsellDiscount > 0) {
       price = Math.round(price * (1 - upsellDiscount / 100));
@@ -292,7 +293,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         const fallbackSqft = details.pressure_washing?.sqft || details.roof_cleaning?.sqft || 0;
         if (fallbackSqft > 0) svcDetails = { ...svcDetails, sqft: fallbackSqft };
       }
-      let price = calculateServicePrice(svc, svcDetails, selectedExtras[svcId], config.globalPriceAdjustment, globalStories, svc.hasPackagePricing ? pkg : undefined, config.storiesMultipliers);
+      let price = calculateServicePrice(svc, svcDetails, selectedExtras[svcId], config.globalPriceAdjustment, globalStories, svc.hasPackagePricing ? pkg : undefined, config.storiesMultipliers, config.minimumCharges);
       const pkgMult = svc.hasPackagePricing ? 1 : (config.packages[pkg]?.multiplier || 1);
       price = Math.round(price * pkgMult);
       if (upsellAccepted.includes(svcId) && upsellDiscount > 0) {
@@ -311,14 +312,14 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     let total = calculateTotalPackagePrice(
       selectedServices, config.services, details, selectedExtras,
       config.globalPriceAdjustment, globalStories, bundleDiscount,
-      pkg, config.packages[pkg].multiplier, config.storiesMultipliers
+      pkg, config.packages[pkg].multiplier, config.storiesMultipliers, config.minimumCharges
     );
     // Calculate upsell savings and subtract from total
     if (upsellAccepted.length > 0 && upsellDiscount > 0) {
       const upsellSavings = upsellAccepted.reduce((sum, svcId) => {
         const svc = config.services.find((sv) => sv.id === svcId);
         if (!svc) return sum;
-        const fullPrice = calculateServicePrice(svc, details[svcId], selectedExtras[svcId], config.globalPriceAdjustment, globalStories, pkg, config.storiesMultipliers);
+        const fullPrice = calculateServicePrice(svc, details[svcId], selectedExtras[svcId], config.globalPriceAdjustment, globalStories, pkg, config.storiesMultipliers, config.minimumCharges);
         const pkgMultiplier = svc.hasPackagePricing ? 1 : (config.packages[pkg]?.multiplier || 1);
         return sum + Math.round(fullPrice * pkgMultiplier * (upsellDiscount / 100));
       }, 0);
@@ -1116,7 +1117,8 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                 <span style={{ fontSize: 16 }}>{"\u{1F4CA}"}</span>
                 <h4 style={{ fontSize: 15, fontWeight: 700, color: C.text, margin: 0 }}>How Your Quote Compares</h4>
               </div>
-              <p style={{ fontSize: 12, color: C.textLight, margin: "4px 0 0" }}>Your price vs. national averages</p>
+              <p style={{ fontSize: 12, color: C.textLight, margin: "4px 0 0" }}>Your price vs. typical premium service range</p>
+              <p style={{ fontSize: 10, color: C.textLight, margin: "4px 0 0", lineHeight: 1.4, fontStyle: "italic" }}>Lower online averages often exclude full service, guarantees, and professional-grade cleaning.</p>
             </div>
             {selectedServices.map((svcId) => {
               const svc = config.services.find((sv) => sv.id === svcId)
@@ -1148,7 +1150,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
                       <span style={{ fontSize: 10, color: C.textLight }}>{fmt(avg.low)}</span>
-                      <span style={{ fontSize: 10, color: C.textLight }}>National avg range</span>
+                      <span style={{ fontSize: 10, color: C.textLight }}>Typical premium range</span>
                       <span style={{ fontSize: 10, color: C.textLight }}>{fmt(avg.high)}</span>
                     </div>
                   </div>
