@@ -107,6 +107,8 @@ export default function CustomerFlow({ config, onSubmitLead }) {
   const [customerPhotos, setCustomerPhotos] = useState([]); // Can't serialize file objects
   const [validationErrors, setValidationErrors] = useState({});
   const [dismissedUpsells, setDismissedUpsells] = useState([]);
+  const [preferredDays, setPreferredDays] = useState(saved?.preferredDays ?? []);
+  const [preferredTime, setPreferredTime] = useState(saved?.preferredTime ?? "");
 
   // Helper functions for per-service package selection
   const getServicePackage = (svcId) => servicePackages[svcId] || "premium";
@@ -124,7 +126,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
 
   // Auto-save progress to sessionStorage
   useEffect(() => {
-    saveCustomerProgress({ step, selectedServices, details, selectedExtras, servicePackages, contact, globalStories })
+    saveCustomerProgress({ step, selectedServices, details, selectedExtras, servicePackages, contact, globalStories, preferredDays, preferredTime })
   }, [step, selectedServices, details, selectedExtras, servicePackages, contact, globalStories])
 
   const enabledServices = config.services.filter((sv) => sv.enabled);
@@ -427,6 +429,8 @@ export default function CustomerFlow({ config, onSubmitLead }) {
       leadSource: contact.leadSource,
       projectType: contact.projectType,
       photos: customerPhotos.map((p) => ({ ...p })),
+      preferredDays: preferredDays.length > 0 ? preferredDays.join(", ") : null,
+      preferredTime: preferredTime || null,
     };
     onSubmitLead(newLead);
     clearCustomerProgress();
@@ -1240,6 +1244,60 @@ export default function CustomerFlow({ config, onSubmitLead }) {
               <span style={{ fontSize: 18 }}>{"\u{2B50}"}</span>
               <div style={{ fontSize: 13, color: C.textMid, lineHeight: 1.4 }}>
                 <strong>100% satisfaction guaranteed</strong> or we'll make it right.
+              </div>
+            </div>
+          </div>
+
+          {/* Scheduling Preference (optional) */}
+          <div style={{ ...s.card, marginTop: 20, padding: 0, overflow: "hidden" }}>
+            <div style={{ padding: "16px 24px 12px", borderBottom: `1px solid ${C.borderLight}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 16 }}>{"\u{1F4C5}"}</span>
+                <h4 style={{ fontSize: 15, fontWeight: 700, color: C.text, margin: 0 }}>When Works Best for You?</h4>
+              </div>
+              <p style={{ fontSize: 12, color: C.textLight, margin: "4px 0 0" }}>Optional — helps us schedule faster</p>
+            </div>
+            <div style={{ padding: "14px 24px 18px" }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.textMid, marginBottom: 8 }}>Preferred Days</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(day => {
+                  const active = preferredDays.includes(day);
+                  return (
+                    <button key={day} onClick={() => setPreferredDays(prev => active ? prev.filter(d => d !== day) : [...prev, day])}
+                      style={{
+                        padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                        border: `1.5px solid ${active ? C.primary : C.border}`,
+                        background: active ? `${C.primary}15` : C.white,
+                        color: active ? C.primary : C.textMid,
+                        transition: "all 0.15s",
+                      }}>
+                      {day}
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.textMid, marginBottom: 8 }}>Preferred Time</div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {[
+                  { key: "morning", label: "Morning", sub: "8am–12pm" },
+                  { key: "afternoon", label: "Afternoon", sub: "12–5pm" },
+                  { key: "any", label: "Any Time", sub: "Flexible" },
+                ].map(opt => {
+                  const active = preferredTime === opt.key;
+                  return (
+                    <button key={opt.key} onClick={() => setPreferredTime(active ? "" : opt.key)}
+                      style={{
+                        flex: 1, padding: "8px 6px", borderRadius: 8, cursor: "pointer", textAlign: "center",
+                        border: `1.5px solid ${active ? C.primary : C.border}`,
+                        background: active ? `${C.primary}15` : C.white,
+                        color: active ? C.primary : C.textMid,
+                        transition: "all 0.15s",
+                      }}>
+                      <div style={{ fontSize: 12, fontWeight: 700 }}>{opt.label}</div>
+                      <div style={{ fontSize: 10, color: active ? C.primary : C.textLight, marginTop: 2 }}>{opt.sub}</div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

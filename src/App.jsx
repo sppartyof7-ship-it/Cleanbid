@@ -181,6 +181,8 @@ export default function App() {
           packagePrices: newLead.allPackagePrices || {},
           bundleApplied: newLead.appliedBundle || null,
           photos: (newLead.photos || []).map(p => ({ name: p.name, size: p.size, timestamp: p.timestamp })),
+          preferredDays: newLead.preferredDays || null,
+          preferredTime: newLead.preferredTime || null,
         }),
       })
         .then(res => res.json())
