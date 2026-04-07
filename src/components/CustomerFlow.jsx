@@ -800,18 +800,24 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                             const pkg = config.packages[pkgKey];
                             if (!pkg) return null;
                             const isActive = getServicePackage(svc.id) === pkgKey;
+                            const isPremium = pkgKey === "premium";
+                            const isPlatinum = pkgKey === "platinum";
+                            const badge = isPremium ? "Most Popular" : isPlatinum ? "Complete Care" : null;
                             return (
                               <button key={pkgKey} onClick={(e) => { e.stopPropagation(); setServicePackage(svc.id, pkgKey); }}
                                 style={{
-                                  flex: 1, padding: "8px 4px", borderRadius: 10, cursor: "pointer",
-                                  border: `2px solid ${isActive ? (pkg.color || C.primary) : C.border}`,
-                                  background: isActive ? (pkg.color || C.primary) : C.white,
+                                  flex: 1, padding: isPremium ? "10px 4px" : "8px 4px", borderRadius: 10, cursor: "pointer",
+                                  border: `2px solid ${isActive ? (pkg.color || C.primary) : isPremium ? `${C.primary}60` : C.border}`,
+                                  background: isActive ? (pkg.color || C.primary) : isPremium ? `${C.primary}08` : C.white,
                                   color: isActive ? "#fff" : C.textMid,
                                   fontSize: 12, fontWeight: 700, transition: "all 0.2s",
-                                  textAlign: "center",
+                                  textAlign: "center", position: "relative",
+                                  boxShadow: isPremium && !isActive ? `0 2px 8px ${C.primary}20` : "none",
                                 }}>
+                                {badge && !isActive && (
+                                  <span style={{ display: "block", fontSize: 8, fontWeight: 800, color: isPremium ? C.primary : C.accent, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 }}>{badge}</span>
+                                )}
                                 {pkg.label}
-                                {pkg.popular && !isActive && <span style={{ display: "block", fontSize: 9, fontWeight: 600, color: C.textLight }}>Popular</span>}
                               </button>
                             );
                           })}
@@ -1000,12 +1006,16 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             <div style={{ fontSize: 14, color: C.textMid, marginTop: 8 }}>
               {selectedServices.length} service{selectedServices.length > 1 ? "s" : ""} included
             </div>
-            {bundleDiscount > 0 && (
-              <div style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 16px", borderRadius: 20, background: "#f0fdf4", border: "1px solid #86efac" }}>
-                <span style={{ fontSize: 14 }}>{"\u{1F389}"}</span>
-                <span style={{ fontSize: 14, fontWeight: 700, color: "#16a34a" }}>{bundleDiscount}% bundle discount applied!</span>
-              </div>
-            )}
+            {bundleDiscount > 0 && (() => {
+              const preBundleTotal = Math.round(totalPrice() / (1 - bundleDiscount / 100));
+              const dollarSaved = preBundleTotal - totalPrice();
+              return (
+                <div style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 16px", borderRadius: 20, background: "#f0fdf4", border: "1px solid #86efac" }}>
+                  <span style={{ fontSize: 14 }}>{"\u{1F389}"}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: "#16a34a" }}>You saved {fmt(dollarSaved)} by bundling ({bundleDiscount}% off)</span>
+                </div>
+              );
+            })()}
             {hasStormWindows && (
               <div style={{ marginTop: 12, padding: "10px 16px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, textAlign: "left" }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#92400e" }}>{"\u26A0\uFE0F"} Storm/combination windows require a custom quote</div>
@@ -1085,14 +1095,18 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                 </div>
               );
             })}
-            {bundleDiscount > 0 && (
-              <div style={{ padding: "10px 24px", borderTop: `1px solid ${C.borderLight}`, background: "#f0fdf4" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 13, color: "#16a34a", fontWeight: 600 }}>{"\u{1F389}"} Bundle discount ({bundleDiscount}%)</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "#16a34a" }}>Saving {bundleDiscount}%!</span>
+            {bundleDiscount > 0 && (() => {
+              const preBundleTotal = Math.round(totalPrice() / (1 - bundleDiscount / 100));
+              const dollarSaved = preBundleTotal - totalPrice();
+              return (
+                <div style={{ padding: "10px 24px", borderTop: `1px solid ${C.borderLight}`, background: "#f0fdf4" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: 13, color: "#16a34a", fontWeight: 600 }}>{"\u{1F389}"} Bundle discount ({bundleDiscount}%)</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "#16a34a" }}>{"\u2212"}{fmt(dollarSaved)}</span>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Property summary row */}
             <div style={{ padding: "10px 24px", borderTop: `1px solid ${C.borderLight}`, display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -1230,8 +1244,21 @@ export default function CustomerFlow({ config, onSubmitLead }) {
             </div>
           </div>
 
+          {/* Trust reinforcement */}
+          <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 6 }}>
+            {[
+              { icon: "\u{1F512}", text: "This quote is locked in. No surprise price changes unless scope changes." },
+              { icon: "\u{1F6AB}", text: "No upsells on arrival. What you see is what you pay." },
+            ].map((item, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: C.bgSoft, borderRadius: 10 }}>
+                <span style={{ fontSize: 14 }}>{item.icon}</span>
+                <span style={{ fontSize: 12, color: C.textMid, fontWeight: 500 }}>{item.text}</span>
+              </div>
+            ))}
+          </div>
+
           {/* Submit button — big, prominent, action-oriented */}
-          <div style={{ marginTop: 28, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+          <div style={{ marginTop: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
             <button
               onClick={submitQuote}
               style={{
@@ -1254,6 +1281,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
               {hasStormWindows ? "Request Custom Quote" : "Lock In My Price"}
             </button>
             <span style={{ fontSize: 12, color: C.textLight }}>{hasStormWindows ? "No payment required. We'll follow up with confirmed pricing for your storm windows." : "No payment required. We'll reach out to schedule your service."}</span>
+            <span style={{ fontSize: 11, color: C.textLight, fontStyle: "italic", marginTop: 2 }}>Scheduling fills quickly during peak season.</span>
           </div>
         </div>
       )}
