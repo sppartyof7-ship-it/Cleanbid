@@ -32,6 +32,8 @@ export function buildDefaultConfig(tenant) {
     if (tenant.supabaseId) cfg.supabaseId = tenant.supabaseId;
     cfg.housecallProEnabled = tenant.housecallProEnabled ?? true;
     if (tenant.storiesMultipliers) cfg.storiesMultipliers = { ...cfg.storiesMultipliers, ...tenant.storiesMultipliers };
+    if (tenant.minimumCharges) cfg.minimumCharges = { ...cfg.minimumCharges, ...tenant.minimumCharges };
+    if (tenant.featureToggles) cfg.featureToggles = { ...cfg.featureToggles, ...tenant.featureToggles };
     if (tenant.gallery) cfg.gallery = tenant.gallery;
     if (tenant.ownerVideoUrl !== undefined) cfg.ownerVideoUrl = tenant.ownerVideoUrl;
     if (tenant.showOwnerVideo !== undefined) cfg.showOwnerVideo = tenant.showOwnerVideo;
@@ -299,6 +301,12 @@ const BASE_CONFIG = {
     discountPercent: 15,
   },
   storiesMultipliers: { 2: 1.12, 3: 1.21 },
+  minimumCharges: {
+    window_cleaning: 75,
+    gutter_guard_install: 200,
+    gutter_cleaning: 75,
+  },
+  featureToggles: { googleCalendar: false },
   bundleDiscounts: { 2: 10, 3: 15, 4: 20, 5: 25 },
   seasonalBundles: [
     {
