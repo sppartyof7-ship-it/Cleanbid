@@ -674,7 +674,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                             <input type="number" placeholder="e.g. 2000" value={d.sqft || ""} onChange={(e) => updateDetail(svc.id, "sqft", Math.max(0, Number(e.target.value)))} style={s.input} />
                             {d.sqft > 0 && (
                               <div style={{ marginTop: 6, fontSize: 12, color: C.textLight }}>
-                                Estimated windows: ~{getEstimatedWindows(d.sqft, svc.windowsPerSqFt)} (based on WI home averages)
+                                Estimated windows: ~{getEstimatedWindows(d.sqft, svc.windowsPerSqFt)} (based on {config.state || "regional"} home averages)
                               </div>
                             )}
                           </div>

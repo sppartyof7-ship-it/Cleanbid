@@ -88,6 +88,8 @@ function rowToTenantObject(row) {
     tagline: cfg.tagline || "Professional Cleaning Services",
     phone: row.phone || "",
     email: row.email || "",
+    city: row.city || cfg.city || "",
+    state: row.state || cfg.state || "",
     adminPassword: cfg.adminPassword || "",
 
     // API keys from config

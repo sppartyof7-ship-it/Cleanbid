@@ -30,6 +30,8 @@ export function buildDefaultConfig(tenant) {
     if (tenant.logoImage) cfg.logoImage = tenant.logoImage;
     if (tenant.id) cfg.tenantId = tenant.id;
     if (tenant.supabaseId) cfg.supabaseId = tenant.supabaseId;
+    if (tenant.city) cfg.city = tenant.city;
+    if (tenant.state) cfg.state = tenant.state;
     cfg.housecallProEnabled = tenant.housecallProEnabled ?? true;
     if (tenant.storiesMultipliers) cfg.storiesMultipliers = { ...cfg.storiesMultipliers, ...tenant.storiesMultipliers };
     if (tenant.minimumCharges) cfg.minimumCharges = { ...cfg.minimumCharges, ...tenant.minimumCharges };
@@ -57,6 +59,8 @@ const BASE_CONFIG = {
   web3formsKey: "6cf87767-154f-42e1-8920-4988ef3cf5a3",
   googlePlacesApiKey: "AIzaSyAnLy1iRt0_fkMJqyBxrC0meEJD0qpshvU",
   tenantId: "cloute",
+  city: "",
+  state: "",
   logoLetter: "C",
   tagline: "Instant Cleaning Service Quotes",
   phone: "(920) 563-4101",

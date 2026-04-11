@@ -1,6 +1,19 @@
 import { useState } from "react";
 import C from "../config/colors";
 
+/* ── State abbreviation → full name ── */
+const STATE_NAMES = {
+  AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",
+  CT:"Connecticut",DE:"Delaware",FL:"Florida",GA:"Georgia",HI:"Hawaii",ID:"Idaho",
+  IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",LA:"Louisiana",
+  ME:"Maine",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",MS:"Mississippi",
+  MO:"Missouri",MT:"Montana",NE:"Nebraska",NV:"Nevada",NH:"New Hampshire",NJ:"New Jersey",
+  NM:"New Mexico",NY:"New York",NC:"North Carolina",ND:"North Dakota",OH:"Ohio",OK:"Oklahoma",
+  OR:"Oregon",PA:"Pennsylvania",RI:"Rhode Island",SC:"South Carolina",SD:"South Dakota",
+  TN:"Tennessee",TX:"Texas",UT:"Utah",VT:"Vermont",VA:"Virginia",WA:"Washington",
+  WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming",DC:"Washington DC",
+};
+
 /* ── Per-tenant gallery & review content ── */
 const TENANT_GALLERY = {
   cloute: {
@@ -68,7 +81,7 @@ export default function TrustGallery({ config }) {
           See the {businessName} Difference
         </h2>
         <p style={{ fontSize: 15, color: C.textLight, maxWidth: 500, margin: "0 auto" }}>
-          Real results from real Wisconsin homes. Drag the slider to compare before & after.
+          Real results from real {config?.state ? STATE_NAMES[config.state] || config.state : "local"} homes. Drag the slider to compare before & after.
         </p>
       </div>
 
