@@ -18,7 +18,7 @@ import TrustGallery from "./TrustGallery";
  */
 const NATIONAL_AVERAGES = {
   pressure_washing: { low: 313, high: 750, label: "House Washing" },
-  window_cleaning: { low: 188, high: 563, label: "Window Cleaning" },
+  window_cleaning: { low: 188, high: 650, label: "Window Cleaning" },
   deck_cleaning: { low: 125, high: 438, label: "Deck Cleaning" },
   concrete_cleaning: { low: 125, high: 438, label: "Concrete Cleaning" },
   roof_cleaning: { low: 313, high: 750, label: "Roof Cleaning" },
