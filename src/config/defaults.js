@@ -123,22 +123,22 @@ const BASE_CONFIG = {
         {
           id: "casement", label: "Casement", multiplier: 1.0,
           description: "Single pane, hinged on one side, cranks open", windowImage: "casement",
-          priceByPackage: { standard: 5.5, premium: 12, platinum: 18 },
+          priceByPackage: { standard: 7, premium: 16, platinum: 24 },
         },
         {
           id: "single_hung", label: "Single Hung", multiplier: 1.3,
           description: "One sash slides up & down, top pane is fixed", windowImage: "single_hung",
-          priceByPackage: { standard: 7, premium: 14, platinum: 21 },
+          priceByPackage: { standard: 9, premium: 18, platinum: 28 },
         },
         {
           id: "double_hung", label: "Double Hung", multiplier: 1.6,
           description: "Two sashes that slide up & down, tilt-in for cleaning", windowImage: "double_hung",
-          priceByPackage: { standard: 8, premium: 16, platinum: 24 },
+          priceByPackage: { standard: 10.50, premium: 21, platinum: 31 },
         },
         {
           id: "combination", label: "Combination / Storm", multiplier: 2.0,
           description: "Inner window + outer storm pane — extra glass to clean", windowImage: "combination",
-          priceByPackage: { standard: 14, premium: 28, platinum: 38 },
+          priceByPackage: { standard: 18, premium: 37, platinum: 50 },
         },
       ],
       extras: [
