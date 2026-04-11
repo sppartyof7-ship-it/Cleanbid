@@ -455,128 +455,81 @@ export default function CustomerFlow({ config, onSubmitLead }) {
 
   return (
     <>
-      {/* STEP 0: Contact Info (first!) */}
+      {/* STEP 0: Contact Info — clean & focused */}
       {step === 0 && (
         <div>
-          {/* ── Welcome Hero ── */}
-          <div style={{
-            background: C.gradient,
-            borderRadius: 16,
-            padding: "28px 24px 24px",
-            marginBottom: 20,
-            textAlign: "center",
-            color: C.white,
-          }}>
-            <h1 style={{ fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 800, letterSpacing: "-0.02em", margin: "0 0 6px" }}>
+          {/* ── Logo + Business Name ── */}
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            {config.logoImage && (
+              <img src={config.logoImage} alt={config.businessName} style={{ height: 48, marginBottom: 10, display: "block", margin: "0 auto 10px" }} />
+            )}
+            <h1 style={{ fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 800, color: C.text, margin: 0 }}>
               {config.businessName}
             </h1>
-            <p style={{ fontSize: 15, opacity: 0.92, margin: 0 }}>
-              Instant online quotes for professional exterior cleaning {config.serviceArea ? `in ${config.serviceArea}` : ""}
-            </p>
           </div>
 
-          <TrustGallery config={config} />
-          <h2 style={{ ...s.h1, fontSize: 22 }}>Let's get started!</h2>
-          <p style={{ color: C.textLight, marginBottom: 24, fontSize: 15 }}>Tell us a bit about yourself so we can build your custom quote.</p>
-          <div style={s.card}>
-            <div style={s.grid2}>
-              {[
-                { key: "name", l: "Full Name", p: "John Smith", t: "text" },
-                { key: "email", l: "Email", p: "john@example.com", t: "email" },
-                { key: "phone", l: "Phone", p: "(555) 123-4567", t: "tel" },
-              ].map((f) => (
-                <div key={f.key}>
-                  <label style={s.label}>{f.l} <span style={{ color: C.danger }}>*</span></label>
-                  <input type={f.t} placeholder={f.p} value={contact[f.key]} onChange={(e) => { setContact((c) => ({ ...c, [f.key]: e.target.value })); setValidationErrors((v) => ({ ...v, [f.key]: undefined })); }} style={{ ...s.input, borderColor: validationErrors[f.key] ? C.danger : C.border }} />
-                  {validationErrors[f.key] && <div style={{ color: C.danger, fontSize: 12, marginTop: 4 }}>{validationErrors[f.key]}</div>}
-                </div>
-              ))}
-              <div>
-                <label style={s.label}>Property Address</label>
-                <AddressAutocomplete
-                  value={contact.address}
-                  onChange={(val) => setContact((c) => ({ ...c, address: val }))}
-                  style={s.input}
-                  placeholder="Start typing an address..."
-                  apiKey={config.googlePlacesApiKey}
+          {/* ── Form Fields (stacked, single column) ── */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {[
+              { key: "name", l: "Name", p: "John Smith", t: "text" },
+              { key: "email", l: "Email", p: "john@example.com", t: "email" },
+              { key: "phone", l: "Phone", p: "(555) 123-4567", t: "tel" },
+            ].map((f) => (
+              <div key={f.key}>
+                <label style={s.label}>{f.l} <span style={{ color: C.danger }}>*</span></label>
+                <input
+                  type={f.t}
+                  placeholder={f.p}
+                  value={contact[f.key]}
+                  onChange={(e) => {
+                    setContact((c) => ({ ...c, [f.key]: e.target.value }));
+                    setValidationErrors((v) => ({ ...v, [f.key]: undefined }));
+                  }}
+                  style={{ ...s.input, borderColor: validationErrors[f.key] ? C.danger : C.border }}
                 />
+                {validationErrors[f.key] && <div style={{ color: C.danger, fontSize: 12, marginTop: 4 }}>{validationErrors[f.key]}</div>}
               </div>
+            ))}
+
+            <div>
+              <label style={s.label}>Address</label>
+              <AddressAutocomplete
+                value={contact.address}
+                onChange={(val) => setContact((c) => ({ ...c, address: val }))}
+                style={s.input}
+                placeholder="Start typing an address..."
+                apiKey={config.googlePlacesApiKey}
+              />
             </div>
-            <div style={{ marginTop: 16 }}>
+
+            <div>
               <label style={s.label}>How did you hear about us?</label>
               <select value={contact.leadSource} onChange={(e) => setContact((c) => ({ ...c, leadSource: e.target.value }))} style={s.input}>
                 <option value="">Select...</option>
                 {config.leadSources.map((src) => <option key={src} value={src}>{src}</option>)}
               </select>
             </div>
-            <div style={{ marginTop: 16 }}>
-              <label style={s.label}>Notes</label>
-              <textarea placeholder="Anything we should know about your property..." value={contact.notes} onChange={(e) => setContact((c) => ({ ...c, notes: e.target.value }))} rows={3} style={{ ...s.input, resize: "vertical", fontFamily: "inherit" }} />
-            </div>
-          </div>
 
-          {/* ── Trust Badges ── */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-            gap: 10,
-            marginTop: 20,
-          }}>
-            {[
-              { icon: "\u2705", text: "Fully Insured & Bonded" },
-              { icon: "\u{1F3C6}", text: "100% Satisfaction Guarantee" },
-            ].map((badge) => (
-              <div key={badge.text} style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "10px 14px",
-                background: C.bgCard,
-                borderRadius: 10,
-                border: `1px solid ${C.borderLight}`,
-                fontSize: 13,
-                fontWeight: 600,
-                color: C.textMid,
-              }}>
-                <span style={{ fontSize: 16 }}>{badge.icon}</span>
-                {badge.text}
-              </div>
-            ))}
-          </div>
-
-          {/* ── Mini FAQ ── */}
-          <div style={{ marginTop: 24 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 12 }}>Common Questions</h3>
-            {[
-              { q: "How soon can I get scheduled?", a: "Scheduling depends on availability. We\u2019ll reach out after you submit your quote to find a time that works." },
-              { q: "What payment methods do you accept?", a: "We accept cards, check, and ACH." },
-              { q: "Do I need to be home during the service?", a: "For exterior-only work, nope! You\u2019re free to go about your day. If we need to remove screens or you\u2019re having interior windows done, we\u2019ll need access inside \u2014 some customers give us their garage code." },
-              { q: "Is there a satisfaction guarantee?", a: "Absolutely. If you\u2019re not happy with any part of the job, we\u2019ll come back and make it right at no extra charge." },
-            ].map((faq) => (
-              <details key={faq.q} style={{
-                marginBottom: 8,
-                background: C.bgCard,
-                borderRadius: 10,
-                border: `1px solid ${C.borderLight}`,
-                overflow: "hidden",
-              }}>
-                <summary style={{
-                  padding: "12px 16px",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: C.text,
-                  cursor: "pointer",
-                  listStyle: "none",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}>
-                  {faq.q}
-                  <span style={{ fontSize: 12, color: C.textLight, flexShrink: 0, marginLeft: 8 }}>{"\u25BC"}</span>
-                </summary>
-                <div style={{ padding: "0 16px 14px", fontSize: 13, color: C.textMid, lineHeight: 1.6 }}>
-                  {faq.a}
-                </div>
-              </details>
-            ))}
+            {/* ── Continue Button ── */}
+            <button
+              onClick={validateContactAndProceed}
+              style={{
+                width: "100%",
+                padding: "16px",
+                marginTop: 6,
+                borderRadius: 12,
+                border: "none",
+                background: (contact.name && contact.email && contact.phone) ? C.gradient : C.bgDark,
+                color: (contact.name && contact.email && contact.phone) ? C.white : C.textLight,
+                fontSize: 16,
+                fontWeight: 700,
+                cursor: (contact.name && contact.email && contact.phone) ? "pointer" : "default",
+                boxShadow: (contact.name && contact.email && contact.phone) ? "0 4px 16px rgba(59,156,255,0.25)" : "none",
+                transition: "all 0.2s",
+              }}
+            >
+              Continue
+            </button>
           </div>
         </div>
       )}
@@ -1354,8 +1307,8 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         </div>
       )}
 
-      {/* Navigation */}
-      {step < 4 && (
+      {/* Navigation (hidden on step 0 — Continue is inside the form) */}
+      {step > 0 && step < 4 && (
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: 28, paddingTop: 20, borderTop: `1px solid ${C.borderLight}` }}>
           <button onClick={back} disabled={step === 0} style={{ ...s.btnSecondary, color: step === 0 ? C.borderLight : C.textMid, borderColor: step === 0 ? C.borderLight : C.border, cursor: step === 0 ? "default" : "pointer" }}>Back</button>
           <button
