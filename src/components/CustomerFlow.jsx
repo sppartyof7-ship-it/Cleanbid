@@ -1101,9 +1101,12 @@ export default function CustomerFlow({ config, onSubmitLead }) {
               const pkgMult = svc.hasPackagePricing ? 1 : (config.packages[svcPkg]?.multiplier || 1)
               const price = Math.round(baseP * pkgMult)
               if (price <= 0) return null
-              const range = avg.high - avg.low
+              // Dynamic range: ensure the high end is always at least 30% above the quote
+              // so the dot lands in the green/yellow zone and "Great value" always shows
+              const dynamicHigh = Math.max(avg.high, Math.round(price * 1.3))
+              const range = dynamicHigh - avg.low
               const position = Math.min(100, Math.max(0, ((price - avg.low) / range) * 100))
-              const isGoodValue = price <= avg.low + range * 0.5
+              const isGoodValue = true
               return (
                 <div key={svcId} style={{ padding: "14px 24px", borderTop: `1px solid ${C.borderLight}` }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
@@ -1122,7 +1125,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                     <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
                       <span style={{ fontSize: 10, color: C.textLight }}>{fmt(avg.low)}</span>
                       <span style={{ fontSize: 10, color: C.textLight }}>Typical premium range</span>
-                      <span style={{ fontSize: 10, color: C.textLight }}>{fmt(avg.high)}</span>
+                      <span style={{ fontSize: 10, color: C.textLight }}>{fmt(dynamicHigh)}</span>
                     </div>
                   </div>
                 </div>
