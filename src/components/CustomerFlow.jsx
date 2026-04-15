@@ -670,8 +670,9 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                       {svc.id === "window_cleaning" && svc.windowTypes && (
                         <div style={{ paddingTop: 16 }}>
                           <div style={{ marginBottom: 12 }}>
-                            <label style={s.label}>Home Square Footage</label>
+                            <label style={s.label}>Total Home Square Footage <span style={{ color: C.danger }}>*</span></label>
                             <input type="number" placeholder="e.g. 2000" value={d.sqft || ""} onChange={(e) => updateDetail(svc.id, "sqft", Math.max(0, Number(e.target.value)))} style={s.input} />
+                            <div style={{ marginTop: 4, fontSize: 11, color: C.textLight }}>Enter your home's total living area (from your listing or tax records)</div>
                             {d.sqft > 0 && (
                               <div style={{ marginTop: 6, fontSize: 12, color: C.textLight }}>
                                 Estimated windows: ~{getEstimatedWindows(d.sqft, svc.windowsPerSqFt)} (based on {config.state || "regional"} home averages)
@@ -717,7 +718,7 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                       {/* Standard numeric inputs (non-window-cleaning services) */}
                       {!(svc.id === "window_cleaning" && svc.windowTypes) && (
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12, paddingTop: svc.tiers ? 0 : 16 }}>
-                          {svc.perSqFt > 0 && <div><label style={s.label}>Square Footage</label><input type="number" placeholder="e.g. 1500" value={d.sqft || ""} onChange={(e) => updateDetail(svc.id, "sqft", Math.max(0, Number(e.target.value)))} style={s.input} /></div>}
+                          {svc.perSqFt > 0 && <div><label style={s.label}>Total Home Square Footage <span style={{ color: C.danger }}>*</span></label><input type="number" placeholder="e.g. 1500" value={d.sqft || ""} onChange={(e) => updateDetail(svc.id, "sqft", Math.max(0, Number(e.target.value)))} style={s.input} /><div style={{ marginTop: 4, fontSize: 11, color: C.textLight }}>Enter your home's total living area (from your listing or tax records)</div></div>}
                           {svc.perWindow > 0 && !svc.windowTypes && <div><label style={s.label}>Number of Windows</label><input type="number" placeholder="e.g. 20" value={d.windows || ""} onChange={(e) => updateDetail(svc.id, "windows", Math.max(0, Number(e.target.value)))} style={s.input} /></div>}
                           {(svc.perLinFt > 0 || (svc.tiers && svc.tiers.length > 0)) && <div><label style={s.label}>Linear Feet of Gutters</label><input type="number" placeholder="e.g. 150" value={d.linearFt || ""} onChange={(e) => updateDetail(svc.id, "linearFt", Math.max(0, Number(e.target.value)))} style={s.input} />{d.linearFt > 0 && (details.pressure_washing?.sqft || details.window_cleaning?.sqft) ? <div style={{ marginTop: 4, fontSize: 11, color: C.textLight }}>{"\u{2139}\u{FE0F}"} Estimated from your home size — adjust if needed</div> : null}</div>}
                         </div>
