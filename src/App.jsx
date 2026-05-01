@@ -7,7 +7,10 @@ import { isSupabaseConnected, fetchTenantBySlug } from "./lib/supabase";
 import { adaptSupabaseConfig, extractColors } from "./lib/configAdapter";
 import { deepClone } from "./utils/helpers";
 import { saveConfig, loadConfig, saveLeads, loadLeads } from "./utils/storage";
-import { sendLeadNotification } from "./utils/email";
+// NOTE: Lead-notification emails now go through the platform's Resend
+// endpoints (see notifyTenantOfLead + emailCustomerConfirmation below).
+// The legacy Web3Forms helper has been retired — every tenant now just sets
+// leadEmail in the dashboard and notifications "just work."
 import { sendToHousecallPro } from "./utils/housecall";
 import AdminPanel from "./components/AdminPanel";
 import LeadsPanel from "./components/LeadsPanel";
@@ -153,7 +156,13 @@ export default function App() {
 
   const handleSubmitLead = (newLead) => {
     setLeads((prev) => [newLead, ...prev]);
-    sendLeadNotification(newLead, config);
+
+    // ── Notify the cleaning company (the tenant) — Resend via platform API ──
+    notifyTenantOfLead(newLead, config);
+
+    // ── Email the customer their "we got your quote" confirmation ──
+    emailCustomerConfirmation(newLead, config);
+
     if (config.housecallProEnabled) {
       sendToHousecallPro(newLead, config.services);
     }
@@ -360,6 +369,81 @@ export default function App() {
 // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // HELPERS
 // ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+
+// Platform API base. Engine runs on slug.mybidquick.com so we call across to
+// www.mybidquick.com where the Resend-backed serverless functions live.
+const PLATFORM_API = "https://www.mybidquick.com";
+
+/**
+ * Fire-and-forget: tell the tenant (Noah, Steven, etc.) that a new lead just
+ * came in. The platform endpoint looks up the tenant by id, pulls leadEmail
+ * from their config, and emails them via Resend with replyTo = customer email.
+ */
+function notifyTenantOfLead(lead, config) {
+  if (!config?.supabaseId) {
+    console.info("[Lead notify] No supabaseId on config - skipping (likely demo/local).");
+    return;
+  }
+  fetch(`${PLATFORM_API}/api/send-lead-notification`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      lead: {
+        name: lead.name,
+        email: lead.email,
+        phone: lead.phone,
+        address: lead.address,
+        services: lead.services,
+        servicePrices: lead.servicePrices,
+        package: lead.package,
+        total: lead.total,
+        notes: lead.notes,
+        leadSource: lead.leadSource,
+        projectType: lead.projectType,
+        photos: lead.photos,
+        preferredDays: lead.preferredDays,
+        preferredTime: lead.preferredTime,
+      },
+      tenant_id: config.supabaseId,
+    }),
+  })
+    .then((r) => r.json())
+    .then((d) => {
+      if (d?.sent) console.log("[Lead notify] Sent to", d.to);
+      else if (d?.skipped) console.warn("[Lead notify] Skipped:", d.reason);
+      else console.warn("[Lead notify] Unknown response:", d);
+    })
+    .catch((err) => console.warn("[Lead notify] Network error (non-blocking):", err));
+}
+
+/**
+ * Fire-and-forget: send the customer their branded "we got your quote"
+ * confirmation. Uses the existing /api/send-quote-confirmation endpoint.
+ */
+function emailCustomerConfirmation(lead, config) {
+  if (!config?.supabaseId) return; // demo/local - no tenant to brand the email
+  if (!lead.email) return; // customer didn't give an email - nothing to send
+  fetch(`${PLATFORM_API}/api/send-quote-confirmation`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      lead: {
+        name: lead.name,
+        email: lead.email,
+        services: lead.services,
+        total: lead.total,
+        package: lead.package,
+      },
+      tenant_id: config.supabaseId,
+    }),
+  })
+    .then((r) => r.json())
+    .then((d) => {
+      if (d?.sent) console.log("[Customer confirm] Sent to", d.to);
+      else if (d?.skipped) console.warn("[Customer confirm] Skipped:", d.reason);
+    })
+    .catch((err) => console.warn("[Customer confirm] Network error (non-blocking):", err));
+}
 
 /**
  * Merge a saved localStorage config with fresh defaults.
