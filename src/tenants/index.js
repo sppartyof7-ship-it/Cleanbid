@@ -13,12 +13,12 @@
  * and App.jsx fetches the full config asynchronously.
  */
 import CLOUTE from "./cloute";
-import CORNERSTONE from "./cornerstone";
+// CORNERSTONE removed 2026-05-01 - Cornerstone now lives in Supabase (slug "cornerstone")
 
 // ââ Hardcoded tenants (legacy â will be phased out as tenants move to Supabase) ââ
 const TENANTS = {
   cloute: CLOUTE,
-  cornerstone: CORNERSTONE,
+  // cornerstone moved to Supabase
 };
 
 // ââ Legacy hostname â tenant ID map ââ
@@ -28,12 +28,6 @@ const HOST_MAP = {
   "cloutebid.vercel.app": "cloute",
   "cloutebid.com": "cloute",
   "www.cloutebid.com": "cloute",
-
-  // Cornerstone
-  "cornerstone.cloutebid.com": "cornerstone",
-  "cornerstonebid.vercel.app": "cornerstone",
-  "cornerstonewash.com": "cornerstone",
-  "www.cornerstonewash.com": "cornerstone",
 
   // Local dev
   localhost: "cloute",
