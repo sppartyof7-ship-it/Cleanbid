@@ -431,6 +431,7 @@ function emailCustomerConfirmation(lead, config) {
         name: lead.name,
         email: lead.email,
         services: lead.services,
+        servicePrices: lead.servicePrices, // per-service final $ for the email line items
         total: lead.total,
         package: lead.package,
       },
