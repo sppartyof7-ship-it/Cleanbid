@@ -21,6 +21,13 @@ const TENANTS = {
   // cornerstone moved to Supabase
 };
 
+// -- Subdomain aliases: map legacy/auto-generated slugs to their canonical --
+// When a tenant's URL changes (e.g. signup-generated long slug -> short slug),
+// add an entry here so old QR codes / bookmarks still resolve.
+const SLUG_ALIASES = {
+  "cornerstone-wash-and-window-cleaning": "cornerstone",
+};
+
 // ââ Legacy hostname â tenant ID map ââ
 const HOST_MAP = {
   // Cloute (default)
@@ -67,25 +74,29 @@ export function extractSubdomainSlug() {
  * This is the FIRST step â just figures out WHAT to load.
  * The actual config fetch happens in App.jsx.
  */
+function applySlugAlias(slug) {
+  return SLUG_ALIASES[slug] || slug;
+}
+
 export function resolveSlug() {
   // 1. Check query param (for testing: ?tenant=cloute-cleaning)
   const params = new URLSearchParams(window.location.search);
   const paramTenant = params.get("tenant");
   if (paramTenant) {
-    return { slug: paramTenant, source: "param" };
+    return { slug: applySlugAlias(paramTenant), source: "param" };
   }
 
   // 2. Check subdomain (cloute-cleaning.mybidquick.com)
   const subSlug = extractSubdomainSlug();
   if (subSlug) {
-    return { slug: subSlug, source: "subdomain" };
+    return { slug: applySlugAlias(subSlug), source: "subdomain" };
   }
 
   // 3. Check legacy hostname map
   const host = window.location.hostname.toLowerCase();
   const legacyId = HOST_MAP[host];
   if (legacyId) {
-    return { slug: legacyId, source: "hostname" };
+    return { slug: applySlugAlias(legacyId), source: "hostname" };
   }
 
   // 4. Fuzzy match for Vercel preview URLs
