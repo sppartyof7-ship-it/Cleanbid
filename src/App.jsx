@@ -3,7 +3,7 @@ import C, { setTenantColors } from "./config/colors";
 import s from "./config/styles";
 import { buildDefaultConfig } from "./config/defaults";
 import { resolveSlug, isHardcodedTenant, getHardcodedTenant, resolveTenant } from "./tenants";
-import { isSupabaseConnected, fetchTenantBySlug } from "./lib/supabase";
+import { isSupabaseConnected, fetchTenantBySlug, uploadLeadPhotos } from "./lib/supabase";
 import { adaptSupabaseConfig, extractColors } from "./lib/configAdapter";
 import { deepClone } from "./utils/helpers";
 import { saveConfig, loadConfig, saveLeads, loadLeads } from "./utils/storage";
@@ -154,17 +154,40 @@ export default function App() {
     changeView("customer");
   };
 
-  const handleSubmitLead = (newLead) => {
+  const handleSubmitLead = async (newLead) => {
     setLeads((prev) => [newLead, ...prev]);
 
+    // ── Upload photos to Supabase Storage BEFORE we hit the edge function ──
+    // PhotoUploader keeps dataUrls in component state for preview; here we
+    // convert them to real Storage objects and capture their public URLs so
+    // the tenant can actually see them in the notification email + dashboard.
+    let uploadedPhotos = [];
+    if (config.supabaseId && newLead.photos?.length) {
+      const submissionId = (crypto.randomUUID && crypto.randomUUID()) || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      try {
+        uploadedPhotos = await uploadLeadPhotos(newLead.photos, {
+          tenantId: config.supabaseId,
+          submissionId,
+        });
+        console.log("[MyBidQuick] Photos uploaded:", uploadedPhotos.filter(p => p.url).length, "of", newLead.photos.length);
+      } catch (err) {
+        console.warn("[MyBidQuick] Photo upload error:", err);
+        uploadedPhotos = newLead.photos.map(p => ({ name: p.name }));
+      }
+    }
+
+    // Attach the uploaded photo URLs to the lead before we notify anyone, so
+    // the email template can render thumbnails.
+    const leadWithPhotos = { ...newLead, photos: uploadedPhotos };
+
     // ── Notify the cleaning company (the tenant) — Resend via platform API ──
-    notifyTenantOfLead(newLead, config);
+    notifyTenantOfLead(leadWithPhotos, config);
 
     // ── Email the customer their "we got your quote" confirmation ──
-    emailCustomerConfirmation(newLead, config);
+    emailCustomerConfirmation(leadWithPhotos, config);
 
     if (config.housecallProEnabled) {
-      sendToHousecallPro(newLead, config.services);
+      sendToHousecallPro(leadWithPhotos, config.services);
     }
 
     // Save lead to Supabase via edge function (deducts credit too)
@@ -175,23 +198,23 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tenant_id: config.supabaseId,
-          name: newLead.name,
-          email: newLead.email,
-          phone: newLead.phone,
-          address: newLead.address || null,
-          projectType: newLead.projectType || "residential",
-          services: newLead.services,
-          selectedPackage: newLead.package,
-          total: newLead.total,
-          notes: newLead.notes || null,
-          leadSource: newLead.leadSource || null,
-          serviceDetails: newLead.details || {},
-          selectedExtras: newLead.selectedExtras || {},
-          packagePrices: newLead.allPackagePrices || {},
-          bundleApplied: newLead.appliedBundle || null,
-          photos: (newLead.photos || []).map(p => ({ name: p.name, size: p.size, timestamp: p.timestamp })),
-          preferredDays: newLead.preferredDays || null,
-          preferredTime: newLead.preferredTime || null,
+          name: leadWithPhotos.name,
+          email: leadWithPhotos.email,
+          phone: leadWithPhotos.phone,
+          address: leadWithPhotos.address || null,
+          projectType: leadWithPhotos.projectType || "residential",
+          services: leadWithPhotos.services,
+          selectedPackage: leadWithPhotos.package,
+          total: leadWithPhotos.total,
+          notes: leadWithPhotos.notes || null,
+          leadSource: leadWithPhotos.leadSource || null,
+          serviceDetails: leadWithPhotos.details || {},
+          selectedExtras: leadWithPhotos.selectedExtras || {},
+          packagePrices: leadWithPhotos.allPackagePrices || {},
+          bundleApplied: leadWithPhotos.appliedBundle || null,
+          photos: uploadedPhotos,
+          preferredDays: leadWithPhotos.preferredDays || null,
+          preferredTime: leadWithPhotos.preferredTime || null,
         }),
       })
         .then(res => res.json())

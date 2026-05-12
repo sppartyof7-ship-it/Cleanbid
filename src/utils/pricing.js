@@ -1,11 +1,6 @@
 import { SERVICES_WITH_STORIES } from "../config/defaults";
 
 /**
- * Minimum charge floors by service — prevents $0 or unrealistic quotes.
- * These are safety nets, not pricing policy. If a real quote calculates
- * above these, the calculated price wins.
- */
-/**
  * Get the stories multiplier for a given story count.
  * Uses tenant-configurable multipliers, falls back to defaults.
  */
@@ -16,11 +11,23 @@ function getStoriesMultiplier(stories, multipliers) {
   return 1;
 }
 
-const MINIMUM_CHARGES = {
+/**
+ * Default minimum charge floors — used as fallback when no config is passed.
+ * Prevents $0 or unrealistic quotes. The calculated price wins if higher.
+ */
+const DEFAULT_MINIMUM_CHARGES = {
   window_cleaning: 75,
   gutter_guard_install: 200,
   gutter_cleaning: 75,
 };
+
+/**
+ * Get the minimum charge for a service, reading from tenant config with fallback.
+ */
+function getMinimumCharge(svcId, minimumCharges) {
+  const m = minimumCharges || DEFAULT_MINIMUM_CHARGES;
+  return m[svcId] ?? DEFAULT_MINIMUM_CHARGES[svcId] ?? 0;
+}
 
 /**
  * Calculate tiered per-sqft cost.
@@ -54,7 +61,7 @@ function tieredSqFtCost(sqft, perSqFt, tiers) {
  *   (like window cleaning), this determines which price tier to use.
  *   Pass "standard", "premium", or "platinum". Falls back to "standard" / base price.
  */
-export function calculateServicePrice(svc, details, selectedExtras, globalPriceAdj, globalStories, packageKey, storiesMultipliers) {
+export function calculateServicePrice(svc, details, selectedExtras, globalPriceAdj, globalStories, packageKey, storiesMultipliers, minimumCharges) {
   if (!svc) return 0;
 
   const applyGlobal = (price) => price * (1 + globalPriceAdj / 100);
@@ -68,7 +75,7 @@ export function calculateServicePrice(svc, details, selectedExtras, globalPriceA
       total *= getStoriesMultiplier(globalStories, storiesMultipliers);
     }
     // Enforce minimum charge floor
-    const min = MINIMUM_CHARGES[svc.id];
+    const min = getMinimumCharge(svc.id, minimumCharges);
     if (min && total > 0 && total < min) total = min;
     return total;
   }
@@ -122,7 +129,7 @@ export function calculateServicePrice(svc, details, selectedExtras, globalPriceA
       total *= getStoriesMultiplier(globalStories, storiesMultipliers);
     }
     // Enforce minimum charge floor for window cleaning
-    const winMin = MINIMUM_CHARGES[svc.id];
+    const winMin = getMinimumCharge(svc.id, minimumCharges);
     if (winMin && total > 0 && total < winMin) total = winMin;
     return total;
   }
@@ -162,7 +169,7 @@ export function calculateServicePrice(svc, details, selectedExtras, globalPriceA
   }
 
   // Enforce minimum charge floor
-  const svcMin = MINIMUM_CHARGES[svc.id];
+  const svcMin = getMinimumCharge(svc.id, minimumCharges);
   if (svcMin && total > 0 && total < svcMin) total = svcMin;
 
   return total;
@@ -171,10 +178,10 @@ export function calculateServicePrice(svc, details, selectedExtras, globalPriceA
 /**
  * Calculate total base price across all selected services.
  */
-export function calculateTotalBase(selectedServices, allServices, allDetails, allExtras, globalPriceAdj, globalStories, storiesMultipliers) {
+export function calculateTotalBase(selectedServices, allServices, allDetails, allExtras, globalPriceAdj, globalStories, storiesMultipliers, minimumCharges) {
   return selectedServices.reduce((total, svcId) => {
     const svc = allServices.find((sv) => sv.id === svcId);
-    return total + calculateServicePrice(svc, allDetails[svcId], allExtras[svcId], globalPriceAdj, globalStories, undefined, storiesMultipliers);
+    return total + calculateServicePrice(svc, allDetails[svcId], allExtras[svcId], globalPriceAdj, globalStories, undefined, storiesMultipliers, minimumCharges);
   }, 0);
 }
 
@@ -212,7 +219,7 @@ export function getPackagePrice(basePrice, discountPercent, packageMultiplier) {
  */
 export function calculateTotalPackagePrice(
   selectedServices, allServices, allDetails, allExtras,
-  globalPriceAdj, globalStories, discountPercent, packageKey, packageMultiplier, storiesMultipliers
+  globalPriceAdj, globalStories, discountPercent, packageKey, packageMultiplier, storiesMultipliers, minimumCharges
 ) {
   let total = 0;
 
@@ -223,11 +230,11 @@ export function calculateTotalPackagePrice(
     if (svc.hasPackagePricing) {
       // This service has its own per-package prices (e.g. window cleaning)
       // Calculate directly with the packageKey â no global multiplier needed
-      const svcPrice = calculateServicePrice(svc, allDetails[svcId], allExtras[svcId], globalPriceAdj, globalStories, packageKey, storiesMultipliers);
+      const svcPrice = calculateServicePrice(svc, allDetails[svcId], allExtras[svcId], globalPriceAdj, globalStories, packageKey, storiesMultipliers, minimumCharges);
       total += svcPrice;
     } else {
       // Standard service â calculate base price, then apply global multiplier
-      const svcBase = calculateServicePrice(svc, allDetails[svcId], allExtras[svcId], globalPriceAdj, globalStories, undefined, storiesMultipliers);
+      const svcBase = calculateServicePrice(svc, allDetails[svcId], allExtras[svcId], globalPriceAdj, globalStories, undefined, storiesMultipliers, minimumCharges);
       total += svcBase * packageMultiplier;
     }
   });
