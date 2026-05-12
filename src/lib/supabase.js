@@ -65,6 +65,39 @@ export async function fetchTenantByEmail(email) {
 }
 
 // ============================================================================
+// NEW CUSTOMER CHECK
+// ============================================================================
+/**
+ * Returns true if this email/phone has never submitted a lead for this tenant.
+ * Used to gate `newCustomerOnly` bundles ($50 off for first-time customers, etc.).
+ *
+ * If supabase isn't connected, we default to `true` so demo/local builds still
+ * show the discount. Production tenants always have supabaseId set, so the
+ * real check runs.
+ */
+export async function isNewCustomer(tenantId, email, phone) {
+  if (!supabase || !tenantId) return true;
+  if (!email && !phone) return true; // no contact info yet — assume new
+
+  try {
+    const { data, error } = await supabase.rpc("check_new_customer", {
+      p_tenant_id: tenantId,
+      p_email: email || null,
+      p_phone: phone || null,
+    });
+
+    if (error) {
+      console.warn("[isNewCustomer] RPC error:", error.message);
+      return true; // fail-open: don't punish a real new customer because of a hiccup
+    }
+    return data === true;
+  } catch (err) {
+    console.warn("[isNewCustomer] Unexpected error:", err);
+    return true;
+  }
+}
+
+// ============================================================================
 // PHOTO UPLOAD
 // ============================================================================
 /**

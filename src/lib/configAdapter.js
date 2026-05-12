@@ -292,10 +292,14 @@ function adaptBundles(mbqBundles) {
     id: b.id,
     name: b.name,
     services: b.services || [],
-    discount: b.discount || 10,
+    discount: b.discount || 0,
     active: b.active ?? true,
     endDate: b.endDate || "",
     tagline: b.tagline || "",
+    // New: flat-dollar discounts and new-customer gating
+    discountType: b.discountType || "percent", // "percent" | "flat"
+    discountAmount: b.discountAmount || 0,     // dollars, used when discountType === "flat"
+    newCustomerOnly: b.newCustomerOnly === true,
   }));
 }
 

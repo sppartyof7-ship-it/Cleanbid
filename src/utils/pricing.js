@@ -187,18 +187,48 @@ export function calculateTotalBase(selectedServices, allServices, allDetails, al
 
 /**
  * Get the discount percentage based on bundle or service count.
+ *
+ * Kept for backwards compat. Prefer `getDiscount` (returns percent + flatAmount).
  */
 export function getDiscountPercent(selectedServices, bundleDiscounts, appliedBundle, seasonalBundle) {
+  return getDiscount(selectedServices, bundleDiscounts, appliedBundle, seasonalBundle).percent;
+}
+
+/**
+ * Get the full discount info (percent + flat dollar amount) for the current
+ * quote selection.
+ *
+ * Seasonal bundles may be EITHER a percent discount or a flat dollar amount
+ * (e.g., "$50 OFF for new customers"). Bundle ladder discounts (2+, 3+, etc.)
+ * are always percentage-based.
+ *
+ * Returns: { percent: number, flatAmount: number, source: string }
+ */
+export function getDiscount(selectedServices, bundleDiscounts, appliedBundle, seasonalBundle) {
   if (appliedBundle && seasonalBundle) {
-    return seasonalBundle.discount;
+    if (seasonalBundle.discountType === "flat") {
+      return {
+        percent: 0,
+        flatAmount: Number(seasonalBundle.discountAmount) || 0,
+        source: "seasonal-flat",
+      };
+    }
+    return {
+      percent: Number(seasonalBundle.discount) || 0,
+      flatAmount: 0,
+      source: "seasonal-percent",
+    };
   }
+
+  // Fall back to bundle-ladder discounts (always percent)
   const count = selectedServices.length;
   const d = bundleDiscounts || {};
-  if (count >= 5) return d[5] ?? 25;
-  if (count >= 4) return d[4] ?? 20;
-  if (count >= 3) return d[3] ?? 15;
-  if (count >= 2) return d[2] ?? 10;
-  return 0;
+  let percent = 0;
+  if (count >= 5) percent = d[5] ?? 25;
+  else if (count >= 4) percent = d[4] ?? 20;
+  else if (count >= 3) percent = d[3] ?? 15;
+  else if (count >= 2) percent = d[2] ?? 10;
+  return { percent, flatAmount: 0, source: percent ? "ladder" : "none" };
 }
 
 /**
@@ -219,7 +249,8 @@ export function getPackagePrice(basePrice, discountPercent, packageMultiplier) {
  */
 export function calculateTotalPackagePrice(
   selectedServices, allServices, allDetails, allExtras,
-  globalPriceAdj, globalStories, discountPercent, packageKey, packageMultiplier, storiesMultipliers, minimumCharges
+  globalPriceAdj, globalStories, discountPercent, packageKey, packageMultiplier, storiesMultipliers, minimumCharges,
+  flatDiscount = 0
 ) {
   let total = 0;
 
@@ -239,8 +270,10 @@ export function calculateTotalPackagePrice(
     }
   });
 
-  // Apply bundle discount to the total
-  return total * (1 - discountPercent / 100);
+  // Apply percent discount first, then subtract any flat dollar discount.
+  // Floor at 0 so a $50 off on a $40 quote doesn't go negative.
+  const afterPercent = total * (1 - discountPercent / 100);
+  return Math.max(0, afterPercent - (flatDiscount || 0));
 }
 
 /**

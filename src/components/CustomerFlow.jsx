@@ -3,7 +3,8 @@ import C from "../config/colors";
 import s from "../config/styles";
 import { SERVICES_WITH_STORIES } from "../config/defaults";
 import { fmt, isValidEmail, isValidPhone } from "../utils/helpers";
-import { calculateServicePrice, calculateTotalBase, getDiscountPercent, getPackagePrice, calculateTotalPackagePrice, getEstimatedWindows, estimateGutterLinearFt } from "../utils/pricing";
+import { calculateServicePrice, calculateTotalBase, getDiscountPercent, getDiscount, getPackagePrice, calculateTotalPackagePrice, getEstimatedWindows, estimateGutterLinearFt } from "../utils/pricing";
+import { isNewCustomer as checkIsNewCustomer } from "../lib/supabase";
 import Badge from "./Badge";
 import CountdownTimer from "./CountdownTimer";
 import PhotoUploader from "./PhotoUploader";
@@ -103,6 +104,9 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     name: "", email: "", phone: "", address: "", notes: "", leadSource: "", projectType: "residential",
   });
   const [appliedBundle, setAppliedBundle] = useState(null);
+  // New-customer status for newCustomerOnly bundles ($50 OFF first-timers).
+  // null = unknown (haven't checked yet), true = new, false = repeat customer.
+  const [isNewCustomer, setIsNewCustomer] = useState(null);
   const [globalStories, setGlobalStories] = useState(saved?.globalStories ?? 1);
   const [customerPhotos, setCustomerPhotos] = useState([]); // Can't serialize file objects
   const [validationErrors, setValidationErrors] = useState({});
@@ -262,7 +266,44 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     (b) => b.active && b.services.every((sid) => selectedServices.includes(sid)) && new Date(b.endDate) > new Date()
   );
 
-  const bundleDiscount = getDiscountPercent(selectedServices, config.bundleDiscounts, appliedBundle, seasonalBundle);
+  // Auto-check new-customer status whenever email/phone changes (debounced effect).
+  // We only need to call the RPC once we have enough info — and only if there's
+  // a newCustomerOnly bundle in play (no point hitting the DB otherwise).
+  const hasNewCustomerBundle = (config.seasonalBundles || []).some((b) => b.active && b.newCustomerOnly);
+  useEffect(() => {
+    if (!hasNewCustomerBundle || !config.supabaseId) return;
+    if (!contact.email && !contact.phone) {
+      setIsNewCustomer(null);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      const result = await checkIsNewCustomer(config.supabaseId, contact.email, contact.phone);
+      if (!cancelled) setIsNewCustomer(result);
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [contact.email, contact.phone, config.supabaseId, hasNewCustomerBundle]);
+
+  // A seasonal bundle auto-applies when:
+  //   1. It matches the customer's service selection (or has empty services = any quote)
+  //   2. It's not expired
+  //   3. If `newCustomerOnly`, the customer is verified new (isNewCustomer === true)
+  // Customers don't have to click — eligibility = applied.
+  const seasonalBundleEligible =
+    seasonalBundle &&
+    (!seasonalBundle.newCustomerOnly || isNewCustomer === true);
+
+  const discountInfo = getDiscount(
+    selectedServices,
+    config.bundleDiscounts,
+    seasonalBundleEligible || appliedBundle,
+    seasonalBundleEligible ? seasonalBundle : null
+  );
+  const bundleDiscount = discountInfo.percent;
+  const flatDiscount = discountInfo.flatAmount;
 
   const svcPrice = (svcId, packageKey) => {
     const svc = config.services.find((sv) => sv.id === svcId);
@@ -306,6 +347,10 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     if (bundleDiscount > 0) {
       total = Math.round(total * (1 - bundleDiscount / 100));
     }
+    // Subtract flat $ discount (e.g. $50 new-customer special), never below 0
+    if (flatDiscount > 0) {
+      total = Math.max(0, total - flatDiscount);
+    }
     return total;
   };
 
@@ -314,7 +359,8 @@ export default function CustomerFlow({ config, onSubmitLead }) {
     let total = calculateTotalPackagePrice(
       selectedServices, config.services, details, selectedExtras,
       config.globalPriceAdjustment, globalStories, bundleDiscount,
-      pkg, config.packages[pkg].multiplier, config.storiesMultipliers, config.minimumCharges
+      pkg, config.packages[pkg].multiplier, config.storiesMultipliers, config.minimumCharges,
+      flatDiscount
     );
     // Calculate upsell savings and subtract from total
     if (upsellAccepted.length > 0 && upsellDiscount > 0) {
@@ -565,22 +611,39 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         </div>
       )}
 
-      {/* Seasonal Bundle Promo */}
-      {step === 1 && config.seasonalBundles.filter((b) => b.active && new Date(b.endDate) > new Date()).map((bundle) => (
-        <div key={bundle.id} style={{ marginBottom: 20, padding: "20px 24px", background: "linear-gradient(135deg, #eef4ff, #f0fdf4)", border: `2px dashed ${C.primary}60`, borderRadius: 16, cursor: "pointer" }}
-          onClick={() => { setSelectedServices(bundle.services.filter((sid) => config.services.find((sv) => sv.id === sid)?.enabled)); setAppliedBundle(bundle.id); }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <Badge color={C.accent}>Seasonal Special</Badge>
-                <span style={{ fontWeight: 800, fontSize: 16 }}>{bundle.name}</span>
+      {/* Seasonal Bundle Promo — supports both percent and flat $ discounts */}
+      {step === 1 && config.seasonalBundles.filter((b) => b.active && new Date(b.endDate) > new Date()).map((bundle) => {
+        const isFlat = bundle.discountType === "flat";
+        const badgeText = isFlat
+          ? `$${bundle.discountAmount || 0} OFF`
+          : `${bundle.discount || 0}% OFF`;
+        const saveText = isFlat
+          ? `Save $${bundle.discountAmount || 0}!`
+          : `Save ${bundle.discount || 0}%!`;
+        // Only pre-select services when the bundle has explicit services
+        // (an empty list means "applies to any quote" — don't clobber selection).
+        const handleClick = () => {
+          if (bundle.services && bundle.services.length > 0) {
+            setSelectedServices(bundle.services.filter((sid) => config.services.find((sv) => sv.id === sid)?.enabled));
+          }
+          setAppliedBundle(bundle.id);
+        };
+        return (
+          <div key={bundle.id} style={{ marginBottom: 20, padding: "20px 24px", background: "linear-gradient(135deg, #eef4ff, #f0fdf4)", border: `2px dashed ${C.primary}60`, borderRadius: 16, cursor: "pointer" }}
+            onClick={handleClick}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <Badge color={C.accent}>{bundle.newCustomerOnly ? "New Customer Special" : "Seasonal Special"}</Badge>
+                  <span style={{ fontWeight: 800, fontSize: 16 }}>{bundle.name}</span>
+                </div>
+                <p style={{ color: C.textMid, fontSize: 13 }}>{bundle.tagline} {saveText}</p>
               </div>
-              <p style={{ color: C.textMid, fontSize: 13 }}>{bundle.tagline} Save {bundle.discount}%!</p>
+              <div style={{ fontSize: 28, fontWeight: 800, color: C.secondaryDark }}>{badgeText}</div>
             </div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: C.secondaryDark }}>{bundle.discount}% OFF</div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {/* STEP 1: Services + Details */}
       {step === 1 && (
@@ -974,6 +1037,12 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                 </div>
               );
             })()}
+            {flatDiscount > 0 && (
+              <div style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 16px", borderRadius: 20, background: "#fef3c7", border: "1px solid #fcd34d" }}>
+                <span style={{ fontSize: 14 }}>{"\u{1F381}"}</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#b45309" }}>{seasonalBundle?.name || `${fmt(flatDiscount)} off applied`}</span>
+              </div>
+            )}
             {hasStormWindows && (
               <div style={{ marginTop: 12, padding: "10px 16px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, textAlign: "left" }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#92400e" }}>{"\u26A0\uFE0F"} Storm/combination windows require a custom quote</div>
@@ -1054,8 +1123,8 @@ export default function CustomerFlow({ config, onSubmitLead }) {
               );
             })}
             {bundleDiscount > 0 && (() => {
-              const preBundleTotal = Math.round(totalPrice() / (1 - bundleDiscount / 100));
-              const dollarSaved = preBundleTotal - totalPrice();
+              const preBundleTotal = Math.round((totalPrice() + flatDiscount) / (1 - bundleDiscount / 100));
+              const dollarSaved = preBundleTotal - (totalPrice() + flatDiscount);
               return (
                 <div style={{ padding: "10px 24px", borderTop: `1px solid ${C.borderLight}`, background: "#f0fdf4" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -1065,6 +1134,14 @@ export default function CustomerFlow({ config, onSubmitLead }) {
                 </div>
               );
             })()}
+            {flatDiscount > 0 && (
+              <div style={{ padding: "10px 24px", borderTop: `1px solid ${C.borderLight}`, background: "#fef3c7" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 13, color: "#b45309", fontWeight: 600 }}>{"\u{1F381}"} {seasonalBundle?.name || "New Customer Discount"}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#b45309" }}>{"\u2212"}{fmt(flatDiscount)}</span>
+                </div>
+              </div>
+            )}
 
             {/* Property summary row */}
             <div style={{ padding: "10px 24px", borderTop: `1px solid ${C.borderLight}`, display: "flex", flexWrap: "wrap", gap: 8 }}>
