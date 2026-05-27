@@ -448,6 +448,26 @@ export default function CustomerFlow({ config, onSubmitLead }) {
   };
 
   const submitQuote = () => {
+    // ── Fix 4 (2026-05-26): Re-validate every submit. Belt-and-suspenders
+    // guard for the Carolyn-class bug where a re-submit from saved state
+    // could drop required fields. The DB CHECK constraint added the same day
+    // would reject these anyway — this gives the user a friendly UI error
+    // instead of a 500 from Supabase.
+    const missing = [];
+    if (!contact.name?.trim()) missing.push("your name");
+    if (!contact.address?.trim()) missing.push("a service address");
+    if (!contact.email?.trim() && !contact.phone?.trim()) missing.push("an email or phone");
+    if (!selectedServices.length) missing.push("at least one service");
+    if (missing.length > 0) {
+      const msg = "Please add " + missing.join(", ") + " before submitting your quote.";
+      setValidationErrors({ submit: msg });
+      alert(msg);
+      if (!selectedServices.length) setStep(0);
+      else if (!contact.address?.trim()) setStep(Math.max(1, step - 2));
+      else setStep(Math.max(2, step - 1));
+      return;
+    }
+
     const newLead = {
       id: Date.now(),
       name: contact.name.trim(),
@@ -460,6 +480,12 @@ export default function CustomerFlow({ config, onSubmitLead }) {
         acc[svcId] = svcPrice(svcId, svcPkg);
         return acc;
       }, {}),
+      // ── Fix 3 (2026-05-26): include details + selectedExtras so App.jsx
+      // can forward them to the email + DB. Without these, the tenant email's
+      // "Add-Ons Selected" section was always empty and the DB's
+      // service_details + selected_extras columns were always {}.
+      details: { ...details },
+      selectedExtras: { ...selectedExtras },
       package: selectedPackage,
       servicePackages: { ...servicePackages },
       total: totalPrice(),

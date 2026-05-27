@@ -208,7 +208,14 @@ export default function App() {
           total: leadWithPhotos.total,
           notes: leadWithPhotos.notes || null,
           leadSource: leadWithPhotos.leadSource || null,
-          serviceDetails: leadWithPhotos.details || {},
+          // Fix 3 (2026-05-26): send structured service_details that pairs
+          // per-service prices with form inputs + chosen tier so the tenant
+          // dashboard can show "Window Cleaning Premium: $450 (1500 sqft)".
+          serviceDetails: {
+            prices: leadWithPhotos.servicePrices || {},
+            inputs: leadWithPhotos.details || {},
+            tiers: leadWithPhotos.servicePackages || {},
+          },
           selectedExtras: leadWithPhotos.selectedExtras || {},
           packagePrices: leadWithPhotos.allPackagePrices || {},
           bundleApplied: leadWithPhotos.appliedBundle || null,
@@ -418,6 +425,11 @@ function notifyTenantOfLead(lead, config) {
         address: lead.address,
         services: lead.services,
         servicePrices: lead.servicePrices,
+        // Fix 3 (2026-05-26): pass selectedExtras + packagePrices so the
+        // tenant email renders the "Add-Ons Selected" and "Tier Comparison"
+        // sections. Both were silently empty without these.
+        selectedExtras: lead.selectedExtras,
+        packagePrices: lead.allPackagePrices,
         package: lead.package,
         total: lead.total,
         notes: lead.notes,
