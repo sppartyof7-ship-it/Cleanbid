@@ -32,6 +32,26 @@ const DEFAULT_LEADS = [
   { id: 4, name: "David Park", email: "david@email.com", phone: "(555) 456-7890", services: ["pressure_washing", "window_cleaning", "gutter_cleaning"], package: "premium", total: 692, status: "pending", date: "2026-03-13", followUpStep: 1, notes: "Spring bundle prospect", leadSource: "Social Media", projectType: "residential", photos: [] },
 ];
 
+// ── Lead-source attribution ──────────────────────────────────────────────
+// When the customer doesn't pick a source, figure out where the lead came
+// from: ?utm_source (so QR codes + campaign links are tracked) → referring
+// site → "Direct". This is what makes marketing ROI measurable — every lead
+// gets a real source instead of NULL. (Fix 2 — 2026-06-25)
+function getAttributedSource() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const utm = (params.get("utm_source") || "").trim();
+    if (utm) return utm;
+    const ref = document.referrer;
+    if (ref) {
+      const refHost = new URL(ref).hostname.replace(/^www\./, "");
+      const selfHost = window.location.hostname.replace(/^www\./, "");
+      if (refHost && refHost !== selfHost) return refHost;
+    }
+  } catch (e) { /* ignore */ }
+  return null;
+}
+
 export default function App() {
   // ââ Loading states ââ
   const [loading, setLoading] = useState(!HARDCODED); // Only loading if we need to fetch
@@ -176,9 +196,13 @@ export default function App() {
       }
     }
 
+    // Default the lead source so marketing is always measurable: customer's
+    // pick → ?utm_source / referrer → "Direct". Never NULL. (Fix 2 — 2026-06-25)
+    const attributedSource = (newLead.leadSource || "").trim() || getAttributedSource() || "Direct";
+
     // Attach the uploaded photo URLs to the lead before we notify anyone, so
     // the email template can render thumbnails.
-    const leadWithPhotos = { ...newLead, photos: uploadedPhotos };
+    const leadWithPhotos = { ...newLead, photos: uploadedPhotos, leadSource: attributedSource };
 
     // ── Notify the cleaning company (the tenant) — Resend via platform API ──
     notifyTenantOfLead(leadWithPhotos, config);
